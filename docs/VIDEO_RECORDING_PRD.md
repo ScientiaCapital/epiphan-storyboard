@@ -64,7 +64,7 @@ features:
 ```yaml
 scenario:
   id: "onboarding_001"
-  title: "Getting Started with Coperniq"
+  title: "Getting Started with Epiphan"
   type: "onboarding"
   persona: "project_manager"
   estimated_duration_sec: 75
@@ -73,7 +73,7 @@ scenario:
     - step: 1
       action: "navigate"
       target: "/login"
-      narration: "Let's start by logging into your Coperniq account."
+      narration: "Let's start by logging into your Epiphan account."
       timing:
         action_delay_ms: 500
         narration_pause_ms: 1000
@@ -212,7 +212,7 @@ class Video(BaseModel):
 ```
 POST /api/v1/recording/scenarios/generate
 {
-  "target_url": "https://app.coperniq.ai",
+  "target_url": "https://app.epiphan.com",
   "auth": {
     "type": "oauth",
     "provider": "google"
@@ -262,7 +262,7 @@ POST /api/v1/recording/videos/{id}/export
 
 This module would integrate with the current storyboard system:
 
-1. **Knowledge Base**: Use existing `coperniq_knowledge` to inform scenario scripts
+1. **Knowledge Base**: Use existing `knowledge` table to inform scenario scripts
 2. **Persona System**: Leverage COI/ROI/EASE value angles for narration tone
 3. **Gemini Client**: Could use for script enhancement/review
 4. **Storage**: Use existing Supabase/R2 infrastructure

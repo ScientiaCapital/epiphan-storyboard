@@ -22,8 +22,8 @@ from typing import Any
 
 from src.tools.base import BaseTool, ToolCategory, ToolDefinition, ToolResult
 from src.tools.storyboard.gemini_client import GeminiStoryboardClient, StoryboardUnderstanding
-from src.tools.storyboard.coperniq_presets import (
-    COPERNIQ_ICP,
+from src.tools.storyboard.epiphan_presets import (
+    EPIPHAN_ICP,
     get_icp_preset,
     get_audience_persona,
     sanitize_content,
@@ -53,7 +53,7 @@ class CodeToStoryboardTool(BaseTool):
         result = await tool.run({
             "file_content": "def calculate_roi(): ...",
             "file_name": "calculator.py",
-            "icp_preset": "coperniq_mep",
+            "icp_preset": "epiphan_av",
             "stage": "preview",
             "audience": "c_suite",
         })
@@ -110,8 +110,8 @@ class CodeToStoryboardTool(BaseTool):
                     },
                     "icp_preset": {
                         "type": "string",
-                        "description": "ICP preset to use (default: coperniq_mep)",
-                        "default": "coperniq_mep",
+                        "description": "ICP preset to use (default: epiphan_av)",
+                        "default": "epiphan_av",
                     },
                     "stage": {
                         "type": "string",
@@ -180,7 +180,7 @@ class CodeToStoryboardTool(BaseTool):
                     file_name = os.path.basename(file_path)
 
             # Get configuration
-            icp_preset_name = arguments.get("icp_preset", "coperniq_mep")
+            icp_preset_name = arguments.get("icp_preset", "epiphan_av")
             stage = arguments.get("stage", "preview")
             audience = arguments.get("audience", "c_suite")
             custom_headline = arguments.get("custom_headline")

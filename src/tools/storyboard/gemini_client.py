@@ -204,7 +204,7 @@ class GeminiStoryboardClient:
         # Stage 1 + 2: Extract → Refine (automatic model routing)
         understanding = await client.understand_code(
             code_content="def calculate_roi(): ...",
-            icp_preset=COPERNIQ_ICP,
+            icp_preset=EPIPHAN_ICP,
             audience="c_suite",
         )
 
@@ -269,8 +269,8 @@ class GeminiStoryboardClient:
         headers = {
             "Authorization": f"Bearer {self.config.openrouter_api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://coperniq.io",
-            "X-Title": "Coperniq Storyboard Generator",
+            "HTTP-Referer": "https://www.epiphan.com",
+            "X-Title": "Epiphan Storyboard Generator",
         }
 
         for attempt in range(max_retries):
@@ -1088,22 +1088,22 @@ Return JSON:
         """
         self._ensure_client()
 
-        from src.tools.storyboard.coperniq_presets import (
-            COPERNIQ_ICP,
-            COPERNIQ_BRAND,
+        from src.tools.storyboard.epiphan_presets import (
+            EPIPHAN_ICP,
+            EPIPHAN_BRAND,
             get_stage_template,
             get_audience_persona,
         )
 
         if icp_preset is None:
-            icp_preset = COPERNIQ_ICP
+            icp_preset = EPIPHAN_ICP
 
         import uuid
         from datetime import datetime
 
         stage_template = get_stage_template(stage)
         visual_style_config = icp_preset.get("visual_style", {})
-        brand = COPERNIQ_BRAND
+        brand = EPIPHAN_BRAND
         persona = get_audience_persona(audience, icp_preset)
 
         # Add uniqueness to avoid cached/repetitive outputs

@@ -1,5 +1,9 @@
 """Tests for billing API router."""
 
+import pytest
+
+pytest.importorskip("stripe")
+
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 

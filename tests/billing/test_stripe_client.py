@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+pytest.importorskip("stripe")
+
 from src.billing.schemas import BillingTier, SubscriptionStatus
 from src.billing.stripe_client import (
     StripeClient,

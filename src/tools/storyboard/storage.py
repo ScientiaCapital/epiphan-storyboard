@@ -20,7 +20,7 @@ class StoryboardStorage:
     Storage service for storyboard images.
 
     Saves to:
-    - Supabase Storage: coperniq-assets/generated-outputs/YYYY-MM-DD/
+    - Supabase Storage: epiphan-assets/generated-outputs/YYYY-MM-DD/
     - Supabase Table: storyboard_assets (metadata tracking)
     """
 
@@ -93,14 +93,14 @@ class StoryboardStorage:
             storage_path = f"generated-outputs/{date_prefix}/{filename}"
 
             # Upload to Supabase Storage
-            result = self._client.storage.from_("coperniq-assets").upload(
+            result = self._client.storage.from_("epiphan-assets").upload(
                 path=storage_path,
                 file=png_bytes,
                 file_options={"content-type": "image/png"}
             )
 
             # Get public URL
-            public_url = self._client.storage.from_("coperniq-assets").get_public_url(storage_path)
+            public_url = self._client.storage.from_("epiphan-assets").get_public_url(storage_path)
 
             # Track in database
             self._client.table("storyboard_assets").insert({

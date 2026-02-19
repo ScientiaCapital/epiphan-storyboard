@@ -38,7 +38,7 @@ Generate storyboard from code file.
 {
   "file_content": "def calculate_roi(): ...",
   "file_name": "calculator.py",
-  "icp_preset": "coperniq_mep",
+  "icp_preset": "epiphan_av",
   "stage": "preview",
   "audience": "c_suite",
   "custom_headline": "Optional custom headline"
@@ -62,7 +62,7 @@ Generate storyboard from roadmap screenshot.
 ```json
 {
   "image_data": "base64-encoded-image",
-  "icp_preset": "coperniq_mep",
+  "icp_preset": "epiphan_av",
   "audience": "c_suite",
   "custom_headline": "Coming Soon",
   "sanitize_ip": true
@@ -135,7 +135,7 @@ Poll job status and get results.
 ## Parameters
 
 ### ICP Presets
-- `coperniq_mep` - MEP contractors (mechanical, electrical, plumbing)
+- `epiphan_av` - AV integrators, IT departments, and organizations needing professional video
 
 ### Stages
 - `preview` - Coming soon teaser (no screenshots)
@@ -143,9 +143,11 @@ Poll job status and get results.
 - `shipped` - Production-ready announcement
 
 ### Audiences
-- `business_owner` - Small business owners ($500K-$2M revenue)
-- `c_suite` - C-suite executives ($5M+ companies)
-- `btl_champion` - Below-the-line champions (ops managers, project managers)
+- `av_integrator` - AV system integrators who spec and install
+- `it_director` - IT leaders managing campus/enterprise AV
+- `cto` - Tech executives evaluating AV infrastructure
+- `reseller` - AV resellers and distributors
+- `bdr` - Business development reps doing outbound
 
 ## Usage Examples
 

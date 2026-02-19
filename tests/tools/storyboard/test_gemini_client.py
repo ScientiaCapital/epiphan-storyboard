@@ -9,7 +9,7 @@ from src.tools.storyboard.gemini_client import (
     GeminiConfig,
     StoryboardUnderstanding,
 )
-from src.tools.storyboard.coperniq_presets import COPERNIQ_ICP
+from src.tools.storyboard.epiphan_presets import EPIPHAN_ICP
 
 
 class TestGeminiConfig:
@@ -154,7 +154,7 @@ class TestLanguageGuidelines:
         config = GeminiConfig(api_key="test-key")
         client = GeminiStoryboardClient(config=config)
 
-        guidelines = client._build_language_guidelines(COPERNIQ_ICP)
+        guidelines = client._build_language_guidelines(EPIPHAN_ICP)
 
         assert "LANGUAGE GUIDELINES" in guidelines
         assert "Tone:" in guidelines
@@ -166,21 +166,20 @@ class TestLanguageGuidelines:
         config = GeminiConfig(api_key="test-key")
         client = GeminiStoryboardClient(config=config)
 
-        guidelines = client._build_language_guidelines(COPERNIQ_ICP)
+        guidelines = client._build_language_guidelines(EPIPHAN_ICP)
 
-        # Should include some of the avoid terms (technical jargon)
-        # NOTE: "AI" is NOT avoided anymore - we use it for AI features
-        assert "API" in guidelines
+        # Should include AV-specific jargon to avoid
+        assert "bitrate optimization" in guidelines
 
     def test_includes_use_terms(self):
         """Test guidelines include terms to use."""
         config = GeminiConfig(api_key="test-key")
         client = GeminiStoryboardClient(config=config)
 
-        guidelines = client._build_language_guidelines(COPERNIQ_ICP)
+        guidelines = client._build_language_guidelines(EPIPHAN_ICP)
 
         # Should include some of the use terms
-        assert "saves you time" in guidelines
+        assert "just works" in guidelines
 
 
 class TestUnderstandCodeMocked:
@@ -217,7 +216,7 @@ class TestUnderstandCodeMocked:
 
         result = await client.understand_code(
             code_content="def track_job(): pass",
-            icp_preset=COPERNIQ_ICP,
+            icp_preset=EPIPHAN_ICP,
             audience="c_suite",
         )
 
@@ -257,7 +256,7 @@ class TestUnderstandCodeMocked:
 
         result = await client.understand_code(
             code_content="test code",
-            icp_preset=COPERNIQ_ICP,
+            icp_preset=EPIPHAN_ICP,
         )
 
         assert result.headline == "Test Headline"
@@ -281,7 +280,7 @@ class TestUnderstandCodeMocked:
 
         result = await client.understand_code(
             code_content="test code",
-            icp_preset=COPERNIQ_ICP,
+            icp_preset=EPIPHAN_ICP,
         )
 
         # Should return error state (not generic copy) so CEO/CTO can review
@@ -361,7 +360,7 @@ class TestGenerateStoryboardMocked:
     @pytest.mark.asyncio
     async def test_generate_storyboard_uses_stage_template(self):
         """Test storyboard generation uses correct stage template."""
-        from src.tools.storyboard.coperniq_presets import get_stage_template
+        from src.tools.storyboard.epiphan_presets import get_stage_template
 
         understanding = StoryboardUnderstanding(
             headline="Test",

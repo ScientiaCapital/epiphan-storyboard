@@ -22,8 +22,8 @@ from typing import Any
 
 from src.tools.base import BaseTool, ToolCategory, ToolDefinition, ToolResult
 from src.tools.storyboard.gemini_client import GeminiStoryboardClient, StoryboardUnderstanding
-from src.tools.storyboard.coperniq_presets import (
-    COPERNIQ_ICP,
+from src.tools.storyboard.epiphan_presets import (
+    EPIPHAN_ICP,
     get_icp_preset,
     get_audience_persona,
     AudiencePersona,
@@ -51,7 +51,7 @@ class RoadmapToStoryboardTool(BaseTool):
         tool = RoadmapToStoryboardTool()
         result = await tool.run({
             "image_data": base64_screenshot,
-            "icp_preset": "coperniq_mep",
+            "icp_preset": "epiphan_av",
             "audience": "c_suite",
         })
         # result.result["storyboard_png"] = base64 PNG teaser
@@ -102,8 +102,8 @@ class RoadmapToStoryboardTool(BaseTool):
                     },
                     "icp_preset": {
                         "type": "string",
-                        "description": "ICP preset to use (default: coperniq_mep)",
-                        "default": "coperniq_mep",
+                        "description": "ICP preset to use (default: epiphan_av)",
+                        "default": "epiphan_av",
                     },
                     "audience": {
                         "type": "string",
@@ -168,7 +168,7 @@ class RoadmapToStoryboardTool(BaseTool):
                 image_data = base64.b64encode(image_bytes).decode("utf-8")
 
             # Get configuration
-            icp_preset_name = arguments.get("icp_preset", "coperniq_mep")
+            icp_preset_name = arguments.get("icp_preset", "epiphan_av")
             audience = arguments.get("audience", "c_suite")
             custom_headline = arguments.get("custom_headline")
             sanitize_ip = arguments.get("sanitize_ip", True)

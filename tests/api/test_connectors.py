@@ -880,50 +880,6 @@ def test_manual_upload_wrong_connector_type(client, mock_supabase, org_id, insta
     assert "not supported" in response.json()["detail"]
 
 
-# ============================================================================
-# Test: Linear Webhook
-# ============================================================================
-
-
-def test_linear_webhook_success(client):
-    """Test Linear webhook handling."""
-    response = client.post(
-        "/connectors/linear/webhook",
-        headers={"Linear-Signature": "signature_xyz"},
-        json={
-            "action": "create",
-            "type": "Issue",
-            "data": {"id": "issue_123", "title": "New issue"},
-        },
-    )
-
-    assert response.status_code == 200
-    data = response.json()
-
-    assert data["message"] == "Webhook received"
-    assert data["action"] == "create"
-
-
-def test_linear_webhook_missing_signature(client):
-    """Test Linear webhook without signature header."""
-    response = client.post(
-        "/connectors/linear/webhook",
-        json={"action": "create"},
-    )
-
-    assert response.status_code == 400
-    assert "Missing Linear-Signature" in response.json()["detail"]
-
-
-def test_linear_webhook_invalid_json(client):
-    """Test Linear webhook with invalid JSON."""
-    response = client.post(
-        "/connectors/linear/webhook",
-        headers={"Linear-Signature": "signature_xyz"},
-        content=b"invalid json",
-    )
-
-    assert response.status_code == 400
 
 
 # ============================================================================

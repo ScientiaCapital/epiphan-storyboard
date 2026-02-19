@@ -114,7 +114,7 @@ class StoryboardChain(BaseChain):
 
             result: ToolResult = await tool.run({
                 "input": input_data,
-                "icp_preset": params.get("icp_preset", "coperniq_mep"),
+                "icp_preset": params.get("icp_preset", "epiphan_av"),
                 "stage": params.get("stage", "demo"),
                 "audience": params.get("audience", "c_suite"),
                 "open_browser": False,  # Never open browser in API

@@ -78,8 +78,8 @@ async def lifespan(app: FastAPI):
 # ============================================================================
 
 app = FastAPI(
-    title="Conductor-AI Agent API",
-    description="Multi-provider LLM agent orchestration with ReAct pattern",
+    title="Epiphan Storyboard API",
+    description="AI-powered storyboard generator for Epiphan Video",
     version="0.1.0",
     lifespan=lifespan,
 )

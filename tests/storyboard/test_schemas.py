@@ -29,7 +29,7 @@ class TestCodeStoryboardRequest:
         )
         assert request.file_content == "def hello(): pass"
         assert request.file_name is None
-        assert request.icp_preset == "coperniq_mep"
+        assert request.icp_preset == "epiphan_av"
         assert request.stage == "preview"
         assert request.audience == "c_suite"
         assert request.custom_headline is None
@@ -39,14 +39,14 @@ class TestCodeStoryboardRequest:
         request = CodeStoryboardRequest(
             file_content="def hello(): pass",
             file_name="test.py",
-            icp_preset="coperniq_mep",
+            icp_preset="epiphan_av",
             stage="demo",
             audience="business_owner",
             custom_headline="Custom Headline",
         )
         assert request.file_content == "def hello(): pass"
         assert request.file_name == "test.py"
-        assert request.icp_preset == "coperniq_mep"
+        assert request.icp_preset == "epiphan_av"
         assert request.stage == "demo"
         assert request.audience == "business_owner"
         assert request.custom_headline == "Custom Headline"
@@ -96,7 +96,7 @@ class TestRoadmapStoryboardRequest:
             image_data="base64encodeddata",
         )
         assert request.image_data == "base64encodeddata"
-        assert request.icp_preset == "coperniq_mep"
+        assert request.icp_preset == "epiphan_av"
         assert request.audience == "c_suite"
         assert request.custom_headline is None
         assert request.sanitize_ip is True
@@ -105,13 +105,13 @@ class TestRoadmapStoryboardRequest:
         """Test fully populated valid request."""
         request = RoadmapStoryboardRequest(
             image_data="base64encodeddata",
-            icp_preset="coperniq_mep",
+            icp_preset="epiphan_av",
             audience="btl_champion",
             custom_headline="Coming Soon",
             sanitize_ip=False,
         )
         assert request.image_data == "base64encodeddata"
-        assert request.icp_preset == "coperniq_mep"
+        assert request.icp_preset == "epiphan_av"
         assert request.audience == "btl_champion"
         assert request.custom_headline == "Coming Soon"
         assert request.sanitize_ip is False
@@ -133,7 +133,7 @@ class TestRoadmapStoryboardRequest:
     def test_missing_image_data_fails(self):
         """Test that missing image_data fails validation."""
         with pytest.raises(ValidationError):
-            RoadmapStoryboardRequest(icp_preset="coperniq_mep")
+            RoadmapStoryboardRequest(icp_preset="epiphan_av")
 
 
 class TestStoryboardJobResponse:

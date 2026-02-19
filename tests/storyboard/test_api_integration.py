@@ -21,7 +21,7 @@ class TestCodeStoryboardRequestValidation:
         )
         assert request.file_content == "def hello(): pass"
         assert request.file_name is None
-        assert request.icp_preset == "coperniq_mep"
+        assert request.icp_preset == "epiphan_av"
         assert request.stage == "preview"
         assert request.audience == "c_suite"
         assert request.custom_headline is None
@@ -96,7 +96,7 @@ class TestRoadmapStoryboardRequestValidation:
             image_data="base64encodeddata",
         )
         assert request.image_data == "base64encodeddata"
-        assert request.icp_preset == "coperniq_mep"
+        assert request.icp_preset == "epiphan_av"
         assert request.audience == "c_suite"
         assert request.custom_headline is None
         assert request.sanitize_ip is True
@@ -134,7 +134,7 @@ class TestRoadmapStoryboardRequestValidation:
         from src.storyboard.schemas import RoadmapStoryboardRequest
 
         with pytest.raises(ValidationError):
-            RoadmapStoryboardRequest(icp_preset="coperniq_mep")
+            RoadmapStoryboardRequest(icp_preset="epiphan_av")
 
 
 class TestStoryboardJobResponse:

@@ -1,5 +1,5 @@
 """
-Base classes for Coperniq Knowledge Brain.
+Base classes for Epiphan Knowledge Brain.
 """
 
 from dataclasses import dataclass, field

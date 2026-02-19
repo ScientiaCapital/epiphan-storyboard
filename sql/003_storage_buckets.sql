@@ -6,8 +6,8 @@
 -- Create storage bucket for storyboard assets
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
-    'coperniq-assets',
-    'coperniq-assets',
+    'epiphan-assets',
+    'epiphan-assets',
     true,  -- Public bucket for easy sharing
     52428800,  -- 50MB limit
     ARRAY['image/png', 'image/jpeg', 'image/webp', 'image/gif']
@@ -17,20 +17,20 @@ VALUES (
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Allow public read access to all files
-CREATE POLICY "Public read access for coperniq-assets"
+CREATE POLICY "Public read access for epiphan-assets"
 ON storage.objects FOR SELECT
-USING (bucket_id = 'coperniq-assets');
+USING (bucket_id = 'epiphan-assets');
 
 -- Policy: Allow authenticated users to upload
-CREATE POLICY "Authenticated upload for coperniq-assets"
+CREATE POLICY "Authenticated upload for epiphan-assets"
 ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'coperniq-assets');
+WITH CHECK (bucket_id = 'epiphan-assets');
 
 -- Policy: Allow service role to manage all files
-CREATE POLICY "Service role full access for coperniq-assets"
+CREATE POLICY "Service role full access for epiphan-assets"
 ON storage.objects
-USING (bucket_id = 'coperniq-assets' AND auth.role() = 'service_role')
-WITH CHECK (bucket_id = 'coperniq-assets' AND auth.role() = 'service_role');
+USING (bucket_id = 'epiphan-assets' AND auth.role() = 'service_role')
+WITH CHECK (bucket_id = 'epiphan-assets' AND auth.role() = 'service_role');
 
 -- =============================================
 -- Optional: Create a table to track generated storyboards

@@ -339,5 +339,5 @@ class CloseCRMIngester:
 
         data = [entry.to_dict() for entry in entries]
 
-        response = self.supabase.table("coperniq_knowledge").insert(data).execute()
+        response = self.supabase.table("knowledge").insert(data).execute()
         return len(response.data)

@@ -1,5 +1,5 @@
 """
-Coperniq Knowledge Brain - Learning Pipeline
+Epiphan Knowledge Brain - Learning Pipeline
 =============================================
 
 Ingests content from various sources and extracts knowledge for storyboard generation.

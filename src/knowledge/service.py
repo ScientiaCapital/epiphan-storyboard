@@ -384,7 +384,7 @@ Raw Extracted: {understanding.raw_extracted_text}
             knowledge_types = ["pain_point", "metric", "approved_term", "feature"]
 
         # Build query
-        query = self.supabase.table("coperniq_knowledge") \
+        query = self.supabase.table("knowledge") \
             .select("*") \
             .in_("knowledge_type", knowledge_types) \
             .gte("confidence_score", 0.7) \
@@ -427,7 +427,7 @@ Raw Extracted: {understanding.raw_extracted_text}
 
     async def get_banned_terms(self) -> list[str]:
         """Get all banned terms from knowledge base."""
-        response = self.supabase.table("coperniq_knowledge") \
+        response = self.supabase.table("knowledge") \
             .select("content") \
             .eq("knowledge_type", "banned_term") \
             .execute()
@@ -436,7 +436,7 @@ Raw Extracted: {understanding.raw_extracted_text}
 
     async def get_approved_terms(self, audience: Optional[str] = None) -> list[str]:
         """Get approved terms, optionally filtered by audience."""
-        query = self.supabase.table("coperniq_knowledge") \
+        query = self.supabase.table("knowledge") \
             .select("content, audience") \
             .eq("knowledge_type", "approved_term")
 
@@ -536,5 +536,5 @@ Raw Extracted: {understanding.raw_extracted_text}
             return 0
 
         data = [entry.to_dict() for entry in entries]
-        response = self.supabase.table("coperniq_knowledge").insert(data).execute()
+        response = self.supabase.table("knowledge").insert(data).execute()
         return len(response.data)

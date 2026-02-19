@@ -43,7 +43,7 @@ class CodeStoryboardRequest(BaseModel):
         description="Name of the file for context (e.g., 'main.py')",
     )
     icp_preset: str = Field(
-        "coperniq_mep",
+        "epiphan_av",
         description="ICP preset to use",
     )
     stage: Literal["preview", "demo", "shipped"] = Field(
@@ -77,7 +77,7 @@ class RoadmapStoryboardRequest(BaseModel):
         min_length=1,
     )
     icp_preset: str = Field(
-        "coperniq_mep",
+        "epiphan_av",
         description="ICP preset to use",
     )
     audience: Literal["business_owner", "c_suite", "btl_champion"] = Field(

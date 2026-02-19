@@ -120,7 +120,7 @@ class GenerateRequest(BaseModel):
         description="Raw code string.",
     )
     icp_preset: str = Field(
-        "coperniq_mep",
+        "epiphan_av",
         description="ICP preset to use",
     )
     stage: Literal["preview", "demo", "shipped"] = Field(

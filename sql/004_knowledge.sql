@@ -1,4 +1,4 @@
--- Conductor-AI Coperniq Knowledge Base SQL Migration
+-- Epiphan Storyboard Knowledge Base SQL Migration
 -- Run in Supabase SQL Editor
 -- Created: 2025-12-04
 -- Purpose: Learning pipeline for intelligent storyboard generation
@@ -53,11 +53,11 @@ CREATE TABLE IF NOT EXISTS knowledge_sources (
 );
 
 -- =============================================================================
--- COPERNIQ KNOWLEDGE TABLE
+-- KNOWLEDGE TABLE
 -- Core knowledge entries extracted from sources
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS coperniq_knowledge (
+CREATE TABLE IF NOT EXISTS knowledge (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Link to source
@@ -65,16 +65,16 @@ CREATE TABLE IF NOT EXISTS coperniq_knowledge (
 
     -- Knowledge classification
     knowledge_type TEXT NOT NULL CHECK (knowledge_type IN (
-        'feature',         -- Product feature (e.g., "Receptionist AI", "Document Engine")
-        'pain_point',      -- Customer pain point (e.g., "PM lives in Excel", "Losing $3K/job")
-        'metric',          -- Specific numbers (e.g., "$3K/job", "5 hours/week", "65% faster")
+        'feature',         -- Product feature (e.g., "Pearl Mini all-in-one encoder")
+        'pain_point',      -- Customer pain point (e.g., "unreliable streaming")
+        'metric',          -- Specific numbers (e.g., "99.9% uptime", "under 5ms latency")
         'quote',           -- Verbatim customer quote worth reusing
-        'approved_term',   -- Language that resonates (e.g., "Save time", "Get paid faster")
-        'banned_term',     -- Language to avoid (e.g., "marketing campaign", "API")
+        'approved_term',   -- Language that resonates (e.g., "just works", "set and forget")
+        'banned_term',     -- Language to avoid (e.g., "revolutionary", "paradigm shift")
         'objection',       -- Common sales objections
         'competitor',      -- Competitor mentions and context
         'success_story',   -- Customer win/testimonial
-        'use_case',        -- Specific use case (e.g., "solar permit tracking")
+        'use_case',        -- Specific use case (e.g., "lecture capture", "worship streaming")
         'persona'          -- ICP persona insight
     )),
 
@@ -84,9 +84,9 @@ CREATE TABLE IF NOT EXISTS coperniq_knowledge (
     verbatim BOOLEAN DEFAULT false,     -- Is this an exact quote vs paraphrased?
 
     -- Relevance metadata
-    audience TEXT[] DEFAULT '{}',       -- Which audiences this applies to (c_suite, field_crew, etc.)
-    industries TEXT[] DEFAULT '{}',     -- Which industries (solar, hvac, electrical, etc.)
-    product_areas TEXT[] DEFAULT '{}',  -- Product areas (Intelligence, Sales Cloud, PM Cloud, etc.)
+    audience TEXT[] DEFAULT '{}',       -- Which audiences this applies to (it_director, cto, etc.)
+    industries TEXT[] DEFAULT '{}',     -- Which industries (higher_ed, corporate, worship, etc.)
+    product_areas TEXT[] DEFAULT '{}',  -- Product areas (Pearl Mini, Pearl Nexus, Epiphan Cloud, etc.)
 
     -- Quality signals
     confidence_score FLOAT DEFAULT 0.8 CHECK (confidence_score >= 0 AND confidence_score <= 1),
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS coperniq_knowledge (
 
     -- Source attribution
     speaker_name TEXT,                  -- Who said it (for quotes)
-    speaker_role TEXT,                  -- Their role (CEO, PM, etc.)
+    speaker_role TEXT,                  -- Their role (IT Director, AV Integrator, etc.)
     company_name TEXT,                  -- Which company (for anonymization)
 
     -- Timestamps
@@ -111,10 +111,10 @@ CREATE TABLE IF NOT EXISTS coperniq_knowledge (
 
 CREATE TABLE IF NOT EXISTS knowledge_tags (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    knowledge_id UUID NOT NULL REFERENCES coperniq_knowledge(id) ON DELETE CASCADE,
+    knowledge_id UUID NOT NULL REFERENCES knowledge(id) ON DELETE CASCADE,
 
     tag_type TEXT NOT NULL CHECK (tag_type IN (
-        'topic',           -- Topic tag (e.g., "invoicing", "scheduling")
+        'topic',           -- Topic tag (e.g., "streaming", "lecture capture")
         'sentiment',       -- Sentiment (positive, negative, neutral)
         'priority',        -- Priority level (high, medium, low)
         'status',          -- Status (active, deprecated, review_needed)
@@ -172,18 +172,18 @@ CREATE INDEX IF NOT EXISTS idx_knowledge_sources_status ON knowledge_sources(ext
 CREATE INDEX IF NOT EXISTS idx_knowledge_sources_external_id ON knowledge_sources(source_type, external_id);
 CREATE INDEX IF NOT EXISTS idx_knowledge_sources_hash ON knowledge_sources(content_hash);
 
--- Coperniq knowledge
-CREATE INDEX IF NOT EXISTS idx_coperniq_knowledge_type ON coperniq_knowledge(knowledge_type);
-CREATE INDEX IF NOT EXISTS idx_coperniq_knowledge_source ON coperniq_knowledge(source_id);
-CREATE INDEX IF NOT EXISTS idx_coperniq_knowledge_audience ON coperniq_knowledge USING GIN(audience);
-CREATE INDEX IF NOT EXISTS idx_coperniq_knowledge_industries ON coperniq_knowledge USING GIN(industries);
-CREATE INDEX IF NOT EXISTS idx_coperniq_knowledge_product_areas ON coperniq_knowledge USING GIN(product_areas);
-CREATE INDEX IF NOT EXISTS idx_coperniq_knowledge_confidence ON coperniq_knowledge(confidence_score DESC);
-CREATE INDEX IF NOT EXISTS idx_coperniq_knowledge_usage ON coperniq_knowledge(usage_count DESC);
+-- Knowledge
+CREATE INDEX IF NOT EXISTS idx_knowledge_type ON knowledge(knowledge_type);
+CREATE INDEX IF NOT EXISTS idx_knowledge_source ON knowledge(source_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_audience ON knowledge USING GIN(audience);
+CREATE INDEX IF NOT EXISTS idx_knowledge_industries ON knowledge USING GIN(industries);
+CREATE INDEX IF NOT EXISTS idx_knowledge_product_areas ON knowledge USING GIN(product_areas);
+CREATE INDEX IF NOT EXISTS idx_knowledge_confidence ON knowledge(confidence_score DESC);
+CREATE INDEX IF NOT EXISTS idx_knowledge_usage ON knowledge(usage_count DESC);
 
 -- Full-text search on knowledge content
-CREATE INDEX IF NOT EXISTS idx_coperniq_knowledge_content_search
-ON coperniq_knowledge USING GIN(to_tsvector('english', content || ' ' || COALESCE(context, '')));
+CREATE INDEX IF NOT EXISTS idx_knowledge_content_search
+ON knowledge USING GIN(to_tsvector('english', content || ' ' || COALESCE(context, '')));
 
 -- Knowledge tags
 CREATE INDEX IF NOT EXISTS idx_knowledge_tags_knowledge ON knowledge_tags(knowledge_id);
@@ -198,7 +198,7 @@ CREATE INDEX IF NOT EXISTS idx_extraction_logs_status ON knowledge_extraction_lo
 -- =============================================================================
 
 ALTER TABLE knowledge_sources ENABLE ROW LEVEL SECURITY;
-ALTER TABLE coperniq_knowledge ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge ENABLE ROW LEVEL SECURITY;
 ALTER TABLE knowledge_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE knowledge_extraction_logs ENABLE ROW LEVEL SECURITY;
 
@@ -207,8 +207,8 @@ CREATE POLICY "Service role full access knowledge_sources"
     ON knowledge_sources FOR ALL
     USING (auth.role() = 'service_role');
 
-CREATE POLICY "Service role full access coperniq_knowledge"
-    ON coperniq_knowledge FOR ALL
+CREATE POLICY "Service role full access knowledge"
+    ON knowledge FOR ALL
     USING (auth.role() = 'service_role');
 
 CREATE POLICY "Service role full access knowledge_tags"
@@ -236,8 +236,8 @@ CREATE TRIGGER update_knowledge_sources_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_coperniq_knowledge_updated_at
-    BEFORE UPDATE ON coperniq_knowledge
+CREATE TRIGGER update_knowledge_updated_at
+    BEFORE UPDATE ON knowledge
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -248,25 +248,25 @@ CREATE TRIGGER update_coperniq_knowledge_updated_at
 -- Active knowledge by type: Most useful knowledge items
 CREATE OR REPLACE VIEW active_knowledge AS
 SELECT
-    ck.id,
-    ck.knowledge_type,
-    ck.content,
-    ck.context,
-    ck.verbatim,
-    ck.audience,
-    ck.industries,
-    ck.product_areas,
-    ck.confidence_score,
-    ck.usage_count,
-    ck.speaker_name,
-    ck.company_name,
+    k.id,
+    k.knowledge_type,
+    k.content,
+    k.context,
+    k.verbatim,
+    k.audience,
+    k.industries,
+    k.product_areas,
+    k.confidence_score,
+    k.usage_count,
+    k.speaker_name,
+    k.company_name,
     ks.source_type,
     ks.source_title,
     ks.source_date
-FROM coperniq_knowledge ck
-LEFT JOIN knowledge_sources ks ON ck.source_id = ks.id
-WHERE ck.confidence_score >= 0.7
-ORDER BY ck.usage_count DESC, ck.confidence_score DESC;
+FROM knowledge k
+LEFT JOIN knowledge_sources ks ON k.source_id = ks.id
+WHERE k.confidence_score >= 0.7
+ORDER BY k.usage_count DESC, k.confidence_score DESC;
 
 -- Knowledge by type summary
 CREATE OR REPLACE VIEW knowledge_type_summary AS
@@ -276,7 +276,7 @@ SELECT
     ROUND(AVG(confidence_score)::NUMERIC, 2) as avg_confidence,
     SUM(usage_count) as total_usage,
     COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days') as added_last_7d
-FROM coperniq_knowledge
+FROM knowledge
 GROUP BY knowledge_type
 ORDER BY total_items DESC;
 
@@ -301,7 +301,7 @@ SELECT
     industries,
     confidence_score,
     usage_count
-FROM coperniq_knowledge
+FROM knowledge
 WHERE knowledge_type = 'pain_point'
   AND confidence_score >= 0.7
 ORDER BY usage_count DESC, confidence_score DESC
@@ -315,7 +315,7 @@ SELECT
     audience,
     usage_count,
     confidence_score
-FROM coperniq_knowledge
+FROM knowledge
 WHERE knowledge_type = 'approved_term'
   AND confidence_score >= 0.8
 ORDER BY usage_count DESC;
@@ -326,7 +326,7 @@ SELECT
     content as term,
     context as reason,
     created_at
-FROM coperniq_knowledge
+FROM knowledge
 WHERE knowledge_type = 'banned_term'
 ORDER BY created_at DESC;
 
@@ -338,7 +338,7 @@ SELECT
     product_areas,
     audience,
     usage_count
-FROM coperniq_knowledge
+FROM knowledge
 WHERE knowledge_type = 'feature'
 ORDER BY usage_count DESC;
 
@@ -366,32 +366,32 @@ RETURNS TABLE (
 BEGIN
     RETURN QUERY
     SELECT
-        ck.id,
-        ck.knowledge_type,
-        ck.content,
-        ck.context,
-        ck.confidence_score,
-        ck.usage_count,
+        k.id,
+        k.knowledge_type,
+        k.content,
+        k.context,
+        k.confidence_score,
+        k.usage_count,
         ks.source_type,
         ts_rank(
-            to_tsvector('english', ck.content || ' ' || COALESCE(ck.context, '')),
+            to_tsvector('english', k.content || ' ' || COALESCE(k.context, '')),
             plainto_tsquery('english', search_query)
         ) as rank
-    FROM coperniq_knowledge ck
-    LEFT JOIN knowledge_sources ks ON ck.source_id = ks.id
+    FROM knowledge k
+    LEFT JOIN knowledge_sources ks ON k.source_id = ks.id
     WHERE
-        to_tsvector('english', ck.content || ' ' || COALESCE(ck.context, ''))
+        to_tsvector('english', k.content || ' ' || COALESCE(k.context, ''))
         @@ plainto_tsquery('english', search_query)
-        AND ck.confidence_score >= min_confidence
-        AND (knowledge_types IS NULL OR ck.knowledge_type = ANY(knowledge_types))
-    ORDER BY rank DESC, ck.usage_count DESC
+        AND k.confidence_score >= min_confidence
+        AND (knowledge_types IS NULL OR k.knowledge_type = ANY(knowledge_types))
+    ORDER BY rank DESC, k.usage_count DESC
     LIMIT max_results;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Get knowledge for storyboard generation
 CREATE OR REPLACE FUNCTION get_knowledge_for_storyboard(
-    target_audience TEXT DEFAULT 'c_suite',
+    target_audience TEXT DEFAULT 'it_director',
     target_industry TEXT DEFAULT NULL,
     knowledge_types TEXT[] DEFAULT ARRAY['pain_point', 'metric', 'approved_term', 'feature']
 )
@@ -404,26 +404,26 @@ RETURNS TABLE (
 BEGIN
     RETURN QUERY
     SELECT
-        ck.knowledge_type,
-        ck.content,
-        ck.context,
-        ck.confidence_score
-    FROM coperniq_knowledge ck
+        k.knowledge_type,
+        k.content,
+        k.context,
+        k.confidence_score
+    FROM knowledge k
     WHERE
-        ck.knowledge_type = ANY(knowledge_types)
-        AND ck.confidence_score >= 0.7
+        k.knowledge_type = ANY(knowledge_types)
+        AND k.confidence_score >= 0.7
         AND (
-            target_audience = ANY(ck.audience)
-            OR array_length(ck.audience, 1) IS NULL
-            OR array_length(ck.audience, 1) = 0
+            target_audience = ANY(k.audience)
+            OR array_length(k.audience, 1) IS NULL
+            OR array_length(k.audience, 1) = 0
         )
         AND (
             target_industry IS NULL
-            OR target_industry = ANY(ck.industries)
-            OR array_length(ck.industries, 1) IS NULL
-            OR array_length(ck.industries, 1) = 0
+            OR target_industry = ANY(k.industries)
+            OR array_length(k.industries, 1) IS NULL
+            OR array_length(k.industries, 1) = 0
         )
-    ORDER BY ck.confidence_score DESC, ck.usage_count DESC
+    ORDER BY k.confidence_score DESC, k.usage_count DESC
     LIMIT 50;
 END;
 $$ LANGUAGE plpgsql;
@@ -433,7 +433,7 @@ $$ LANGUAGE plpgsql;
 -- =============================================================================
 
 GRANT ALL ON knowledge_sources TO service_role;
-GRANT ALL ON coperniq_knowledge TO service_role;
+GRANT ALL ON knowledge TO service_role;
 GRANT ALL ON knowledge_tags TO service_role;
 GRANT ALL ON knowledge_extraction_logs TO service_role;
 
@@ -446,17 +446,17 @@ GRANT SELECT ON banned_terms TO service_role;
 GRANT SELECT ON feature_catalog TO service_role;
 
 -- =============================================================================
--- SEED DATA: Initial banned terms (from coperniq_presets.py)
+-- SEED DATA: Initial banned terms (from epiphan_presets.py)
 -- =============================================================================
 
-INSERT INTO coperniq_knowledge (knowledge_type, content, context, confidence_score) VALUES
+INSERT INTO knowledge (knowledge_type, content, context, confidence_score) VALUES
 -- Technical jargon to avoid
-('banned_term', 'API', 'Technical term - contractors don''t use this language', 1.0),
-('banned_term', 'microservices', 'Technical architecture term', 1.0),
-('banned_term', 'backend', 'Technical term', 1.0),
-('banned_term', 'frontend', 'Technical term', 1.0),
-('banned_term', 'async', 'Technical programming term', 1.0),
-('banned_term', 'database schema', 'Technical database term', 1.0),
+('banned_term', 'bitrate optimization', 'AV technical term — buyers don''t speak this language', 1.0),
+('banned_term', 'codec pipeline', 'Technical architecture term', 1.0),
+('banned_term', 'FPGA', 'Hardware engineering term', 1.0),
+('banned_term', 'firmware stack', 'Technical term', 1.0),
+('banned_term', 'hardware abstraction', 'Technical programming term', 1.0),
+('banned_term', 'kernel driver', 'Technical system term', 1.0),
 
 -- Marketing fluff to avoid
 ('banned_term', 'revolutionary', 'Marketing fluff - sounds salesy', 1.0),
@@ -468,7 +468,7 @@ INSERT INTO coperniq_knowledge (knowledge_type, content, context, confidence_sco
 ('banned_term', 'holistic', 'Corporate jargon', 1.0),
 
 -- Marketing language (internal GTM - not for external content)
-('banned_term', 'marketing campaign', 'Internal GTM language - not for ICP/VC content', 1.0),
+('banned_term', 'marketing campaign', 'Internal GTM language - not for ICP content', 1.0),
 ('banned_term', 'marketing strategy', 'Internal GTM language', 1.0),
 ('banned_term', 'brand awareness', 'Internal GTM language', 1.0),
 ('banned_term', 'promotional', 'Internal GTM language', 1.0),
@@ -476,19 +476,17 @@ INSERT INTO coperniq_knowledge (knowledge_type, content, context, confidence_sco
 ('banned_term', 'drive engagement', 'Internal GTM language', 1.0),
 ('banned_term', 'target audience', 'Internal GTM language', 1.0),
 ('banned_term', 'buyer persona', 'Internal GTM language', 1.0),
-('banned_term', 'customer journey', 'Internal GTM language', 1.0),
-('banned_term', 'content marketing', 'Internal GTM language', 1.0),
-('banned_term', 'lead generation campaign', 'Internal GTM language', 1.0)
+('banned_term', 'customer journey', 'Internal GTM language', 1.0)
 ON CONFLICT DO NOTHING;
 
--- Seed approved terms (from coperniq_presets.py)
-INSERT INTO coperniq_knowledge (knowledge_type, content, context, audience, confidence_score) VALUES
-('approved_term', 'saves you time', 'Direct benefit language contractors understand', ARRAY['business_owner', 'c_suite', 'btl_champion'], 1.0),
-('approved_term', 'gets you paid faster', 'Cash flow focus - critical for contractors', ARRAY['business_owner', 'c_suite'], 1.0),
-('approved_term', 'one less headache', 'Relatable pain reduction', ARRAY['business_owner', 'btl_champion'], 1.0),
-('approved_term', 'works on your phone in the field', 'Mobile-first messaging for field workers', ARRAY['field_crew', 'btl_champion'], 1.0),
-('approved_term', 'no more spreadsheets', 'Anti-Excel positioning', ARRAY['business_owner', 'c_suite', 'btl_champion'], 1.0),
-('approved_term', 'see everything in one place', 'Consolidation value prop', ARRAY['c_suite', 'btl_champion'], 1.0)
+-- Seed approved terms (from epiphan_presets.py)
+INSERT INTO knowledge (knowledge_type, content, context, audience, confidence_score) VALUES
+('approved_term', 'just works', 'Core Epiphan value prop - reliability without complexity', ARRAY['av_integrator', 'it_director', 'cto'], 1.0),
+('approved_term', 'set it and forget it', 'Reliability messaging for IT/AV buyers', ARRAY['it_director', 'av_integrator'], 1.0),
+('approved_term', 'works with any video source', 'Universal compatibility value prop', ARRAY['av_integrator', 'cto'], 1.0),
+('approved_term', 'manage from anywhere', 'Remote management via Epiphan Cloud', ARRAY['it_director', 'cto'], 1.0),
+('approved_term', 'no IT headaches', 'Pain reduction messaging', ARRAY['it_director', 'av_integrator'], 1.0),
+('approved_term', 'reliable every time', 'Uptime and reliability focus', ARRAY['av_integrator', 'it_director', 'cto'], 1.0)
 ON CONFLICT DO NOTHING;
 
 -- =============================================================================
@@ -499,12 +497,12 @@ DO $$
 BEGIN
     RAISE NOTICE '';
     RAISE NOTICE '=================================================================';
-    RAISE NOTICE '  COPERNIQ KNOWLEDGE BASE - Migration Complete';
+    RAISE NOTICE '  EPIPHAN KNOWLEDGE BASE - Migration Complete';
     RAISE NOTICE '=================================================================';
     RAISE NOTICE '';
     RAISE NOTICE 'Tables created:';
     RAISE NOTICE '  - knowledge_sources: Track ingestion sources (Close CRM, Loom, Miro, Code)';
-    RAISE NOTICE '  - coperniq_knowledge: Core knowledge entries (features, pain points, metrics)';
+    RAISE NOTICE '  - knowledge: Core knowledge entries (features, pain points, metrics)';
     RAISE NOTICE '  - knowledge_tags: Flexible tagging system';
     RAISE NOTICE '  - knowledge_extraction_logs: Audit trail for extractions';
     RAISE NOTICE '';
@@ -520,8 +518,8 @@ BEGIN
     RAISE NOTICE '  - get_knowledge_for_storyboard(): Get relevant knowledge for generation';
     RAISE NOTICE '';
     RAISE NOTICE 'Seed data:';
-    RAISE NOTICE '  - 22 banned terms (technical jargon, marketing fluff, GTM language)';
-    RAISE NOTICE '  - 6 approved terms (contractor-friendly language)';
+    RAISE NOTICE '  - 22 banned terms (AV jargon, marketing fluff, GTM language)';
+    RAISE NOTICE '  - 6 approved terms (Epiphan-friendly value prop language)';
     RAISE NOTICE '';
     RAISE NOTICE 'Next steps:';
     RAISE NOTICE '  1. Build Close CRM ingestion pipeline';

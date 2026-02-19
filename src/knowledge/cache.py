@@ -79,7 +79,7 @@ class KnowledgeCache:
             client = create_client(url, key)
 
             # Query all knowledge
-            response = client.table("coperniq_knowledge").select(
+            response = client.table("knowledge").select(
                 "knowledge_type, content, audience, confidence_score"
             ).gte("confidence_score", 0.7).execute()
 

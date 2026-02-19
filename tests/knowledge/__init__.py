@@ -1,1 +1,1 @@
-"""Tests for Coperniq Knowledge Brain."""
+"""Tests for Epiphan Knowledge Brain."""

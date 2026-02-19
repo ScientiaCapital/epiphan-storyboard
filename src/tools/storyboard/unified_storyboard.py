@@ -27,7 +27,7 @@ from typing import Literal
 import httpx
 
 from src.tools.base import BaseTool, ToolCategory, ToolDefinition, ToolResult
-from src.tools.storyboard.coperniq_presets import (
+from src.tools.storyboard.epiphan_presets import (
     get_audience_persona,
     get_icp_preset,
     sanitize_content,
@@ -120,8 +120,8 @@ class UnifiedStoryboardTool(BaseTool):
                     },
                     "icp_preset": {
                         "type": "string",
-                        "description": "ICP preset to use (default: coperniq_mep)",
-                        "default": "coperniq_mep",
+                        "description": "ICP preset to use (default: epiphan_av)",
+                        "default": "epiphan_av",
                     },
                     "stage": {
                         "type": "string",
@@ -304,7 +304,7 @@ class UnifiedStoryboardTool(BaseTool):
         Args:
             arguments: Tool arguments containing:
                 - input: Required. Any input type.
-                - icp_preset: Optional. ICP preset (default: coperniq_mep)
+                - icp_preset: Optional. ICP preset (default: epiphan_av)
                 - stage: Optional. Storyboard stage (default: preview)
                 - audience: Optional. Target audience (default: c_suite)
                 - output_format: Optional. "infographic" (horizontal) or "storyboard" (vertical)
@@ -331,7 +331,7 @@ class UnifiedStoryboardTool(BaseTool):
                 execution_time_ms=int((perf_counter() - start_time) * 1000),
             )
 
-        icp_preset = arguments.get("icp_preset", "coperniq_mep")
+        icp_preset = arguments.get("icp_preset", "epiphan_av")
         stage = arguments.get("stage", "preview")
         audience = arguments.get("audience", "c_suite")
         output_format = arguments.get("output_format", "infographic")

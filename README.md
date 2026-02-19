@@ -1,190 +1,192 @@
-# Conductor-AI
+# Epiphan Storyboard
 
-> Commercial SaaS Platform for AI Agent Orchestration
+**AI-powered storyboard generator for Epiphan Video sales and marketing**
 
-A ReAct-pattern agent orchestration system with tool calling, async polling, and Docker sandboxing. Built with FastAPI, Claude 4.5, Redis, and Supabase.
+Owner: THK Enterprises LLC
+
+---
+
+Transforms code, transcripts, and screenshots into executive-ready visual storyboards using NANO BANANA (Gemini Flash Image Preview). Built for Epiphan Video BDRs, AV integrators, and sales teams who need polished one-page visuals — fast.
+
+## What It Does
+
+- Ingests code files, roadmap screenshots, or call transcripts
+- Extracts business value and sanitizes technical IP
+- Generates beautiful one-page PNG storyboards tailored to AV industry personas
+- Supports three BDR cadence stages: Preview, Demo, Shipped
+- Personas: AV Integrator, IT Director, CTO, Reseller, BDR
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Runtime | Python 3.13 |
+| API Framework | FastAPI |
+| Image Generation | Gemini Flash (Image Preview) — NANO BANANA |
+| Vision/LLM | Gemini 2.0 Flash + Qwen 2.5 VL 72B via OpenRouter |
+| Database | Supabase (Postgres + Storage) |
+| Cache | Redis |
+| Billing | Stripe |
+| Deployment | Vercel |
 
 ## Quick Start
 
 ```bash
-# Clone and setup
-git clone https://github.com/ScientiaCapital/conductor-ai.git
-cd conductor-ai
-
-# Switch to feature branch
-git fetch origin feature/agent-system
-git checkout feature/agent-system
-
-# Or work in the worktree (already set up)
-cd .worktrees/agent-system
-
 # Install dependencies
-pip install -r builder/requirements.txt
-pip install -r test-requirements.txt
+pip install -e ".[dev]"
+
+# Configure environment
+cp .env.example .env
+# Fill in GOOGLE_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, REDIS_URL
+
+# Run dev server
+uvicorn src.api:app --reload
 
 # Run tests
 python -m pytest tests/ -v
+
+# Type check
+python -m mypy src/ --ignore-missing-imports
+
+# Lint / Format
+ruff check src/
+ruff format src/
 ```
 
-## Project Status
+## API Endpoints
 
-**Phase 2: Agent Orchestration System** (In Progress)
+### Storyboard Generation
 
-| Task | Status | Tests | Description |
-|------|--------|-------|-------------|
-| 1. Agent Schemas | ✅ Complete | 44 | Pydantic v2 models |
-| 2. Tool Base Classes | ✅ Complete | 32 | BaseTool, Registry |
-| 3. web_fetch Tool | ✅ Complete | 38 | HTTP with SSRF protection |
-| 4. code_run Tool | ✅ Complete | 37 | Docker sandbox |
-| 5. sql_query Tool | ✅ Complete | 53 | Supabase SQL |
-| 6. State Manager | 🔄 Next | - | Redis + Supabase |
-| 7. AgentRunner | ⏳ Pending | - | ReAct loop |
-| 8. API Endpoints | ⏳ Pending | - | FastAPI routes |
-| 9. Integration Test | ⏳ Pending | - | E2E testing |
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/storyboard/code` | Generate storyboard from code file |
+| `POST` | `/storyboard/roadmap` | Generate teaser from roadmap screenshot |
+| `POST` | `/storyboard/unified` | Unified endpoint (code or image input) |
 
-**Total Tests**: 204 passing
+### Agent Orchestration
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/agents/run` | Start agent execution |
+| `GET` | `/agents/{session_id}` | Poll session status |
+| `POST` | `/agents/{session_id}/cancel` | Cancel running session |
+| `POST` | `/agents/route` | Auto-classify and route task to chain |
+| `GET` | `/agents/route/{job_id}` | Poll router job status |
+| `GET` | `/agents/route/chains` | List available chains |
+
+### Billing
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/billing/checkout` | Create Stripe Checkout session |
+| `GET` | `/billing/subscription` | Get subscription status |
+| `POST` | `/billing/portal` | Create Customer Portal session |
+| `POST` | `/billing/webhooks/stripe` | Handle Stripe webhooks |
+
+### Utilities
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/tools` | List available tools |
+| `GET` | `/health` | Health check |
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:8000/storyboard/code \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_content": "def calculate_roi(): ...",
+    "file_name": "calculator.py",
+    "icp_preset": "epiphan_av",
+    "stage": "preview",
+    "audience": "it_director"
+  }'
+```
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      FastAPI Server                          │
-├─────────────────────────────────────────────────────────────┤
-│  POST /v1/agents/run    → Start agent session               │
-│  GET  /v1/agents/{id}   → Poll status/steps                 │
-│  POST /v1/agents/{id}/cancel → Cancel session               │
-│  GET  /v1/tools         → List available tools              │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      AgentRunner                             │
-│  ReAct Loop: Thought → Action → Observation → Repeat        │
-├─────────────────────────────────────────────────────────────┤
-│  1. Build system prompt with tool definitions               │
-│  2. Call Claude 4.5 with conversation history               │
-│  3. Parse JSON response (thought/action/is_final)           │
-│  4. If is_final: return final_answer                        │
-│  5. If action: execute tool, add observation                │
-│  6. Repeat until max_steps or completion                    │
-└─────────────────────────────────────────────────────────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│   web_fetch     │  │   code_run      │  │   sql_query     │
-│   HTTP Client   │  │  Docker Sandbox │  │  Supabase SQL   │
-│   SSRF Protected│  │  128MB/50% CPU  │  │  Approval Req   │
-└─────────────────┘  └─────────────────┘  └─────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     State Manager                            │
-├─────────────────────────────────────────────────────────────┤
-│  Redis (Hot State)     │  Supabase (Cold Storage)           │
-│  • Active sessions     │  • Completed sessions              │
-│  • 1 hour TTL          │  • Permanent persistence           │
-│  • Fast polling        │  • Analytics/history               │
-└─────────────────────────────────────────────────────────────┘
+src/
+├── api.py                          # FastAPI app entry point
+├── agents/                         # Agent runner + schemas
+├── billing/                        # Stripe billing integration
+├── connectors/                     # Data connectors (Gong, Fireflies, Close)
+├── demo/                           # Demo router
+├── knowledge/                      # Knowledge brain (learning pipeline)
+│   ├── base.py                     # Base classes
+│   ├── cache.py                    # In-memory knowledge cache
+│   ├── close_crm.py                # Close CRM connector
+│   └── service.py                  # Knowledge service
+├── router/                         # Agent classifier + chain execution
+│   ├── chains.py                   # Chain definitions
+│   └── classifier.py               # Intent classifier
+├── routers/                        # FastAPI routers
+│   └── connectors.py               # Connector endpoints
+├── storyboard/                     # Storyboard API layer
+│   ├── router.py                   # Storyboard endpoints
+│   └── schemas.py                  # Request/response models
+└── tools/
+    ├── base.py                     # BaseTool + ToolResult
+    ├── registry.py                 # Tool registry
+    └── storyboard/                 # Core storyboard pipeline
+        ├── epiphan_presets.py      # ICP presets and personas
+        ├── gemini_client.py        # Gemini vision + image gen client
+        ├── code_to_storyboard.py   # Code -> storyboard tool
+        ├── roadmap_to_storyboard.py # Screenshot -> teaser tool
+        ├── unified_storyboard.py   # Unified tool
+        └── storage.py              # Supabase storage
 ```
-
-## Tools
-
-### web_fetch
-HTTP GET/POST with comprehensive security:
-- SSRF protection via DNS resolution validation
-- Redirect blocking to prevent internal access
-- 50KB response limit, 30s timeout
-- No approval required
-
-### code_run
-Sandboxed code execution:
-- **Docker mode**: python:3.11-slim, node:20-slim
-- Resource limits: 128MB RAM, 50% CPU, no network
-- Subprocess fallback for development
-- 60s max timeout
-
-### sql_query
-Supabase PostgreSQL queries:
-- Blocks dangerous operations (DROP, TRUNCATE, ALTER)
-- DELETE/UPDATE require WHERE clause
-- Parameterized queries prevent injection
-- **Requires approval for all queries**
 
 ## Environment Variables
 
 ```bash
-# Required
-ANTHROPIC_API_KEY=sk-ant-...
+# Supabase (required for persistence)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_KEY=your-service-key
 
-# Supabase
-SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_SERVICE_KEY=eyJ...
-SUPABASE_DB_URL=postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres
-
-# Redis
+# Redis (required for job state)
 REDIS_URL=redis://localhost:6379
+
+# LLM Providers (NO OpenAI)
+ANTHROPIC_API_KEY=sk-ant-...        # Claude models
+GOOGLE_API_KEY=AIza...              # Gemini Flash (image generation)
+OPENROUTER_API_KEY=sk-or-...        # Qwen/DeepSeek vision via OpenRouter
+
+# Stripe Billing
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_ID_BASIC=price_...
+STRIPE_PRICE_ID_PRO=price_...
+
+# Data Ingestion (optional)
+CLOSE_API_KEY=...                   # Close CRM calls/notes
+LOOM_API_KEY=...                    # Video analytics
+
+# App Config
+APP_ENV=development
+API_URL=http://localhost:8000
 ```
 
-## Development
+## Epiphan Ecosystem
 
-```bash
-# Run all tests
-python -m pytest tests/ -v
+This tool is part of the Epiphan Video sales and marketing automation stack:
 
-# Run specific tool tests
-python -m pytest tests/tools/test_web_fetch.py -v
-python -m pytest tests/tools/test_code_run.py -v
-python -m pytest tests/tools/test_sql_query.py -v
+- **epiphan-storyboard** (this repo) — AI storyboard generator
+- **epiphan-sales-agent** — Outbound sales automation
+- **epiphan-linkedin-engine** — LinkedIn content and outreach engine
 
-# Run schema tests
-python -m pytest tests/agents/test_schemas.py -v
+Repository: [https://github.com/ScientiaCapital/epiphan-storyboard](https://github.com/ScientiaCapital/epiphan-storyboard)
 
-# Start Redis (Docker Compose)
-docker-compose up -d redis
-```
+## Epiphan Products Covered
 
-## Project Structure
-
-```
-conductor-ai/
-├── .worktrees/agent-system/     # Feature development worktree
-│   ├── src/
-│   │   ├── agents/
-│   │   │   ├── schemas.py       # Pydantic agent models
-│   │   │   └── state.py         # State manager (WIP)
-│   │   └── tools/
-│   │       ├── base.py          # BaseTool, ToolRegistry
-│   │       ├── web_fetch.py     # HTTP tool
-│   │       ├── code_run.py      # Code sandbox
-│   │       └── sql_query.py     # SQL tool
-│   ├── tests/                   # 204 tests
-│   └── docs/plans/              # Implementation plans
-├── builder/                     # vLLM builder (existing)
-├── src/                         # Main source
-│   ├── model_catalog.py         # Model definitions
-│   └── cost_optimizer.py        # Cost optimization
-├── docker-compose.yml           # Redis + services
-└── CLAUDE.md                    # Project instructions
-```
-
-## Models
-
-Primary models for agent orchestration:
-- **Claude 4.5 Opus** (`claude-opus-4-5-20251101`) - Complex reasoning
-- **Claude 4.5 Sonnet** (`claude-sonnet-4-5-20250929`) - Default agent model
-
-Budget alternatives via OpenRouter:
-- Qwen 2.5 72B
-- DeepSeek V3
-
-## Contributing
-
-1. Work in the `.worktrees/agent-system` directory
-2. Run tests before committing
-3. Follow existing code patterns
-4. All tools need security review
+- **Pearl Mini** — All-in-one video encoder, recorder, and streamer
+- **Pearl Nano** — Ultra-compact live production system
+- **Pearl Nexus** — Cloud-managed video gateway
+- **Epiphan Connect (EC20 PTZ)** — PoE-powered PTZ camera
+- **Webcaster X2** — Simple live streaming encoder
 
 ## License
 
-Proprietary - Scientia Capital
+MIT — Copyright (c) 2025 THK Enterprises LLC

@@ -1,7 +1,8 @@
 """Tests for the web_fetch tool."""
 
 import pytest
-from aioresponses import aioresponses
+
+aioresponses = pytest.importorskip("aioresponses").aioresponses
 
 from src.tools.base import ToolCategory, ToolResult
 from src.tools.web_fetch import WebFetchTool

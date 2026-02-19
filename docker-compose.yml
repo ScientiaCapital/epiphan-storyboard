@@ -4,7 +4,7 @@ services:
   # Redis for hot state management
   redis:
     image: redis:7-alpine
-    container_name: conductor-redis
+    container_name: epiphan-redis
     ports:
       - "6379:6379"
     volumes:
@@ -17,12 +17,12 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # Conductor API (FastAPI backend)
+  # Epiphan Storyboard API (FastAPI backend)
   api:
     build:
       context: .
       dockerfile: Dockerfile.api
-    container_name: conductor-api
+    container_name: epiphan-api
     ports:
       - "8000:8000"
     environment:
@@ -51,4 +51,4 @@ volumes:
 
 networks:
   default:
-    name: conductor-network
+    name: epiphan-network

@@ -21,8 +21,15 @@ import os
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-import stripe
-from stripe import error as stripe_error
+try:
+    import stripe
+    from stripe import error as stripe_error
+
+    _STRIPE_AVAILABLE = True
+except ImportError:
+    stripe = None  # type: ignore[assignment]
+    stripe_error = None  # type: ignore[assignment]
+    _STRIPE_AVAILABLE = False
 
 from src.billing.schemas import (
     TIER_PRICE_ENV_MAP,
@@ -92,16 +99,20 @@ class StripeClient:
         self._webhook_secret = webhook_secret or os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
         # Configure stripe module
-        if self._secret_key:
+        if self._secret_key and _STRIPE_AVAILABLE:
             stripe.api_key = self._secret_key
 
     @property
     def is_configured(self) -> bool:
         """Check if Stripe is properly configured."""
-        return bool(self._secret_key)
+        return bool(self._secret_key) and _STRIPE_AVAILABLE
 
     def _ensure_configured(self) -> None:
         """Raise error if Stripe is not configured."""
+        if not _STRIPE_AVAILABLE:
+            raise StripeConfigError(
+                "stripe package is not installed. Run: pip install stripe"
+            )
         if not self.is_configured:
             raise StripeConfigError(
                 "Stripe is not configured. Set STRIPE_SECRET_KEY environment variable."

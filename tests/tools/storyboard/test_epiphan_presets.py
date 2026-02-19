@@ -1,10 +1,10 @@
-"""Tests for Coperniq ICP presets and sanitization."""
+"""Tests for Epiphan ICP presets and sanitization."""
 
 import pytest
 import re
 
-from src.tools.storyboard.coperniq_presets import (
-    COPERNIQ_ICP,
+from src.tools.storyboard.epiphan_presets import (
+    EPIPHAN_ICP,
     SANITIZE_RULES,
     AudiencePersona,
     StoryboardStage,
@@ -17,39 +17,39 @@ from src.tools.storyboard.coperniq_presets import (
 )
 
 
-class TestCoperniqICPStructure:
-    """Tests for Coperniq ICP configuration structure."""
+class TestEpiphanICPStructure:
+    """Tests for Epiphan ICP configuration structure."""
 
     def test_icp_has_name(self):
         """ICP preset should have a name."""
-        assert "name" in COPERNIQ_ICP
-        assert COPERNIQ_ICP["name"] == "coperniq_mep"
+        assert "name" in EPIPHAN_ICP
+        assert EPIPHAN_ICP["name"] == "epiphan_av"
 
     def test_icp_has_target(self):
         """ICP should define target audience."""
-        assert "target" in COPERNIQ_ICP
-        assert "contractor" in COPERNIQ_ICP["target"].lower()
+        assert "target" in EPIPHAN_ICP
+        assert "AV integrators" in EPIPHAN_ICP["target"]
 
     def test_icp_has_characteristics(self):
         """ICP should have characteristics section."""
-        assert "characteristics" in COPERNIQ_ICP
-        chars = COPERNIQ_ICP["characteristics"]
-        assert "revenue" in chars
-        assert "trades" in chars
+        assert "characteristics" in EPIPHAN_ICP
+        chars = EPIPHAN_ICP["characteristics"]
+        assert "verticals" in chars
+        assert "style" in chars
         assert "pain_points" in chars
 
     def test_icp_has_audience_personas(self):
         """ICP should have audience personas."""
-        assert "audience_personas" in COPERNIQ_ICP
-        personas = COPERNIQ_ICP["audience_personas"]
-        assert AudiencePersona.BUSINESS_OWNER in personas
-        assert AudiencePersona.C_SUITE in personas
-        assert AudiencePersona.BTL_CHAMPION in personas
+        assert "audience_personas" in EPIPHAN_ICP
+        personas = EPIPHAN_ICP["audience_personas"]
+        assert AudiencePersona.AV_INTEGRATOR in personas
+        assert AudiencePersona.IT_DIRECTOR in personas
+        assert AudiencePersona.CTO in personas
 
     def test_icp_has_language_style(self):
         """ICP should have language style guidelines."""
-        assert "language_style" in COPERNIQ_ICP
-        style = COPERNIQ_ICP["language_style"]
+        assert "language_style" in EPIPHAN_ICP
+        style = EPIPHAN_ICP["language_style"]
         assert "avoid" in style
         assert "use" in style
         assert len(style["avoid"]) > 0
@@ -57,13 +57,13 @@ class TestCoperniqICPStructure:
 
     def test_icp_has_tone(self):
         """ICP should define tone."""
-        assert "tone" in COPERNIQ_ICP
-        assert len(COPERNIQ_ICP["tone"]) > 0
+        assert "tone" in EPIPHAN_ICP
+        assert len(EPIPHAN_ICP["tone"]) > 0
 
     def test_icp_has_visual_style(self):
         """ICP should have visual style guidelines."""
-        assert "visual_style" in COPERNIQ_ICP
-        visual = COPERNIQ_ICP["visual_style"]
+        assert "visual_style" in EPIPHAN_ICP
+        visual = EPIPHAN_ICP["visual_style"]
         assert "colors" in visual
         assert len(visual["colors"]) > 0
 
@@ -72,31 +72,29 @@ class TestLanguageStyleRules:
     """Tests for language style avoid/use rules."""
 
     def test_avoid_contains_technical_jargon(self):
-        """Avoid list should contain technical jargon that confuses contractors."""
-        avoid = COPERNIQ_ICP["language_style"]["avoid"]
-        # NOTE: "AI" and "machine learning" are NOT avoided - we use them for AI features
-        technical_terms = ["API", "microservices", "backend", "frontend"]
+        """Avoid list should contain technical jargon that confuses AV buyers."""
+        avoid = EPIPHAN_ICP["language_style"]["avoid"]
+        technical_terms = ["synergy", "paradigm", "holistic"]
         for term in technical_terms:
             assert term in avoid, f"'{term}' should be in avoid list"
 
     def test_avoid_contains_corporate_speak(self):
         """Avoid list should contain marketing fluff."""
-        avoid = COPERNIQ_ICP["language_style"]["avoid"]
-        # NOTE: "leverage" is not avoided anymore - it's valid business language
-        corporate_terms = ["synergy", "paradigm", "holistic"]
+        avoid = EPIPHAN_ICP["language_style"]["avoid"]
+        corporate_terms = ["revolutionary", "disruptive", "game-changing"]
         for term in corporate_terms:
             assert term in avoid, f"'{term}' should be in avoid list"
 
     def test_use_contains_simple_language(self):
         """Use list should contain simple, benefit-focused language."""
-        use = COPERNIQ_ICP["language_style"]["use"]
-        simple_phrases = ["saves you time", "gets you paid faster"]
+        use = EPIPHAN_ICP["language_style"]["use"]
+        simple_phrases = ["just works", "reliable every time"]
         for phrase in simple_phrases:
             assert phrase in use, f"'{phrase}' should be in use list"
 
     def test_no_openai_in_avoid_list(self):
         """OpenAI should not be explicitly mentioned (we just don't use it)."""
-        avoid = COPERNIQ_ICP["language_style"]["avoid"]
+        avoid = EPIPHAN_ICP["language_style"]["avoid"]
         # We avoid "AI" as a term, but don't call out OpenAI specifically
         assert "OpenAI" not in avoid
 
@@ -104,28 +102,28 @@ class TestLanguageStyleRules:
 class TestAudiencePersonas:
     """Tests for audience persona configurations."""
 
-    def test_business_owner_persona(self):
-        """Business owner persona should have required fields."""
-        persona = COPERNIQ_ICP["audience_personas"][AudiencePersona.BUSINESS_OWNER]
+    def test_av_integrator_persona(self):
+        """AV integrator persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.AV_INTEGRATOR]
         assert "title" in persona
         assert "cares_about" in persona
         assert "tone" in persona
         assert "hooks" in persona
-        assert "profit" in persona["cares_about"]
+        assert "reliable installs" in persona["cares_about"]
 
-    def test_c_suite_persona(self):
-        """C-suite persona should have required fields."""
-        persona = COPERNIQ_ICP["audience_personas"][AudiencePersona.C_SUITE]
+    def test_it_director_persona(self):
+        """IT director persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.IT_DIRECTOR]
         assert "title" in persona
         assert "cares_about" in persona
-        assert "ROI" in persona["cares_about"]
+        assert "security" in persona["cares_about"]
 
-    def test_btl_champion_persona(self):
-        """BTL champion persona should have required fields."""
-        persona = COPERNIQ_ICP["audience_personas"][AudiencePersona.BTL_CHAMPION]
+    def test_cto_persona(self):
+        """CTO persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.CTO]
         assert "title" in persona
         assert "cares_about" in persona
-        assert "easier day-to-day" in persona["cares_about"]
+        assert "vendor consolidation" in persona["cares_about"]
 
 
 class TestSanitizeRules:
@@ -201,15 +199,15 @@ class TestStageTemplates:
 class TestGetICPPreset:
     """Tests for get_icp_preset function."""
 
-    def test_get_coperniq_preset(self):
-        """Should return Coperniq preset."""
-        preset = get_icp_preset("coperniq_mep")
-        assert preset["name"] == "coperniq_mep"
+    def test_get_epiphan_preset(self):
+        """Should return Epiphan preset."""
+        preset = get_icp_preset("epiphan_av")
+        assert preset["name"] == "epiphan_av"
 
     def test_get_default_preset(self):
-        """Default should be coperniq_mep."""
+        """Default should be epiphan_av."""
         preset = get_icp_preset()
-        assert preset["name"] == "coperniq_mep"
+        assert preset["name"] == "epiphan_av"
 
     def test_invalid_preset_raises_error(self):
         """Invalid preset name should raise ValueError."""
@@ -221,20 +219,20 @@ class TestGetICPPreset:
 class TestGetAudiencePersona:
     """Tests for get_audience_persona function."""
 
-    def test_get_business_owner_persona(self):
-        """Should return business owner persona."""
-        persona = get_audience_persona(AudiencePersona.BUSINESS_OWNER)
-        assert persona["title"] == "Business Owner / Founder"
+    def test_get_av_integrator_persona(self):
+        """Should return AV integrator persona."""
+        persona = get_audience_persona(AudiencePersona.AV_INTEGRATOR)
+        assert persona["title"] == "AV System Integrator"
 
     def test_get_persona_by_string(self):
         """Should accept string value."""
-        persona = get_audience_persona("c_suite")
-        assert "CEO" in persona["title"]
+        persona = get_audience_persona("it_director")
+        assert "IT Director" in persona["title"]
 
-    def test_get_btl_champion_persona(self):
-        """Should return BTL champion persona."""
-        persona = get_audience_persona(AudiencePersona.BTL_CHAMPION)
-        assert "Project Manager" in persona["title"]
+    def test_get_cto_persona(self):
+        """Should return CTO persona."""
+        persona = get_audience_persona(AudiencePersona.CTO)
+        assert "CTO" in persona["title"]
 
 
 class TestGetStageTemplate:
@@ -318,14 +316,13 @@ class TestBuildLanguageGuidelines:
         """Guidelines should include words to avoid."""
         guidelines = build_language_guidelines()
         assert "AVOID" in guidelines
-        # NOTE: "AI" is NOT avoided anymore - we use it for AI features like Receptionist AI
-        assert "API" in guidelines  # Technical jargon is still avoided
+        assert "bitrate optimization" in guidelines  # First AV jargon term is avoided
 
     def test_includes_use_words(self):
         """Guidelines should include words to use."""
         guidelines = build_language_guidelines()
         assert "USE" in guidelines
-        assert "saves you time" in guidelines
+        assert "just works" in guidelines
 
     def test_includes_tone(self):
         """Guidelines should include tone."""
@@ -341,17 +338,17 @@ class TestBuildLanguageGuidelines:
 class TestAudiencePersonaEnum:
     """Tests for AudiencePersona enum."""
 
-    def test_business_owner_value(self):
-        """Business owner enum value."""
-        assert AudiencePersona.BUSINESS_OWNER.value == "business_owner"
+    def test_av_integrator_value(self):
+        """AV integrator enum value."""
+        assert AudiencePersona.AV_INTEGRATOR.value == "av_integrator"
 
-    def test_c_suite_value(self):
-        """C-suite enum value."""
-        assert AudiencePersona.C_SUITE.value == "c_suite"
+    def test_it_director_value(self):
+        """IT director enum value."""
+        assert AudiencePersona.IT_DIRECTOR.value == "it_director"
 
-    def test_btl_champion_value(self):
-        """BTL champion enum value."""
-        assert AudiencePersona.BTL_CHAMPION.value == "btl_champion"
+    def test_cto_value(self):
+        """CTO enum value."""
+        assert AudiencePersona.CTO.value == "cto"
 
 
 class TestStoryboardStageEnum:

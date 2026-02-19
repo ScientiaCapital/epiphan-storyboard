@@ -11,7 +11,6 @@ Endpoints:
 - GET /connectors/instances/{instance_id}/sync-history - Get sync history
 - DELETE /connectors/instances/{instance_id} - Disconnect connector
 - POST /connectors/instances/{instance_id}/upload - Manual upload (Loom/Miro)
-- POST /connectors/linear/webhook - Linear webhook handler
 """
 
 from __future__ import annotations
@@ -886,51 +885,47 @@ async def manual_upload(
             raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
         raise
 
-    # TODO: Implement manual upload logic with connectors
-    # This would call the appropriate connector's upload method
-    # For now, return a placeholder response
-
     logger.info(f"Manual upload to instance {instance_id} (type={connector_type.value})")
 
-    return SyncResponse(
-        success=True,
-        items_fetched=1,
-        items_extracted=1,
-        items_created=1,
-        items_skipped=0,
+    # Get connector and run upload
+    registry = ConnectorRegistry.get()
+    connector = registry.get_connector(connector_type)
+
+    # Build ConnectorInstance from DB row
+    instance = ConnectorInstance(
+        id=str(row["id"]),
+        org_id=row["org_id"],
+        connector_type=connector_type,
+        status=ConnectorStatus(row["status"]),
+        config=row.get("config", {}),
+        created_at=row.get("created_at", datetime.now(timezone.utc)),
+        updated_at=row.get("updated_at", datetime.now(timezone.utc)),
     )
 
+    # Call upload method based on connector type
+    if connector_type == ConnectorType.LOOM:
+        result = await connector.upload_transcript(
+            instance,
+            video_url=request.url or "",
+            transcript=request.content,
+            title=request.title,
+        )
+    elif connector_type == ConnectorType.MIRO:
+        import base64
+        result = await connector.upload_screenshot(
+            instance,
+            image_data=base64.b64decode(request.content),
+            board_url=request.url,
+            title=request.title,
+        )
+    else:
+        raise HTTPException(status_code=400, detail=f"Upload not supported for: {connector_type.value}")
 
-@router.post(
-    "/linear/webhook",
-    response_model=dict,
-    summary="Linear webhook handler",
-    description="Handle Linear webhook events for real-time syncing",
-)
-async def linear_webhook(request: Request) -> dict:
-    """Handle Linear webhook events."""
-    # Get signature from headers
-    signature = request.headers.get("Linear-Signature")
-    if not signature:
-        raise HTTPException(status_code=400, detail="Missing Linear-Signature header")
-
-    # Get payload
-    payload = await request.body()
-
-    # TODO: Verify signature
-    # webhook_secret = os.getenv("LINEAR_WEBHOOK_SECRET")
-    # if not verify_linear_signature(payload, signature, webhook_secret):
-    #     raise HTTPException(status_code=401, detail="Invalid signature")
-
-    # Parse payload
-    try:
-        data = await request.json()
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid JSON payload: {e}")
-
-    # TODO: Process webhook event
-    # This would trigger a sync for the affected connector instance
-
-    logger.info(f"Received Linear webhook: {data.get('action', 'unknown')}")
-
-    return {"message": "Webhook received", "action": data.get("action")}
+    return SyncResponse(
+        success=result.success,
+        items_fetched=result.items_fetched,
+        items_extracted=result.items_extracted,
+        items_created=result.items_created,
+        items_skipped=result.items_skipped,
+        error_message=result.error_message,
+    )

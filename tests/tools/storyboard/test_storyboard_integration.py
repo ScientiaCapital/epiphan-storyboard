@@ -7,7 +7,7 @@ from src.tools.storyboard import (
     RoadmapToStoryboardTool,
     GeminiStoryboardClient,
     StoryboardUnderstanding,
-    COPERNIQ_ICP,
+    EPIPHAN_ICP,
     SANITIZE_RULES,
     get_icp_preset,
     get_audience_persona,
@@ -42,7 +42,7 @@ class TestStoryboardModuleExports:
             "RoadmapToStoryboardTool",
             "GeminiStoryboardClient",
             "StoryboardUnderstanding",
-            "COPERNIQ_ICP",
+            "EPIPHAN_ICP",
             "SANITIZE_RULES",
             "get_icp_preset",
             "get_audience_persona",
@@ -67,9 +67,9 @@ class TestStoryboardModuleExports:
 
     def test_icp_presets_importable(self):
         """Verify ICP presets can be imported."""
-        from src.tools.storyboard import COPERNIQ_ICP, get_icp_preset
+        from src.tools.storyboard import EPIPHAN_ICP, get_icp_preset
 
-        assert COPERNIQ_ICP is not None
+        assert EPIPHAN_ICP is not None
         assert callable(get_icp_preset)
 
 
@@ -220,14 +220,14 @@ class TestNoOpenAIModels:
 class TestICPPresetIntegration:
     """Test ICP preset integration."""
 
-    def test_coperniq_icp_is_default(self):
-        """Coperniq ICP should be the default preset."""
+    def test_epiphan_icp_is_default(self):
+        """Epiphan ICP should be the default preset."""
         preset = get_icp_preset()
-        assert preset["name"] == "coperniq_mep"
+        assert preset["name"] == "epiphan_av"
 
     def test_icp_has_all_required_fields(self):
         """ICP preset should have all required fields for tools."""
-        preset = get_icp_preset("coperniq_mep")
+        preset = get_icp_preset("epiphan_av")
 
         required_fields = [
             "name",

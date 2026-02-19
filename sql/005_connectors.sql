@@ -100,11 +100,11 @@ COMMENT ON COLUMN sync_runs.cursor_after IS 'Sync cursor to use for next increme
 ALTER TABLE knowledge_sources
     ADD COLUMN IF NOT EXISTS org_id TEXT;
 
-ALTER TABLE coperniq_knowledge
+ALTER TABLE knowledge
     ADD COLUMN IF NOT EXISTS org_id TEXT;
 
 COMMENT ON COLUMN knowledge_sources.org_id IS 'Multi-tenant isolation key (NULL for legacy/shared data)';
-COMMENT ON COLUMN coperniq_knowledge.org_id IS 'Multi-tenant isolation key (NULL for legacy/shared data)';
+COMMENT ON COLUMN knowledge.org_id IS 'Multi-tenant isolation key (NULL for legacy/shared data)';
 
 -- ============================================================================
 -- INDEXES
@@ -135,8 +135,8 @@ CREATE INDEX IF NOT EXISTS idx_sync_runs_started
 CREATE INDEX IF NOT EXISTS idx_knowledge_sources_org
     ON knowledge_sources(org_id);
 
-CREATE INDEX IF NOT EXISTS idx_coperniq_knowledge_org
-    ON coperniq_knowledge(org_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_org
+    ON knowledge(org_id);
 
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS)
@@ -248,7 +248,7 @@ COMMENT ON FUNCTION get_connector_sync_stats IS 'Returns aggregated sync statist
 /*
 -- Example connector instance
 INSERT INTO connector_instances (org_id, connector_type, status, config) VALUES
-('coperniq-dev', 'gong', 'connected', '{"workspace_id": "gong_ws_123"}'::jsonb);
+('epiphan-dev', 'gong', 'connected', '{"workspace_id": "gong_ws_123"}'::jsonb);
 
 -- Example sync run
 INSERT INTO sync_runs (
@@ -293,7 +293,7 @@ SELECT
     tablename,
     indexname
 FROM pg_indexes
-WHERE tablename IN ('connector_instances', 'sync_runs', 'knowledge_sources', 'coperniq_knowledge')
+WHERE tablename IN ('connector_instances', 'sync_runs', 'knowledge_sources', 'knowledge')
 ORDER BY tablename, indexname;
 
 -- Check triggers

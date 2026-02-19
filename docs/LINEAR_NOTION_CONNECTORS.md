@@ -427,7 +427,7 @@ CREATE TABLE knowledge_sources (
 );
 
 -- Extracted knowledge entries
-CREATE TABLE coperniq_knowledge (
+CREATE TABLE knowledge (
     id UUID PRIMARY KEY,
     org_id TEXT NOT NULL,
     knowledge_type TEXT NOT NULL,  -- feature, pain_point, use_case, etc.

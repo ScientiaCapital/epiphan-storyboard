@@ -259,7 +259,8 @@ async def test_sync_first_sync_no_cursor(
     # Verify list_documents called with modified_after (7 days ago)
     call_kwargs = mock_client.list_documents.call_args.kwargs
     assert call_kwargs["modified_after"] is not None
-    assert "2025-" in call_kwargs["modified_after"]  # Should be recent date
+    current_year = str(datetime.now().year)
+    assert current_year in call_kwargs["modified_after"]  # Should be recent date
 
 
 @pytest.mark.asyncio
@@ -434,5 +435,6 @@ async def test_sync_cursor_update_on_completion(
         result = await connector.sync(connector_instance)
 
     # Cursor should be updated to current time
-    assert result.cursor_after.startswith("modified_after:2025-")
+    current_year = str(datetime.now().year)
+    assert result.cursor_after.startswith(f"modified_after:{current_year}-")
     assert "page_token" not in result.cursor_after

@@ -147,14 +147,13 @@ class TestGeminiClientHealthCheck:
 
 
 class TestLanguageGuidelines:
-    """Tests for _build_language_guidelines method."""
+    """Tests for build_language_guidelines (extracted from client during decomposition)."""
 
     def test_builds_guidelines_from_icp(self):
         """Test guidelines are built from ICP preset."""
-        config = GeminiConfig(api_key="test-key")
-        client = GeminiStoryboardClient(config=config)
+        from src.tools.storyboard.epiphan_presets import build_language_guidelines
 
-        guidelines = client._build_language_guidelines(EPIPHAN_ICP)
+        guidelines = build_language_guidelines(EPIPHAN_ICP)
 
         assert "LANGUAGE GUIDELINES" in guidelines
         assert "Tone:" in guidelines
@@ -163,20 +162,18 @@ class TestLanguageGuidelines:
 
     def test_includes_avoid_terms(self):
         """Test guidelines include terms to avoid."""
-        config = GeminiConfig(api_key="test-key")
-        client = GeminiStoryboardClient(config=config)
+        from src.tools.storyboard.epiphan_presets import build_language_guidelines
 
-        guidelines = client._build_language_guidelines(EPIPHAN_ICP)
+        guidelines = build_language_guidelines(EPIPHAN_ICP)
 
         # Should include AV-specific jargon to avoid
         assert "bitrate optimization" in guidelines
 
     def test_includes_use_terms(self):
         """Test guidelines include terms to use."""
-        config = GeminiConfig(api_key="test-key")
-        client = GeminiStoryboardClient(config=config)
+        from src.tools.storyboard.epiphan_presets import build_language_guidelines
 
-        guidelines = client._build_language_guidelines(EPIPHAN_ICP)
+        guidelines = build_language_guidelines(EPIPHAN_ICP)
 
         # Should include some of the use terms
         assert "just works" in guidelines
@@ -398,13 +395,14 @@ class TestEnsureClientInitialization:
 
     def test_raises_without_api_key(self):
         """Test initialization raises without API key."""
-        config = GeminiConfig(api_key=None)
-        client = GeminiStoryboardClient(config=config)
+        with patch.dict("os.environ", {}, clear=True):
+            config = GeminiConfig(api_key=None)
+            client = GeminiStoryboardClient(config=config)
 
-        with pytest.raises(ValueError) as exc_info:
-            client._ensure_client()
+            with pytest.raises(ValueError) as exc_info:
+                client._ensure_client()
 
-        assert "GOOGLE_API_KEY" in str(exc_info.value)
+            assert "GOOGLE_API_KEY" in str(exc_info.value)
 
     def test_raises_on_missing_package(self):
         """Test initialization raises if google-genai not installed."""

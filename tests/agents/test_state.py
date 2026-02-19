@@ -46,11 +46,13 @@ def state_manager(mock_redis, mock_supabase):
     """Create a StateManager with mocked dependencies."""
     from src.agents.state import StateManager
 
-    manager = StateManager(
-        redis_url="redis://localhost:6379",
-        supabase_url="https://test.supabase.co",
-        supabase_key="test-key",
-    )
+    with patch("src.agents.state.create_client") as mock_create:
+        mock_create.return_value = MagicMock()
+        manager = StateManager(
+            redis_url="redis://localhost:6379",
+            supabase_url="https://test.supabase.co",
+            supabase_key="test-key",
+        )
     manager._redis = mock_redis
     manager._supabase = mock_supabase
     return manager
@@ -64,10 +66,12 @@ def state_manager(mock_redis, mock_supabase):
 class TestStateManagerInit:
     """Test StateManager initialization."""
 
-    def test_init_with_redis_url(self):
+    @patch("src.agents.state.create_client")
+    def test_init_with_redis_url(self, mock_create):
         """Test initialization with explicit Redis URL."""
         from src.agents.state import StateManager
 
+        mock_create.return_value = MagicMock()
         with patch.dict("os.environ", {}, clear=True):
             manager = StateManager(
                 redis_url="redis://localhost:6379",
@@ -76,10 +80,12 @@ class TestStateManagerInit:
             )
             assert manager._redis_url == "redis://localhost:6379"
 
-    def test_init_with_env_vars(self):
+    @patch("src.agents.state.create_client")
+    def test_init_with_env_vars(self, mock_create):
         """Test initialization from environment variables."""
         from src.agents.state import StateManager
 
+        mock_create.return_value = MagicMock()
         env_vars = {
             "REDIS_URL": "redis://env-redis:6379",
             "SUPABASE_URL": "https://env.supabase.co",
@@ -98,10 +104,12 @@ class TestStateManagerInit:
             with pytest.raises(ValueError, match="Redis URL"):
                 StateManager()
 
-    def test_init_default_session_ttl(self):
+    @patch("src.agents.state.create_client")
+    def test_init_default_session_ttl(self, mock_create):
         """Test default session TTL is 1 hour."""
         from src.agents.state import StateManager
 
+        mock_create.return_value = MagicMock()
         with patch.dict("os.environ", {
             "REDIS_URL": "redis://localhost:6379",
             "SUPABASE_URL": "https://test.supabase.co",
@@ -562,11 +570,13 @@ class TestCleanup:
         """Test StateManager as async context manager."""
         from src.agents.state import StateManager
 
-        with patch.dict("os.environ", {
-            "REDIS_URL": "redis://localhost:6379",
-            "SUPABASE_URL": "https://test.supabase.co",
-            "SUPABASE_SERVICE_KEY": "test-key",
-        }):
-            # This tests that StateManager can be used with async with
-            # and properly cleans up on exit
-            pass  # Actual implementation will test async with pattern
+        with patch("src.agents.state.create_client") as mock_create:
+            mock_create.return_value = MagicMock()
+            with patch.dict("os.environ", {
+                "REDIS_URL": "redis://localhost:6379",
+                "SUPABASE_URL": "https://test.supabase.co",
+                "SUPABASE_SERVICE_KEY": "test-key",
+            }):
+                # This tests that StateManager can be used with async with
+                # and properly cleans up on exit
+                pass  # Actual implementation will test async with pattern

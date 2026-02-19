@@ -68,6 +68,7 @@ class TestAuditLayerIntegration:
         assert logs[0].success is True
 
 
+@pytest.mark.skip(reason="Sibling project not present in epiphan-storyboard fork")
 class TestDealerScraperPluginIntegration:
     """Test dealer-scraper-mvp plugin integration."""
 
@@ -203,6 +204,7 @@ class TestDealerScraperPluginIntegration:
         assert hasattr(module, "ToolCategory")
 
 
+@pytest.mark.skip(reason="Sibling project not present in epiphan-storyboard fork")
 class TestSalesAgentPluginIntegration:
     """Test sales-agent plugin integration."""
 
@@ -259,6 +261,7 @@ class TestSalesAgentPluginIntegration:
 class TestCrossProjectDataFlow:
     """Test data flows correctly between projects."""
 
+    @pytest.mark.skip(reason="Sibling project not present in epiphan-storyboard fork")
     @pytest.mark.asyncio
     async def test_dealer_to_qualify_flow(self):
         """Data from dealer scraper can flow to qualification."""
@@ -338,6 +341,7 @@ class TestCrossProjectDataFlow:
         assert len(sales_logger.get_recent_logs()) == 2
 
 
+@pytest.mark.skip(reason="Sibling project not present in epiphan-storyboard fork")
 class TestPluginToolCategoryCompatibility:
     """Test that tools have compatible categories."""
 

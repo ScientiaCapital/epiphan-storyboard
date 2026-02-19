@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -38,8 +38,8 @@ skip_no_anthropic = pytest.mark.skipif(
 )
 
 skip_no_openrouter = pytest.mark.skipif(
-    len(OPENROUTER_KEY) < 10,  # Real keys are much longer
-    reason="OPENROUTER_API_KEY not set or invalid"
+    not OPENROUTER_KEY.startswith("sk-or-"),
+    reason="OPENROUTER_API_KEY not set or not a real key"
 )
 
 # Mark all tests in this module as integration tests
@@ -134,11 +134,13 @@ def mock_supabase():
 @pytest.fixture
 def state_manager(mock_redis, mock_supabase):
     """Create a StateManager with mocked storage but real logic."""
-    manager = StateManager(
-        redis_url="redis://localhost:6379",
-        supabase_url="https://test.supabase.co",
-        supabase_key="test-key",
-    )
+    with patch("src.agents.state.create_client") as mock_create:
+        mock_create.return_value = MagicMock()
+        manager = StateManager(
+            redis_url="redis://localhost:6379",
+            supabase_url="https://test.supabase.co",
+            supabase_key="test-key",
+        )
     manager._redis = mock_redis
     manager._supabase = mock_supabase
     return manager

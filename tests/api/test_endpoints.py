@@ -111,11 +111,13 @@ def mock_state_manager(mock_redis, mock_supabase):
     """Create a StateManager with mocked dependencies."""
     from src.agents.state import StateManager
 
-    manager = StateManager(
-        redis_url="redis://localhost:6379",
-        supabase_url="https://test.supabase.co",
-        supabase_key="test-key",
-    )
+    with patch("src.agents.state.create_client") as mock_create:
+        mock_create.return_value = MagicMock()
+        manager = StateManager(
+            redis_url="redis://localhost:6379",
+            supabase_url="https://test.supabase.co",
+            supabase_key="test-key",
+        )
     manager._redis = mock_redis
     manager._supabase = mock_supabase
     return manager

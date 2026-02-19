@@ -63,8 +63,8 @@ def test_list_examples_contains_expected(client):
     # Check for key examples
     expected = {
         "unified_storyboard",
-        "video_script_generator",
         "gemini_client",
+        "epiphan_presets",
     }
 
     assert expected.issubset(example_names), f"Missing examples: {expected - example_names}"
@@ -148,7 +148,7 @@ def test_generate_rejects_empty_code(client):
             "input_type": "code",
             "code": "",
             "stage": "preview",
-            "audience": "c_suite",
+            "audience": "av_director",
         },
     )
 
@@ -165,7 +165,7 @@ def test_generate_rejects_empty_image(client):
             "input_type": "image",
             "image_base64": "",
             "stage": "preview",
-            "audience": "c_suite",
+            "audience": "av_director",
         },
     )
 
@@ -181,7 +181,7 @@ def test_generate_rejects_whitespace_only(client):
             "input_type": "code",
             "code": "   \n\t  ",
             "stage": "preview",
-            "audience": "c_suite",
+            "audience": "av_director",
         },
     )
 
@@ -197,7 +197,7 @@ def test_generate_requires_image_when_type_image(client):
             "input_type": "image",
             "code": "def foo(): pass",  # Wrong field
             "stage": "preview",
-            "audience": "c_suite",
+            "audience": "av_director",
         },
     )
 
@@ -213,7 +213,7 @@ def test_generate_requires_code_when_type_code(client):
             "input_type": "code",
             "image_base64": "fake_base64",  # Wrong field
             "stage": "preview",
-            "audience": "c_suite",
+            "audience": "av_director",
         },
     )
 
@@ -229,7 +229,7 @@ def test_generate_validates_input_type(client):
             "input_type": "invalid_type",
             "code": "def foo(): pass",
             "stage": "preview",
-            "audience": "c_suite",
+            "audience": "av_director",
         },
     )
 
@@ -269,7 +269,7 @@ def test_generate_with_code_mocked(client):
                 "input_type": "code",
                 "code": "def calculate_roi(): return 100",
                 "stage": "preview",
-                "audience": "c_suite",
+                "audience": "av_director",
             },
         )
 
@@ -281,7 +281,7 @@ def test_generate_with_code_mocked(client):
         assert "understanding" in data
         assert data["input_type"] == "code"
         assert data["stage"] == "preview"
-        assert data["audience"] == "c_suite"
+        assert data["audience"] == "av_director"
 
 
 def test_generate_handles_tool_failure(client):
@@ -305,7 +305,7 @@ def test_generate_handles_tool_failure(client):
                 "input_type": "code",
                 "code": "def foo(): pass",
                 "stage": "preview",
-                "audience": "c_suite",
+                "audience": "av_director",
             },
         )
 

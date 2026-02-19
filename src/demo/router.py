@@ -33,24 +33,9 @@ router = APIRouter(prefix="/demo", tags=["demo"])
 
 EXAMPLES = [
     {
-        "name": "video_script_generator",
-        "path": "src/tools/video/video_script_generator.py",
-        "description": "AI-powered video script generation using DeepSeek V3",
-    },
-    {
         "name": "unified_storyboard",
         "path": "src/tools/storyboard/unified_storyboard.py",
         "description": "Convert any input to PNG storyboard via Gemini",
-    },
-    {
-        "name": "video_scheduler",
-        "path": "src/tools/video/video_scheduler.py",
-        "description": "Optimal send time prediction for video prospecting",
-    },
-    {
-        "name": "video_analytics",
-        "path": "src/tools/video/video_analytics.py",
-        "description": "Loom view tracking and engagement scoring",
     },
     {
         "name": "gemini_client",
@@ -58,14 +43,9 @@ EXAMPLES = [
         "description": "Gemini Vision + Image Generation client",
     },
     {
-        "name": "video_generator",
-        "path": "src/tools/video/video_generator.py",
-        "description": "Multi-provider video generation (Kling/HaiLuo/Runway)",
-    },
-    {
-        "name": "video_template_manager",
-        "path": "src/tools/video/video_template_manager.py",
-        "description": "Industry-specific video templates (solar, hvac, electrical)",
+        "name": "epiphan_presets",
+        "path": "src/tools/storyboard/epiphan_presets.py",
+        "description": "ICP presets, personas, and product catalog",
     },
 ]
 
@@ -127,10 +107,20 @@ class GenerateRequest(BaseModel):
         description="Storyboard stage for BDR cadence",
     )
     audience: Literal[
-        "business_owner", "c_suite", "btl_champion", "top_tier_vc", "field_crew"
+        "av_director",
+        "ld_director",
+        "sim_center_director",
+        "court_admin",
+        "corp_comms",
+        "ehs_manager",
+        "law_firm_it",
+        "provost",
+        "university_president",
+        "university_finance",
+        "technical_director",
     ] = Field(
-        "field_crew",
-        description="Target audience persona",
+        "av_director",
+        description="Target audience persona (Epiphan ICP)",
     )
     output_format: Literal["infographic", "storyboard"] = Field(
         "infographic",

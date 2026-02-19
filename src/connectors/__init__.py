@@ -37,18 +37,12 @@ from src.connectors.base import (
     OAuthTokens,
     SyncResult,
 )
-from src.connectors.clari.connector import ClariConnector  # noqa: F401
-
 # Import all connectors to trigger @connector decorator registration
+from src.connectors.clari.connector import ClariConnector  # noqa: F401
 from src.connectors.close.connector import CloseConnector  # noqa: F401
 from src.connectors.fireflies.connector import FirefliesConnector  # noqa: F401
 from src.connectors.gong.connector import GongConnector  # noqa: F401
-from src.connectors.google_docs.connector import GoogleDocsConnector  # noqa: F401
 from src.connectors.hubspot.connector import HubSpotConnector  # noqa: F401
-from src.connectors.linear.connector import LinearConnector  # noqa: F401
-from src.connectors.loom.connector import LoomConnector  # noqa: F401
-from src.connectors.miro.connector import MiroConnector  # noqa: F401
-from src.connectors.notion.connector import NotionConnector  # noqa: F401
 from src.connectors.registry import ConnectorRegistry, connector
 
 __all__ = [

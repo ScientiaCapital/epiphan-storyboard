@@ -19,7 +19,6 @@ from time import perf_counter
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException
 
-from src.billing.middleware import BillingContext, require_billing
 from src.storyboard.schemas import (
     CodeStoryboardRequest,
     JobStatus,
@@ -337,27 +336,20 @@ async def run_transcript_storyboard_task(
         "Returns immediately with job_id and poll_url. "
         "Use GET /storyboard/jobs/{job_id} to poll for completion."
     ),
-    responses={
-        402: {"description": "Payment required - subscription issue"},
-        429: {"description": "Quota exceeded"},
-    },
 )
 async def generate_code_storyboard(
     request: CodeStoryboardRequest,
     background_tasks: BackgroundTasks,
-    billing: BillingContext = Depends(require_billing(estimated_tokens=5000)),
+    x_org_id: str = Header("default", alias="X-Org-ID"),
     job_manager: StoryboardJobManager = Depends(get_job_manager),
 ) -> StoryboardJobResponse:
     """
     Generate storyboard from code file.
 
     Returns immediately with job ID. Poll GET /storyboard/jobs/{job_id} for completion.
-
-    Requires valid subscription and available quota.
     """
-    # Create job (billing.org_id is validated by require_billing)
     job = await job_manager.create_job(
-        org_id=billing.org_id,
+        org_id=x_org_id,
         job_type=JobType.CODE_TO_STORYBOARD,
         input_params=request.model_dump(),
     )
@@ -387,27 +379,20 @@ async def generate_code_storyboard(
         "Returns immediately with job_id and poll_url. "
         "Use GET /storyboard/jobs/{job_id} to poll for completion."
     ),
-    responses={
-        402: {"description": "Payment required - subscription issue"},
-        429: {"description": "Quota exceeded"},
-    },
 )
 async def generate_roadmap_storyboard(
     request: RoadmapStoryboardRequest,
     background_tasks: BackgroundTasks,
-    billing: BillingContext = Depends(require_billing(estimated_tokens=5000)),
+    x_org_id: str = Header("default", alias="X-Org-ID"),
     job_manager: StoryboardJobManager = Depends(get_job_manager),
 ) -> StoryboardJobResponse:
     """
     Generate storyboard from roadmap screenshot.
 
     Returns immediately with job ID. Poll GET /storyboard/jobs/{job_id} for completion.
-
-    Requires valid subscription and available quota.
     """
-    # Create job (billing.org_id is validated by require_billing)
     job = await job_manager.create_job(
-        org_id=billing.org_id,
+        org_id=x_org_id,
         job_type=JobType.ROADMAP_TO_STORYBOARD,
         input_params=request.model_dump(),
     )
@@ -438,15 +423,11 @@ async def generate_roadmap_storyboard(
         "Returns immediately with job_id and poll_url. "
         "Use GET /storyboard/jobs/{job_id} to poll for completion."
     ),
-    responses={
-        402: {"description": "Payment required - subscription issue"},
-        429: {"description": "Quota exceeded"},
-    },
 )
 async def generate_transcript_storyboard(
     request: TranscriptStoryboardRequest,
     background_tasks: BackgroundTasks,
-    billing: BillingContext = Depends(require_billing(estimated_tokens=15000)),
+    x_org_id: str = Header("default", alias="X-Org-ID"),
     job_manager: StoryboardJobManager = Depends(get_job_manager),
 ) -> StoryboardJobResponse:
     """
@@ -454,12 +435,9 @@ async def generate_transcript_storyboard(
 
     Returns immediately with job ID. Poll GET /storyboard/jobs/{job_id} for completion.
     Result includes 2-4 scenario storyboard PNGs and a BDR follow-up email draft.
-
-    Requires valid subscription and available quota.
     """
-    # Create job (billing.org_id is validated by require_billing)
     job = await job_manager.create_job(
-        org_id=billing.org_id,
+        org_id=x_org_id,
         job_type=JobType.TRANSCRIPT_TO_STORYBOARD,
         input_params=request.model_dump(),
     )

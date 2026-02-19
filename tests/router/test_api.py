@@ -1,17 +1,11 @@
-"""Tests for Agent Router API endpoints.
-
-TDD approach: Write tests FIRST, then implement API endpoints.
-"""
+"""Tests for Agent Router API endpoints."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timezone
 
-from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
-from src.billing.middleware import BillingContext
-from src.billing.schemas import BillingTier, SubscriptionStatus
 from src.router.schemas import (
     TaskType,
     ClassificationResult,
@@ -59,29 +53,14 @@ def mock_chain_registry():
     return registry
 
 
-@pytest.fixture
-def mock_billing_context():
-    """Create mock BillingContext that allows all requests."""
-    return BillingContext(
-        org_id="test-org",
-        tier=BillingTier.PRO,
-        subscription_status=SubscriptionStatus.ACTIVE,
-        quota_allowed=True,
-        estimated_tokens=10000,
-    )
-
-
 class TestPostAgentsRoute:
     """Test POST /agents/route endpoint."""
 
     @pytest.mark.asyncio
     async def test_post_agents_route_success(
-        self, mock_job_manager, mock_classifier, mock_chain_registry, mock_billing_context
+        self, mock_job_manager, mock_classifier, mock_chain_registry
     ):
         """Test successful task routing (202 Accepted)."""
-        from src.billing.schemas import OrganizationBilling
-
-        # Mock job creation
         mock_job = RouterJob(
             job_id="test-job-123",
             org_id="test-org",
@@ -91,61 +70,35 @@ class TestPostAgentsRoute:
         )
         mock_job_manager.create_job = AsyncMock(return_value=mock_job)
 
-        # Mock billing service to return a valid subscription
-        mock_billing = OrganizationBilling(
-            org_id="test-org",
-            tier=BillingTier.PRO,
-            subscription_status=SubscriptionStatus.ACTIVE,
-        )
+        from src.router.api import router, get_job_manager, get_classifier, get_chain_registry
+        from fastapi import FastAPI
 
-        # Mock quota manager to allow the request
-        mock_quota_result = MagicMock()
-        mock_quota_result.allowed = True
-        mock_quota_result.warning = None
-        mock_quota_result.reason = None
+        app = FastAPI()
+        app.include_router(router)
 
-        with patch("src.billing.middleware.get_subscription_service") as mock_get_service, \
-             patch("src.billing.middleware.get_quota_manager") as mock_get_quota:
-            # Set up billing service mock
-            mock_service = AsyncMock()
-            mock_service.get_organization_billing = AsyncMock(return_value=mock_billing)
-            mock_get_service.return_value = mock_service
+        app.dependency_overrides[get_job_manager] = lambda: mock_job_manager
+        app.dependency_overrides[get_classifier] = lambda: mock_classifier
+        app.dependency_overrides[get_chain_registry] = lambda: mock_chain_registry
 
-            # Set up quota manager mock
-            mock_quota = AsyncMock()
-            mock_quota.check_quota = AsyncMock(return_value=mock_quota_result)
-            mock_get_quota.return_value = mock_quota
+        async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test"
+        ) as client:
+            response = await client.post(
+                "/agents/route",
+                json={"query": "scrape https://example.com"},
+                headers={"X-Org-ID": "test-org"},
+            )
 
-            from src.router.api import router, get_job_manager, get_classifier, get_chain_registry
-            from fastapi import FastAPI
-
-            app = FastAPI()
-            app.include_router(router)
-
-            # Override other dependencies
-            app.dependency_overrides[get_job_manager] = lambda: mock_job_manager
-            app.dependency_overrides[get_classifier] = lambda: mock_classifier
-            app.dependency_overrides[get_chain_registry] = lambda: mock_chain_registry
-
-            async with AsyncClient(
-                transport=ASGITransport(app=app),
-                base_url="http://test"
-            ) as client:
-                response = await client.post(
-                    "/agents/route",
-                    json={"query": "scrape https://example.com"},
-                    headers={"X-Org-ID": "test-org"},
-                )
-
-                assert response.status_code == 202
-                data = response.json()
-                assert "job_id" in data
-                assert data["status"] == "pending"
-                assert "/agents/route/" in data["poll_url"]
+            assert response.status_code == 202
+            data = response.json()
+            assert "job_id" in data
+            assert data["status"] == "pending"
+            assert "/agents/route/" in data["poll_url"]
 
     @pytest.mark.asyncio
-    async def test_post_agents_route_missing_org_id(self):
-        """Test routing without X-Org-ID header returns 400."""
+    async def test_post_agents_route_empty_query(self):
+        """Test routing with empty query returns 422."""
         from src.router.api import router
         from fastapi import FastAPI
 
@@ -158,59 +111,11 @@ class TestPostAgentsRoute:
         ) as client:
             response = await client.post(
                 "/agents/route",
-                json={"query": "test"},
+                json={"query": ""},
+                headers={"X-Org-ID": "test-org"},
             )
 
-            # Should fail due to missing header
-            assert response.status_code in [400, 422]
-
-    @pytest.mark.asyncio
-    async def test_post_agents_route_empty_query(self):
-        """Test routing with empty query returns 422."""
-        from src.billing.schemas import OrganizationBilling
-
-        # Mock billing service to return a valid subscription
-        mock_billing = OrganizationBilling(
-            org_id="test-org",
-            tier=BillingTier.PRO,
-            subscription_status=SubscriptionStatus.ACTIVE,
-        )
-
-        # Mock quota manager to allow the request
-        mock_quota_result = MagicMock()
-        mock_quota_result.allowed = True
-        mock_quota_result.warning = None
-        mock_quota_result.reason = None
-
-        with patch("src.billing.middleware.get_subscription_service") as mock_get_service, \
-             patch("src.billing.middleware.get_quota_manager") as mock_get_quota:
-            # Set up billing service mock
-            mock_service = AsyncMock()
-            mock_service.get_organization_billing = AsyncMock(return_value=mock_billing)
-            mock_get_service.return_value = mock_service
-
-            # Set up quota manager mock
-            mock_quota = AsyncMock()
-            mock_quota.check_quota = AsyncMock(return_value=mock_quota_result)
-            mock_get_quota.return_value = mock_quota
-
-            from src.router.api import router
-            from fastapi import FastAPI
-
-            app = FastAPI()
-            app.include_router(router)
-
-            async with AsyncClient(
-                transport=ASGITransport(app=app),
-                base_url="http://test"
-            ) as client:
-                response = await client.post(
-                    "/agents/route",
-                    json={"query": ""},
-                    headers={"X-Org-ID": "test-org"},
-                )
-
-                assert response.status_code == 422  # Validation error
+            assert response.status_code == 422  # Validation error
 
 
 class TestGetAgentsRouteJob:

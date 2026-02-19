@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException
 
-from src.billing.middleware import BillingContext, require_billing
 from src.router.schemas import (
     ClassificationRequest,
     ClassificationResult,
@@ -181,27 +180,18 @@ async def execute_route_job(
         "Automatically classify a task and route to the appropriate execution chain. "
         "Returns immediately with job_id. Poll GET /agents/route/{job_id} for completion."
     ),
-    responses={
-        402: {"description": "Payment required - subscription issue"},
-        429: {"description": "Quota exceeded"},
-    },
 )
 async def route_task(
     request: RouterRequest,
     background_tasks: BackgroundTasks,
-    billing: BillingContext = Depends(require_billing(estimated_tokens=10000)),
+    x_org_id: str = Header("default", alias="X-Org-ID"),
     job_manager: RouterJobManager = Depends(get_job_manager),
     classifier: TaskClassifier = Depends(get_classifier),
     chain_registry: ChainRegistry = Depends(get_chain_registry),
 ) -> RouterJobResponse:
-    """
-    Route a task to the appropriate chain.
-
-    Requires valid subscription and available quota.
-    """
-    # Create job (billing.org_id is validated by require_billing)
+    """Route a task to the appropriate chain."""
     job = await job_manager.create_job(
-        org_id=billing.org_id,
+        org_id=x_org_id,
         query=request.query,
         context=request.context,
         max_steps=request.max_steps,
@@ -212,7 +202,7 @@ async def route_task(
         execute_route_job,
         job_id=job.job_id,
         request=request,
-        org_id=billing.org_id,
+        org_id=x_org_id,
         job_manager=job_manager,
         classifier=classifier,
         chain_registry=chain_registry,

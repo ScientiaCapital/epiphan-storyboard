@@ -25,24 +25,18 @@ def ensure_connectors_registered():
     registry = ConnectorRegistry.get()
 
     # If registry was reset, re-import all connectors
-    if len(registry._connectors) < 8:
+    if len(registry._connectors) < 5:
+        from src.connectors.clari.connector import ClariConnector  # noqa: F401
         from src.connectors.close.connector import CloseConnector  # noqa: F401
         from src.connectors.fireflies.connector import FirefliesConnector  # noqa: F401
         from src.connectors.gong.connector import GongConnector  # noqa: F401
-        from src.connectors.google_docs.connector import GoogleDocsConnector  # noqa: F401
-        from src.connectors.linear.connector import LinearConnector  # noqa: F401
-        from src.connectors.loom.connector import LoomConnector  # noqa: F401
-        from src.connectors.miro.connector import MiroConnector  # noqa: F401
-        from src.connectors.notion.connector import NotionConnector  # noqa: F401
+        from src.connectors.hubspot.connector import HubSpotConnector  # noqa: F401
 
         # Force re-registration
+        registry.register(ClariConnector)
         registry.register(CloseConnector)
         registry.register(FirefliesConnector)
         registry.register(GongConnector)
-        registry.register(GoogleDocsConnector)
-        registry.register(LinearConnector)
-        registry.register(LoomConnector)
-        registry.register(MiroConnector)
-        registry.register(NotionConnector)
+        registry.register(HubSpotConnector)
 
     yield

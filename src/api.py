@@ -7,10 +7,6 @@ Endpoints:
 - POST /agents/route - Auto-classify and route task to chain
 - GET /agents/route/{job_id} - Poll router job status and results
 - GET /agents/route/chains - List available chains
-- POST /billing/checkout - Create Stripe Checkout session
-- GET /billing/subscription - Get subscription status
-- POST /billing/portal - Create Customer Portal session
-- POST /billing/webhooks/stripe - Handle Stripe webhooks
 - GET /tools - List available tools
 - GET /health - Health check
 """
@@ -39,7 +35,6 @@ from src.agents.schemas import (
     SessionStatus,
 )
 from src.agents.state import StateManager
-from src.billing import billing_router
 from src.demo.router import router as demo_router
 from src.knowledge.cache import KnowledgeCache
 from src.router.api import router as agent_router
@@ -88,7 +83,6 @@ app = FastAPI(
 app.include_router(storyboard_router)
 app.include_router(demo_router)
 app.include_router(agent_router)
-app.include_router(billing_router)
 app.include_router(connectors_router)
 app.include_router(demo_pipeline_router)
 

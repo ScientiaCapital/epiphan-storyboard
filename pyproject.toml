@@ -63,11 +63,6 @@ llm = [
     "epiphan-storyboard[anthropic,google]",
 ]
 
-# Billing/payments
-billing = [
-    "stripe>=7.0.0",
-]
-
 # Development and testing
 dev = [
     "pytest>=8.0.0",
@@ -98,36 +93,22 @@ package-dir = {"" = "."}
 packages = [
     "src",
     "src.agents",
-    "src.billing",
     "src.connectors",
+    "src.connectors.clari",
     "src.connectors.close",
     "src.connectors.fireflies",
     "src.connectors.gong",
-    "src.connectors.google_docs",
-    "src.connectors.linear",
-    "src.connectors.loom",
-    "src.connectors.miro",
-    "src.connectors.notion",
-    "src.connectors.oauth",
+    "src.connectors.hubspot",
     "src.demo",
     "src.knowledge",
-    "src.observability",
     "src.router",
     "src.routers",
     "src.sdk",
     "src.sdk.security",
-    "src.sdk.testing",
     "src.storyboard",
     "src.tools",
-    "src.tools.recording",
     "src.tools.storyboard",
     "src.tools.video",
-    "shared",
-    "shared.agents",
-    "shared.audit",
-    "shared.config",
-    "shared.providers",
-    "plugins",
 ]
 
 [tool.setuptools.package-data]

@@ -1,0 +1,55 @@
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# RunPod
+runpod.toml
+
+# Testing
+test/*
+.pytest_cache/
+.coverage
+htmlcov/
+
+# vLLM
+vllm-base/vllm-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+
+# Docker
+.docker/
+
+# Logs
+*.log
+logs/
+
+# Git Worktrees
+.worktrees/
+.vercel
+CLAUDE.md
+LICENSE.md

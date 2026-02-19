@@ -1,0 +1,18 @@
+# audit-saas Business Config
+
+business:
+  name: "Conductor AI"
+  type: "product"  # product | service | hybrid
+  value_proposition: "Agent orchestration platform with Docker sandboxing for safe AI code execution"
+  target_customer: "AI developers, enterprise teams building agent systems"
+  price_point: "$299/month per team"
+
+investment:
+  start_date: "2025-10-01"  # Recent active development
+  total_hours: 100
+  hourly_rate: 150
+
+revenue:
+  status: "pre-revenue"  # pre-revenue | has-leads | has-revenue
+  monthly_revenue: 0
+  paying_customers: 0

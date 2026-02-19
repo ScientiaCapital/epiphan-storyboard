@@ -255,7 +255,7 @@ class TestChainRegistry:
         registry = ChainRegistry(mock_tool_registry)
         chains = registry.list_chains()
 
-        assert len(chains) == 6
+        assert len(chains) == 7
         chain_types = [c["chain_type"] for c in chains]
         assert "storyboard" in chain_types
         assert "video" in chain_types
@@ -263,3 +263,4 @@ class TestChainRegistry:
         assert "code_run" in chain_types
         assert "knowledge" in chain_types
         assert "sql" in chain_types
+        assert "demo_pipeline" in chain_types

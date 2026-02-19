@@ -110,15 +110,19 @@ class StoryboardChain(BaseChain):
 
         try:
             # Get input from params or classification
-            input_data = params.get("input") or classification.extracted_params.get("input")
+            input_data = params.get("input") or classification.extracted_params.get(
+                "input"
+            )
 
-            result: ToolResult = await tool.run({
-                "input": input_data,
-                "icp_preset": params.get("icp_preset", "epiphan_av"),
-                "stage": params.get("stage", "demo"),
-                "audience": params.get("audience", "c_suite"),
-                "open_browser": False,  # Never open browser in API
-            })
+            result: ToolResult = await tool.run(
+                {
+                    "input": input_data,
+                    "icp_preset": params.get("icp_preset", "epiphan_av"),
+                    "stage": params.get("stage", "demo"),
+                    "audience": params.get("audience", "c_suite"),
+                    "open_browser": False,  # Never open browser in API
+                }
+            )
 
             if not result.success:
                 return {
@@ -173,7 +177,9 @@ class VideoChain(BaseChain):
             if not script:
                 script_tool = self._get_tool("video_script_generator")
                 if script_tool:
-                    prompt = params.get("prompt", classification.extracted_params.get("prompt", ""))
+                    prompt = params.get(
+                        "prompt", classification.extracted_params.get("prompt", "")
+                    )
                     script_result = await script_tool.run({"prompt": prompt})
 
                     if script_result.success:
@@ -194,10 +200,12 @@ class VideoChain(BaseChain):
                     "error": "video_generator tool not found",
                 }
 
-            video_result = await video_tool.run({
-                "script": script,
-                "provider": params.get("provider", "kling"),
-            })
+            video_result = await video_tool.run(
+                {
+                    "script": script,
+                    "provider": params.get("provider", "kling"),
+                }
+            )
 
             if not video_result.success:
                 return {
@@ -267,10 +275,12 @@ class ScrapeChain(BaseChain):
                     "error": "No URL provided",
                 }
 
-            result = await tool.run({
-                "url": url,
-                "method": params.get("method", "GET"),
-            })
+            result = await tool.run(
+                {
+                    "url": url,
+                    "method": params.get("method", "GET"),
+                }
+            )
 
             if not result.success:
                 return {
@@ -329,13 +339,17 @@ class CodeRunChain(BaseChain):
 
         try:
             code = params.get("code", classification.extracted_params.get("code", ""))
-            language = params.get("language", classification.extracted_params.get("language", "python"))
+            language = params.get(
+                "language", classification.extracted_params.get("language", "python")
+            )
 
-            result = await tool.run({
-                "code": code,
-                "language": language,
-                "timeout": params.get("timeout", 30),
-            })
+            result = await tool.run(
+                {
+                    "code": code,
+                    "language": language,
+                    "timeout": params.get("timeout", 30),
+                }
+            )
 
             if not result.success:
                 return {
@@ -389,7 +403,9 @@ class KnowledgeChain(BaseChain):
             "chain_type": self.chain_type.value,
             "success": True,
             "message": "Knowledge search not yet fully implemented",
-            "query": params.get("query", classification.extracted_params.get("query", "")),
+            "query": params.get(
+                "query", classification.extracted_params.get("query", "")
+            ),
             "execution_time_ms": 0,
         }
 
@@ -425,13 +441,17 @@ class SqlChain(BaseChain):
             }
 
         try:
-            query = params.get("query", classification.extracted_params.get("query", ""))
+            query = params.get(
+                "query", classification.extracted_params.get("query", "")
+            )
 
-            result = await tool.run({
-                "query": query,
-                "params": params.get("params", []),
-                "max_rows": params.get("max_rows", 100),
-            })
+            result = await tool.run(
+                {
+                    "query": query,
+                    "params": params.get("params", []),
+                    "max_rows": params.get("max_rows", 100),
+                }
+            )
 
             if not result.success:
                 return {
@@ -458,6 +478,98 @@ class SqlChain(BaseChain):
             }
 
 
+class DemoPipelineChain(BaseChain):
+    """Run demo video pipeline: scene extraction + video generation.
+
+    Uses: scene_extractor, video_asset_generator tools
+    Output: Scene extraction result + optional video assets
+    """
+
+    @property
+    def chain_type(self) -> TaskType:
+        return TaskType.DEMO_PIPELINE
+
+    @property
+    def required_tools(self) -> list[str]:
+        return ["scene_extractor", "video_asset_generator"]
+
+    async def execute(
+        self,
+        params: dict[str, Any],
+        classification: ClassificationResult,
+    ) -> dict[str, Any]:
+        """Execute demo pipeline chain."""
+        try:
+            # Step 1: Extract scenes
+            extractor = self._get_tool("scene_extractor")
+            if not extractor:
+                # Fall back to direct import if not in registry
+                from src.tools.video.scene_extractor import SceneExtractorTool
+
+                extractor = SceneExtractorTool()
+
+            understanding = params.get(
+                "understanding",
+                classification.extracted_params.get("understanding", {}),
+            )
+
+            extraction_result = await extractor.run(
+                {
+                    "understanding": understanding,
+                    "persona": params.get("persona", "av_director"),
+                    "vertical": params.get("vertical", "higher_ed"),
+                    "product_focus": params.get("product_focus", "pearl_mini"),
+                }
+            )
+
+            if not extraction_result.success:
+                return {
+                    "chain_type": self.chain_type.value,
+                    "success": False,
+                    "error": f"Scene extraction failed: {extraction_result.error}",
+                }
+
+            result: dict[str, Any] = {
+                "chain_type": self.chain_type.value,
+                "success": True,
+                "scene_extraction": extraction_result.result,
+                "extraction_time_ms": extraction_result.execution_time_ms,
+            }
+
+            # Step 2: Generate video assets (unless skip requested)
+            if not params.get("skip_video_generation", False):
+                generator = self._get_tool("video_asset_generator")
+                if not generator:
+                    from src.tools.video.video_asset_generator import (
+                        VideoAssetGeneratorTool,
+                    )
+
+                    generator = VideoAssetGeneratorTool()
+
+                scenes = extraction_result.result.get("scenes", [])
+                asset_result = await generator.run(
+                    {
+                        "scenes": scenes,
+                        "provider": params.get("provider", "kling"),
+                    }
+                )
+
+                if asset_result.success:
+                    result["video_assets"] = asset_result.result
+                else:
+                    result["video_generation_error"] = asset_result.error
+
+            return result
+
+        except Exception as e:
+            logger.error(f"DemoPipelineChain execution failed: {e}")
+            return {
+                "chain_type": self.chain_type.value,
+                "success": False,
+                "error": str(e),
+            }
+
+
 class ChainRegistry:
     """Registry for managing and accessing chains.
 
@@ -477,6 +589,7 @@ class ChainRegistry:
             TaskType.CODE_RUN: CodeRunChain(tool_registry),
             TaskType.KNOWLEDGE: KnowledgeChain(tool_registry),
             TaskType.SQL: SqlChain(tool_registry),
+            TaskType.DEMO_PIPELINE: DemoPipelineChain(tool_registry),
         }
 
     def get(self, task_type: TaskType) -> BaseChain | None:

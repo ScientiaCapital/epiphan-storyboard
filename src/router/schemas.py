@@ -23,6 +23,7 @@ class TaskType(str, Enum):
     CODE_RUN = "code_run"  # Execute code in sandbox
     KNOWLEDGE = "knowledge"  # Knowledge base / CRM queries
     SQL = "sql"  # Database queries
+    DEMO_PIPELINE = "demo_pipeline"  # Storyboard → scene extraction → video assets
 
 
 class RouterJobStatus(str, Enum):
@@ -98,13 +99,13 @@ class RouterJob(BaseModel):
     chain_result: dict[str, Any] | None = Field(
         default=None, description="Chain execution result (populated after executing)"
     )
-    error_message: str | None = Field(default=None, description="Error message if failed")
+    error_message: str | None = Field(
+        default=None, description="Error message if failed"
+    )
     execution_time_ms: int | None = Field(
         default=None, description="Total execution time in milliseconds"
     )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC)
-    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = Field(default=None)
 
     model_config = {"extra": "forbid"}
@@ -128,9 +129,7 @@ class RouterJobStatusResponse(BaseModel):
 
     job_id: str
     status: RouterJobStatus
-    task_type: TaskType | None = Field(
-        default=None, description="Classified task type"
-    )
+    task_type: TaskType | None = Field(default=None, description="Classified task type")
     classification: ClassificationResult | None = Field(
         default=None, description="Full classification result"
     )

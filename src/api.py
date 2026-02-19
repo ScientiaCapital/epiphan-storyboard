@@ -19,6 +19,7 @@ from __future__ import annotations
 
 # Load environment variables before any other imports
 from dotenv import load_dotenv
+
 load_dotenv()
 
 import logging
@@ -28,15 +29,13 @@ from typing import Any
 
 import httpx
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from src.agents.runner import AgentRunner
 from src.agents.schemas import (
     AgentRunRequest,
-    AgentRunResponse,
-    AgentSession,
     SessionStatus,
 )
 from src.agents.state import StateManager
@@ -46,8 +45,8 @@ from src.knowledge.cache import KnowledgeCache
 from src.router.api import router as agent_router
 from src.routers.connectors import router as connectors_router
 from src.storyboard.router import router as storyboard_router
-from src.tools.base import ToolCategory
 from src.tools.registry import ToolRegistry
+from src.tools.video.demo_pipeline_router import router as demo_pipeline_router
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +54,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # Lifespan: Startup/Shutdown Events
 # ============================================================================
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -90,6 +90,7 @@ app.include_router(demo_router)
 app.include_router(agent_router)
 app.include_router(billing_router)
 app.include_router(connectors_router)
+app.include_router(demo_pipeline_router)
 
 # Serve static files (demo web UI)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -124,6 +125,7 @@ def get_anthropic_client() -> Any:
     """Dependency to get Anthropic client."""
     try:
         import anthropic
+
         return anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     except ImportError:
         return None
@@ -141,6 +143,7 @@ def get_openrouter_client() -> httpx.AsyncClient:
 
 class RunResponse(BaseModel):
     """Response from POST /agents/run."""
+
     session_id: str = Field(..., description="Unique session identifier")
     status: str = Field(..., description="Initial session status")
     poll_url: str = Field(..., description="URL to poll for updates")
@@ -148,6 +151,7 @@ class RunResponse(BaseModel):
 
 class SessionResponse(BaseModel):
     """Response from GET /agents/{session_id}."""
+
     session_id: str
     status: str
     steps: list[dict[str, Any]]
@@ -158,6 +162,7 @@ class SessionResponse(BaseModel):
 
 class CancelResponse(BaseModel):
     """Response from POST /agents/{session_id}/cancel."""
+
     session_id: str
     status: str
     message: str
@@ -165,6 +170,7 @@ class CancelResponse(BaseModel):
 
 class ToolInfo(BaseModel):
     """Tool information in list response."""
+
     name: str
     description: str
     category: str
@@ -174,16 +180,19 @@ class ToolInfo(BaseModel):
 
 class ToolsResponse(BaseModel):
     """Response from GET /tools."""
+
     tools: list[ToolInfo]
 
 
 class HealthResponse(BaseModel):
     """Response from GET /health."""
+
     status: str
 
 
 class ErrorResponse(BaseModel):
     """Standard error response."""
+
     detail: str
 
 
@@ -248,8 +257,7 @@ async def run_agent(
         for tool_name in request.tools:
             if not tool_registry.has(tool_name):
                 raise HTTPException(
-                    status_code=400,
-                    detail=f"Tool '{tool_name}' not found in registry"
+                    status_code=400, detail=f"Tool '{tool_name}' not found in registry"
                 )
 
     # Create session
@@ -343,7 +351,7 @@ async def cancel_session(
     if session.status in (SessionStatus.COMPLETED, SessionStatus.FAILED):
         raise HTTPException(
             status_code=409,
-            detail=f"Cannot cancel session with status '{session.status.value}'"
+            detail=f"Cannot cancel session with status '{session.status.value}'",
         )
 
     # Cancel the session

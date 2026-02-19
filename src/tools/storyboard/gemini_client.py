@@ -138,7 +138,7 @@ class StoryboardUnderstanding(BaseModel):
         ..., description="Catchy, benefit-focused headline (8 words max)"
     )
     tagline: str = Field(
-        default="One platform for contractors who do it all",
+        default="",
         description="Dynamic tagline specific to content and persona (10 words max)",
     )
     what_it_does: str = Field(
@@ -744,34 +744,7 @@ Return ONLY valid JSON matching this exact structure:
         knowledge_context = prompt_builders.build_knowledge_context(audience)
         persona_context = prompts.get_persona_generation_context(audience, persona)
 
-        if audience == "top_tier_vc":
-            # VC/Investor storyboard - flexible investment thesis
-            raw_context = ""
-            if understanding.raw_extracted_text:
-                raw_context = f"""
-SOURCE MATERIAL (use to derive specific insights):
-{understanding.raw_extracted_text[:600]}
-"""
-
-            return f"""CONTENT FOR INVESTOR AUDIENCE:
-
-{persona_context}
-
-WHAT WE EXTRACTED:
-- Core Insight: "{understanding.headline}"
-- Problem Space: "{understanding.pain_point_addressed}"
-- Solution: "{understanding.what_it_does}"
-- Differentiator: "{understanding.differentiator}"
-- Business Value: "{understanding.business_value}"
-{raw_context}
-
-{knowledge_context if knowledge_context else ""}
-
-CREATIVE FREEDOM: Design the visual however best tells this story.
-You choose the layout, sections, and flow. No rigid template required.
-Make it visually compelling - this could end up in a pitch deck."""
-
-        # Customer-focused storyboard (sales, internal, field crew)
+        # Customer-focused storyboard (all 8 BDR Playbook personas)
         raw_context = ""
         if understanding.raw_extracted_text:
             raw_context = f"""
@@ -801,18 +774,17 @@ VISUAL DESIGN FREEDOM:
 - Trust that executives understand visual hierarchy without explicit labels
 
 INDUSTRY GUARDRAILS (CRITICAL - NEVER VIOLATE):
-- This is for MEP contractors: ELECTRICAL, HVAC, PLUMBING, SOLAR, ENERGY contractors
-- NEVER mention unrelated industries (no beef, no agriculture, no manufacturing, no retail)
-- Icons must be construction/trades relevant: trucks, tools, clipboards, hard hats, wrenches, wire, pipes, solar panels
-- If the input mentions an unrelated industry, IGNORE it and focus on MEP contractor context
-- The target audience runs field service crews, does installations, handles permits, manages subcontractors
+- This is for AV/IT professionals in education, corporate, healthcare, government, and live events
+- NEVER mention unrelated industries (no construction, no retail, no agriculture)
+- Icons must be AV/IT relevant: cameras, video encoders, displays, lecture halls, meeting rooms, live streams
+- The target audience manages video capture, streaming, and recording infrastructure
 
 PROFESSIONAL QUALITY (LinkedIn-ready):
 - Must look like it came from a top-tier design agency
 - Clean, modern, minimal - no clip art or amateur elements
 - Every pixel must be intentional and polished
 - Text must be 100% legible at thumbnail size
-- Would you put this in front of a $10M contractor? If not, redo it.
+- Would you put this in front of a university AV director? If not, redo it.
 
 NEVER output generic copy. ALWAYS use specifics from the extraction."""
 
@@ -836,7 +808,7 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
         Args:
             understanding: StoryboardUnderstanding from Stage 1
             stage: "preview", "demo", or "shipped" (affects visual style)
-            audience: Target audience (top_tier_vc uses different structure)
+            audience: Target audience persona (8 BDR Playbook personas)
             output_format: "infographic" (horizontal 16:9) or "storyboard" (vertical, detailed)
             visual_style: "clean", "polished", "photo_realistic", or "minimalist"
             icp_preset: Optional ICP preset for visual style
@@ -881,7 +853,7 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
 
 ANTI-CANNED-COPY RULE (CRITICAL):
 - DO NOT use generic marketing phrases like "streamline operations", "get paid faster", "one platform"
-- BANNED METAPHORS (NEVER USE): "Frankenstack", "Goldilocks", "Goldilocks Zone", "perfect fit", "daily grind", "fighting fires", "2026 Software"
+- BANNED METAPHORS (NEVER USE): "Frankenstack", "Goldilocks", "Goldilocks Zone", "perfect fit", "daily grind", "fighting fires"
 - Every word must come from the EXTRACTED DATA below - nothing else
 - If you find yourself writing generic copy, STOP and use the specific extracted content instead
 - The headline MUST be "{understanding.headline}" - do not change it
@@ -895,13 +867,13 @@ THEME: "{dynamic_tagline}"
 
 VISUAL REQUIREMENTS:
 - Style: {stage_template.get("visual_style", "Modern professional")}
-- Color scheme: Professional teal/green palette (MUST USE THESE EXACT COLORS):
-  - Primary (CTAs/headers): {visual_style_config.get("primary_color", "#23433E")} (dark teal/forest green)
-  - Accent (highlights/emphasis): {visual_style_config.get("accent_color", "#2D9688")} (teal)
-  - Text: {visual_style_config.get("text_color", "#333333")} (dark gray)
-  - Background: {visual_style_config.get("hero_bg", "#DDEDEB")} (light mint/sage green)
+- Color scheme: Professional brand palette (MUST USE THESE EXACT COLORS):
+  - Primary (CTAs/headers): {visual_style_config.get("primary_color", "#1D2B51")} (dark navy)
+  - Accent (highlights/emphasis): {visual_style_config.get("accent_color", "#8CBE3F")} (lime green)
+  - Text: {visual_style_config.get("text_color", "#202329")} (dark gray)
+  - Background: {visual_style_config.get("hero_bg", "#f6f7f9")} (light gray)
 - NO badges, ribbons, or "demo/preview/coming soon" labels - keep it clean and professional
-- Include simple icons representing the content (construction/business metaphors)
+- Include simple icons representing the content (AV/IT/education metaphors)
 - Large, readable text (executive-friendly)
 
 TEXT ACCURACY REQUIREMENTS (CRITICAL - DO NOT IGNORE):
@@ -919,11 +891,11 @@ TEXT ACCURACY REQUIREMENTS (CRITICAL - DO NOT IGNORE):
 {prompts.get_artist_style_instructions(artist_style) if artist_style else ""}
 
 DESIGN PRINCIPLES:
-- {visual_style_config.get("aesthetic", "Modern, professional, teal/green palette. Corporate but approachable.")}
-- Light mint/sage backgrounds with clean white sections
-- Icons should be simple and metaphorical (tools, buildings, charts)
+- {visual_style_config.get("aesthetic", "Modern, professional, navy/lime-green palette. Corporate but approachable.")}
+- Light gray backgrounds with clean white sections
+- Icons should be simple and metaphorical (cameras, displays, charts)
 - Ready to share in presentations, emails, LinkedIn, or Slack
-- CRITICAL: Use teal/green color palette, NOT orange or blue
+- CRITICAL: Use navy/lime-green color palette as specified above
 - NO promotional badges or ribbons - this is executive content, not a sales flyer
 
 {prompts.get_format_output_instructions(output_format)}"""
@@ -972,7 +944,7 @@ DESIGN PRINCIPLES:
             self._ensure_client()
             return {
                 "status": "healthy",
-                "vision_model": self.config.vision_model,
+                "vision_model": self.config.gemini_vision_model,
                 "image_model": self.config.image_model,
                 "api_key_configured": bool(self.config.api_key),
             }

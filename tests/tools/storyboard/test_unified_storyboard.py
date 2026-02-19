@@ -445,7 +445,174 @@ class TestMiroUrlHandling:
         )
 
 
-class TestResultFormat:
+class TestIsTranscript:
+    """Tests for is_transcript() heuristic — including M-4 false positive fix."""
+
+    def test_clear_transcript_detected(self):
+        """Clear transcript with speaker labels should be detected."""
+        tool = UnifiedStoryboardTool()
+        transcript = """
+John: We need to standardize AV across all 300 rooms.
+Sarah: I think Pearl Mini is the right fit for the smaller rooms.
+John: And for the larger lecture halls, we discussed the Pearl-2.
+Sarah: Thank you for setting up this meeting.
+"""
+        assert tool.is_transcript(transcript) is True
+
+    def test_clear_code_detected(self):
+        """Clear Python code should NOT be detected as transcript."""
+        tool = UnifiedStoryboardTool()
+        code = """
+import asyncio
+from dataclasses import dataclass
+
+class JobTracker:
+    def __init__(self):
+        self.jobs = []
+
+    async def track(self, job_id: str) -> dict:
+        return {"id": job_id, "status": "active"}
+"""
+        assert tool.is_transcript(code) is False
+
+    def test_typed_python_not_false_positive(self):
+        """Python code with type annotations must NOT be classified as transcript (M-4 fix)."""
+        tool = UnifiedStoryboardTool()
+        typed_code = """
+from typing import Any
+
+@dataclass
+class Config:
+    api_key: str = ""
+    model_name: str = "gemini-2.0-flash"
+    timeout: int = 90
+    max_retries: int = 3
+    enable_cache: bool = True
+    vision_provider: str = "qwen"
+
+def process(config: Config, data: dict[str, Any]) -> list[str]:
+    results: list[str] = []
+    for key, value in data.items():
+        result: str = f"{key}: {value}"
+        results.append(result)
+    return results
+"""
+        assert tool.is_transcript(typed_code) is False
+
+    def test_pydantic_model_not_false_positive(self):
+        """Pydantic model with Field() calls must NOT be classified as transcript."""
+        tool = UnifiedStoryboardTool()
+        pydantic_code = """
+from pydantic import BaseModel, Field
+
+class StoryboardUnderstanding(BaseModel):
+    headline: str = Field(..., description="Catchy headline")
+    tagline: str = Field(default="", description="Dynamic tagline")
+    what_it_does: str = Field(..., description="Plain English")
+    business_value: str = Field(..., description="Quantified benefit")
+    who_benefits: str = Field(..., description="Target persona")
+    differentiator: str = Field(..., description="What makes special")
+    extraction_confidence: float = Field(default=1.0)
+"""
+        assert tool.is_transcript(pydantic_code) is False
+
+    def test_empty_string(self):
+        """Empty string should return False (default to code)."""
+        tool = UnifiedStoryboardTool()
+        assert tool.is_transcript("") is False
+
+    def test_single_line(self):
+        """Single line of code should return False."""
+        tool = UnifiedStoryboardTool()
+        assert tool.is_transcript("def foo(): pass") is False
+
+    def test_json_blob_not_transcript(self):
+        """JSON blob should NOT be classified as transcript."""
+        tool = UnifiedStoryboardTool()
+        json_content = """
+{
+    "name": "test",
+    "version": "1.0",
+    "dependencies": {
+        "fastapi": "^0.100",
+        "pydantic": "^2.0"
+    }
+}
+"""
+        assert tool.is_transcript(json_content) is False
+
+    def test_conversational_transcript_with_timestamps(self):
+        """Transcript with timestamps and natural language should be detected."""
+        tool = UnifiedStoryboardTool()
+        transcript = """
+[00:01] Sarah: Thanks for joining the call today.
+[00:05] Mike: Of course. So we discussed the deployment timeline.
+[00:12] Sarah: I think we can have the demo ready by Friday.
+[00:18] Mike: That sounds good. And the presentation slides?
+[00:25] Sarah: Let me check. We talked about using the new template.
+[00:30] Mike: Going to need at least 3 slides for the meeting.
+"""
+        assert tool.is_transcript(transcript) is True
+
+    def test_mixed_content_code_dominant(self):
+        """Content with more code patterns than transcript should be classified as code."""
+        tool = UnifiedStoryboardTool()
+        content = """
+# This module handles the demo presentation
+import os
+from pathlib import Path
+
+def setup_demo():
+    # Initialize the meeting room config
+    config = load_config()
+    return config
+
+class DemoRunner:
+    def __init__(self):
+        self.active = True
+"""
+        assert tool.is_transcript(content) is False
+
+    def test_long_natural_language_detected(self):
+        """Long natural language text with few code patterns should be detected as transcript."""
+        tool = UnifiedStoryboardTool()
+        # Generate content > 3000 chars with no code patterns
+        long_text = (
+            "The team discussed various approaches to improving the recording quality. "
+            "Sarah mentioned that the current setup has reliability issues. "
+            "We talked about standardizing the equipment across all rooms. "
+        ) * 20  # ~3600 chars
+        assert tool.is_transcript(long_text) is True
+
+
+class TestDirBugFix:
+    """Test that the dir() bug fix in error handler works correctly (M-6)."""
+
+    @pytest.mark.asyncio
+    async def test_error_handler_captures_input_type(self):
+        """Error handler should use locals().get() to safely capture input_type."""
+        tool = UnifiedStoryboardTool()
+
+        # Trigger an error after input_type is set but before completion
+        mock_client = MagicMock()
+        mock_client.understand_code = AsyncMock(
+            side_effect=RuntimeError("Simulated API failure")
+        )
+        tool._gemini_client = mock_client
+
+        result = await tool.run(
+            {
+                "input": "def test(): pass",
+                "open_browser": False,
+            }
+        )
+
+        assert result.success is False
+        # The input_type should be captured even in the error path
+        assert result.result.get("input_type") == "code"
+
+
+
     """Tests for result format."""
 
     @pytest.mark.asyncio

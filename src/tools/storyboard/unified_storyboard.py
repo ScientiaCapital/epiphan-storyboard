@@ -239,8 +239,8 @@ class UnifiedStoryboardTool(BaseTool):
         ]
 
         # Transcript indicators (more = likely transcript)
+        # NOTE: bare ": " removed — it false-positives on Python type annotations
         transcript_patterns = [
-            ": ",
             "Speaker",
             "said",
             "talked about",
@@ -270,8 +270,16 @@ class UnifiedStoryboardTool(BaseTool):
         )
 
         # Check for speaker patterns like "Name:" at line starts
+        # Exclude lines that look like code (type annotations, dicts, imports)
+        code_line_markers = ("def ", "class ", "import ", "from ", "->", "=>", "= ", "]: ", '": ')
         lines = content[:2000].split("\n")
-        speaker_lines = sum(1 for line in lines if ":" in line[:30] and line.strip())
+        speaker_lines = sum(
+            1
+            for line in lines
+            if ":" in line[:30]
+            and line.strip()
+            and not any(m in line for m in code_line_markers)
+        )
         if speaker_lines > 3:
             transcript_score += 3
 
@@ -584,7 +592,7 @@ class UnifiedStoryboardTool(BaseTool):
                 tool_name=self.definition.name,
                 success=False,
                 result={
-                    "input_type": input_type if "input_type" in dir() else "unknown"
+                    "input_type": locals().get("input_type", "unknown")
                 },
                 error=str(e),
                 execution_time_ms=int((perf_counter() - start_time) * 1000),

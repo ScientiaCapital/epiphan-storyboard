@@ -8,8 +8,12 @@ from src.tools.storyboard.gemini_client import (
     GeminiStoryboardClient,
     GeminiConfig,
     StoryboardUnderstanding,
+    _repair_json,
 )
-from src.tools.storyboard.epiphan_presets import EPIPHAN_ICP
+from src.tools.storyboard.epiphan_presets import (
+    EPIPHAN_ICP,
+    get_audience_persona,
+)
 
 
 class TestGeminiConfig:
@@ -413,3 +417,176 @@ class TestEnsureClientInitialization:
         with patch.dict("sys.modules", {"google": None}):
             with pytest.raises((ImportError, ValueError)):
                 client._ensure_client()
+
+
+class TestRepairJson:
+    """Tests for _repair_json() — handles malformed LLM JSON responses."""
+
+    def test_valid_json_passes_through(self):
+        """Valid JSON should be returned unchanged."""
+        valid = '{"headline": "Test", "value": 42}'
+        assert json.loads(_repair_json(valid)) == json.loads(valid)
+
+    def test_trailing_comma_repair(self):
+        """Trailing commas before closing braces should be removed."""
+        broken = '{"a": 1, "b": 2,}'
+        result = _repair_json(broken)
+        parsed = json.loads(result)
+        assert parsed == {"a": 1, "b": 2}
+
+    def test_trailing_comma_in_array(self):
+        """Trailing commas before closing brackets should be removed."""
+        broken = '{"items": [1, 2, 3,]}'
+        result = _repair_json(broken)
+        parsed = json.loads(result)
+        assert parsed == {"items": [1, 2, 3]}
+
+    def test_missing_closing_brace(self):
+        """Missing closing braces should be added."""
+        broken = '{"headline": "Test"'
+        result = _repair_json(broken)
+        parsed = json.loads(result)
+        assert parsed["headline"] == "Test"
+
+    def test_multiple_missing_braces(self):
+        """Multiple missing closing braces should be added."""
+        broken = '{"outer": {"inner": "value"'
+        result = _repair_json(broken)
+        parsed = json.loads(result)
+        assert parsed["outer"]["inner"] == "value"
+
+    def test_markdown_code_fence_stripping(self):
+        """Markdown code fences around JSON should be stripped."""
+        wrapped = '```json\n{"headline": "Test"}\n```'
+        result = _repair_json(wrapped)
+        parsed = json.loads(result)
+        assert parsed["headline"] == "Test"
+
+    def test_markdown_code_fence_without_lang(self):
+        """Markdown code fences without language tag should be handled."""
+        wrapped = '```\n{"headline": "Test"}\n```'
+        result = _repair_json(wrapped)
+        parsed = json.loads(result)
+        assert parsed["headline"] == "Test"
+
+    def test_empty_string_returns_empty(self):
+        """Empty string should be returned (will fail json.loads, that's OK)."""
+        result = _repair_json("")
+        assert isinstance(result, str)
+
+    def test_unterminated_string_repair(self):
+        """Unterminated strings should get a closing quote."""
+        broken = '{"headline": "Test value'
+        result = _repair_json(broken)
+        # After repair, it should at least be parseable
+        parsed = json.loads(result)
+        assert "Test value" in parsed["headline"]
+
+
+class TestBuildGenerationContentSection:
+    """Tests for _build_generation_content_section() — post-Tier-1 content verification."""
+
+    def _make_understanding(self, **overrides):
+        """Helper to create a StoryboardUnderstanding with defaults."""
+        defaults = {
+            "headline": "Fleet Management Made Simple",
+            "what_it_does": "Manages AV equipment across 300+ rooms",
+            "business_value": "Save 20 hours/week on AV support tickets",
+            "who_benefits": "AV Directors managing campus infrastructure",
+            "differentiator": "Single pane of glass for all Pearl devices",
+            "pain_point_addressed": "Each room has different AV, creating support chaos",
+            "suggested_icon": "monitor",
+            "raw_extracted_text": "Fleet management dashboard, NDI, SRT, rack-mount",
+            "extraction_confidence": 0.92,
+        }
+        defaults.update(overrides)
+        return StoryboardUnderstanding(**defaults)
+
+    def _build_section(self, audience="av_director"):
+        """Helper to build a content section."""
+        config = GeminiConfig(api_key="test-key")
+        client = GeminiStoryboardClient(config=config)
+        understanding = self._make_understanding()
+        persona = get_audience_persona(audience, EPIPHAN_ICP)
+        return client._build_generation_content_section(
+            understanding, audience, persona
+        )
+
+    def test_never_contains_mep(self):
+        """Output must NEVER contain MEP or contractor references."""
+        for audience in [
+            "av_director",
+            "ld_director",
+            "sim_center_director",
+            "court_admin",
+        ]:
+            section = self._build_section(audience)
+            section_lower = section.lower()
+            assert "mep" not in section_lower, f"MEP in {audience} section"
+            assert "contractor" not in section_lower, f"contractor in {audience} section"
+            assert "hvac" not in section_lower, f"HVAC in {audience} section"
+            assert "hard hat" not in section_lower, f"hard hat in {audience} section"
+
+    def test_never_contains_top_tier_vc_branch(self):
+        """The top_tier_vc branch should be completely removed."""
+        section = self._build_section("av_director")
+        assert "INVESTOR AUDIENCE" not in section
+        assert "pitch deck" not in section.lower()
+
+    def test_includes_understanding_fields(self):
+        """Section should include the extracted understanding data."""
+        section = self._build_section("av_director")
+        assert "Fleet Management Made Simple" in section
+        assert "Manages AV equipment across 300+ rooms" in section
+        assert "Save 20 hours/week" in section
+
+    def test_includes_persona_context(self):
+        """Section should include persona-specific context."""
+        section = self._build_section("av_director")
+        assert "AV Director" in section or "av_director" in section.lower()
+
+    def test_includes_raw_context_when_present(self):
+        """Section should include raw extraction when available."""
+        section = self._build_section("av_director")
+        assert "RAW EXTRACTION" in section or "Fleet management dashboard" in section
+
+    def test_all_eight_personas_produce_output(self):
+        """All 8 BDR Playbook personas should produce valid content sections."""
+        for audience in [
+            "av_director",
+            "ld_director",
+            "sim_center_director",
+            "court_admin",
+            "corp_comms",
+            "ehs_manager",
+            "law_firm_it",
+            "technical_director",
+        ]:
+            section = self._build_section(audience)
+            assert len(section) > 100, f"{audience} section too short"
+            assert "Fleet Management Made Simple" in section
+
+
+class TestHealthCheckFixed:
+    """Tests verifying H-1 fix — health_check uses correct attribute name."""
+
+    @pytest.mark.asyncio
+    async def test_health_check_returns_correct_model(self):
+        """health_check should reference gemini_vision_model (not vision_model)."""
+        config = GeminiConfig(api_key="test-key")
+        client = GeminiStoryboardClient(config=config)
+
+        # Mock successful initialization
+        mock_genai = MagicMock()
+        mock_genai.Client.return_value = MagicMock()
+
+        with patch.dict(
+            "sys.modules", {"google": MagicMock(), "google.genai": mock_genai}
+        ):
+            health = await client.health_check()
+
+        # Should not crash with AttributeError
+        assert health["api_key_configured"] is True
+        # If healthy, should have vision_model key
+        if health["status"] == "healthy":
+            assert health["vision_model"] == "models/gemini-2.0-flash"

@@ -70,7 +70,7 @@ class StoryboardStorage:
 
         Args:
             png_bytes: PNG image bytes
-            audience: Target audience (e.g., 'top_tier_vc', 'field_crew')
+            audience: Target audience (e.g., 'av_director', 'technical_director')
             stage: Storyboard stage ('preview', 'demo', 'shipped')
             input_type: Input type ('code' or 'image')
             headline: Extracted headline from understanding

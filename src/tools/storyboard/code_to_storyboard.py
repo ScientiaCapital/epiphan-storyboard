@@ -9,7 +9,7 @@ Two-stage pipeline:
 2. GENERATE (Gemini Image Gen) - Create beautiful PNG storyboard
 
 Supports any programming language (.py, .js, .ts, .go, .rs, etc.)
-Target audience: MEP+energy contractors ($5M+ ICP)
+Target audience: AV/IT professionals (8 BDR Playbook personas)
 
 NO OpenAI - Gemini only.
 """
@@ -41,7 +41,7 @@ class CodeToStoryboardTool(BaseTool):
     Features:
     - Language-agnostic (Python, JavaScript, TypeScript, Go, Rust, etc.)
     - Automatic IP sanitization (no technical details leaked)
-    - ICP-optimized language (MEP+energy contractors)
+    - ICP-optimized language (Epiphan AV/IT personas)
     - Stage-aware visuals (preview/demo/shipped)
     - Audience targeting (8 personas: 7 ATL + 1 BTL from BDR Playbook)
 
@@ -86,7 +86,7 @@ class CodeToStoryboardTool(BaseTool):
                 "Transform code files into beautiful one-page PNG storyboards. "
                 "Takes any programming language code and produces an executive-ready "
                 "visual showing business value, benefits, and differentiators. "
-                "Perfect for BDR cold outreach to contractors. "
+                "Perfect for BDR cold outreach to AV/IT decision makers. "
                 "Automatically sanitizes technical details and IP."
             ),
             category=ToolCategory.DATA,
@@ -222,6 +222,7 @@ class CodeToStoryboardTool(BaseTool):
             png_bytes = await self.gemini_client.generate_storyboard(
                 understanding=understanding,
                 stage=stage,
+                audience=audience,
                 icp_preset=icp_preset,
             )
 

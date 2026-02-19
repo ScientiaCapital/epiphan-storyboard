@@ -9,7 +9,7 @@ Two-stage pipeline:
 2. GENERATE (Gemini Image Gen) - Create beautiful PNG teaser
 
 Extra aggressive sanitization for CTO roadmaps (lots of IP).
-Target audience: MEP+energy contractors ($5M+ ICP)
+Target audience: AV/IT professionals (8 BDR Playbook personas)
 
 NO OpenAI - Gemini only.
 """
@@ -41,7 +41,7 @@ class RoadmapToStoryboardTool(BaseTool):
     - Extra IP sanitization (roadmaps often contain sensitive info)
     - "Coming Soon" teaser format (builds excitement)
     - Supports image bytes or base64 input
-    - ICP-optimized language (MEP+energy contractors)
+    - ICP-optimized language (Epiphan AV/IT personas)
     - Stage-aware visuals (preview focus)
 
     Example:

@@ -73,9 +73,9 @@ class TestRoadmapToStoryboardParameters:
         tool = RoadmapToStoryboardTool()
         params = tool.definition.parameters["properties"]
         assert "audience" in params
-        assert "business_owner" in params["audience"]["enum"]
-        assert "c_suite" in params["audience"]["enum"]
-        assert "btl_champion" in params["audience"]["enum"]
+        assert "av_integrator" in params["audience"]["enum"]
+        assert "cto" in params["audience"]["enum"]
+        assert "bdr" in params["audience"]["enum"]
 
     def test_accepts_icp_preset_parameter(self):
         """Tool should accept icp_preset parameter."""
@@ -186,7 +186,7 @@ class TestRoadmapToStoryboardRun:
 
         result = await tool.run({
             "image_data": base64.b64encode(b"fake image").decode(),
-            "audience": "c_suite",
+            "audience": "cto",
         })
 
         assert result.success is True

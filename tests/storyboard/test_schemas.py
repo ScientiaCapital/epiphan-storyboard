@@ -31,7 +31,7 @@ class TestCodeStoryboardRequest:
         assert request.file_name is None
         assert request.icp_preset == "epiphan_av"
         assert request.stage == "preview"
-        assert request.audience == "c_suite"
+        assert request.audience == "cto"
         assert request.custom_headline is None
 
     def test_valid_request_full(self):
@@ -41,14 +41,14 @@ class TestCodeStoryboardRequest:
             file_name="test.py",
             icp_preset="epiphan_av",
             stage="demo",
-            audience="business_owner",
+            audience="av_integrator",
             custom_headline="Custom Headline",
         )
         assert request.file_content == "def hello(): pass"
         assert request.file_name == "test.py"
         assert request.icp_preset == "epiphan_av"
         assert request.stage == "demo"
-        assert request.audience == "business_owner"
+        assert request.audience == "av_integrator"
         assert request.custom_headline == "Custom Headline"
 
     def test_empty_file_content_fails(self):
@@ -97,7 +97,7 @@ class TestRoadmapStoryboardRequest:
         )
         assert request.image_data == "base64encodeddata"
         assert request.icp_preset == "epiphan_av"
-        assert request.audience == "c_suite"
+        assert request.audience == "cto"
         assert request.custom_headline is None
         assert request.sanitize_ip is True
 
@@ -106,13 +106,13 @@ class TestRoadmapStoryboardRequest:
         request = RoadmapStoryboardRequest(
             image_data="base64encodeddata",
             icp_preset="epiphan_av",
-            audience="btl_champion",
+            audience="bdr",
             custom_headline="Coming Soon",
             sanitize_ip=False,
         )
         assert request.image_data == "base64encodeddata"
         assert request.icp_preset == "epiphan_av"
-        assert request.audience == "btl_champion"
+        assert request.audience == "bdr"
         assert request.custom_headline == "Coming Soon"
         assert request.sanitize_ip is False
 

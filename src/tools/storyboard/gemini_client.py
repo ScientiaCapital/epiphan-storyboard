@@ -205,7 +205,7 @@ class GeminiStoryboardClient:
         understanding = await client.understand_code(
             code_content="def calculate_roi(): ...",
             icp_preset=EPIPHAN_ICP,
-            audience="c_suite",
+            audience="cto",
         )
 
         # Stage 3: Generate
@@ -400,7 +400,7 @@ class GeminiStoryboardClient:
         initial: StoryboardUnderstanding,
         original_content: str,
         content_type: str = "text",
-        audience: str = "c_suite",
+        audience: str = "cto",
     ) -> StoryboardUnderstanding:
         """
         Stage 2 (REFINE): Use alternate model to validate/improve low-confidence extraction.
@@ -499,7 +499,7 @@ Return ONLY valid JSON matching this exact structure:
         self,
         code_content: str,
         icp_preset: dict[str, Any] | None = None,
-        audience: str = "c_suite",
+        audience: str = "cto",
         file_name: str | None = None,
     ) -> StoryboardUnderstanding:
         """
@@ -631,7 +631,7 @@ Return JSON:
         self,
         transcript: str,
         icp_preset: dict[str, Any] | None = None,
-        audience: str = "c_suite",
+        audience: str = "cto",
         context: str | None = None,
     ) -> StoryboardUnderstanding:
         """
@@ -737,43 +737,43 @@ Return JSON:
     def _get_persona_extraction_focus(self, audience: str, audience_info: dict) -> str:
         """Get persona-specific extraction instructions."""
         extractions = {
-            "business_owner": """FOCUS FOR BUSINESS OWNER:
-- What PROFIT or REVENUE impact was discussed?
-- What TIME savings would they get back (family time, less nights/weekends)?
-- What HEADACHES would disappear?
-- Did they mention competitors or falling behind?""",
+            "av_integrator": """FOCUS FOR AV INTEGRATOR:
+- What INSTALLATION or DEPLOYMENT efficiency was discussed?
+- What COMPATIBILITY with existing AV infrastructure?
+- What RELIABILITY and UPTIME improvements?
+- How does this simplify SYSTEM DESIGN and reduce truck rolls?""",
 
-            "c_suite": """FOCUS FOR C-SUITE EXECUTIVE:
+            "it_director": """FOCUS FOR IT DIRECTOR:
+- What NETWORK and SECURITY requirements are addressed?
+- What MANAGEMENT and MONITORING capabilities?
+- What SCALABILITY across campus or enterprise?
+- How does this reduce SUPPORT TICKETS and maintenance burden?""",
+
+            "cto": """FOCUS FOR CTO:
 - What ROI or METRICS were mentioned?
 - What SCALABILITY or GROWTH enablement was discussed?
-- What DATA or VISIBILITY improvements?
-- What COMPETITIVE advantages?""",
+- What INTEGRATION with existing tech stack?
+- What COMPETITIVE advantages and future-proofing?""",
 
-            "btl_champion": """FOCUS FOR OPERATIONS/PROJECT MANAGER:
-- What DAILY FRUSTRATIONS would be eliminated?
-- What COORDINATION problems were mentioned?
-- What would their TEAM actually use?
-- How does this reduce fire-fighting and chaos?""",
+            "reseller": """FOCUS FOR RESELLER:
+- What MARGIN and REVENUE opportunity?
+- What DIFFERENTIATION vs competing product lines?
+- What EASE OF SALE (demo-ability, proof of value)?
+- What RECURRING REVENUE or upsell potential?""",
 
-            "top_tier_vc": """FOCUS FOR VC/INVESTOR:
-- What MARKET SIZE indicators were mentioned?
-- What TRACTION or GROWTH metrics?
-- What MOAT or defensibility?
-- What makes this a CATEGORY-DEFINING opportunity?""",
-
-            "field_crew": """FOCUS FOR FIELD CREW:
-- What would make their JOB EASIER?
-- What PAPERWORK or HASSLE would disappear?
-- What TOOLS would they actually use on the job site?
-- Keep it SIMPLE - 5th grade vocabulary.""",
+            "bdr": """FOCUS FOR BDR:
+- What PAIN POINTS resonate in cold outreach?
+- What QUICK WINS can be demonstrated?
+- What OBJECTION HANDLING points were raised?
+- What makes this URGENT (not just nice-to-have)?""",
         }
-        return extractions.get(audience, extractions["c_suite"])
+        return extractions.get(audience, extractions["cto"])
 
     async def understand_image(
         self,
         image_data: bytes | str,
         icp_preset: dict[str, Any] | None = None,
-        audience: str = "c_suite",
+        audience: str = "cto",
         sanitize_ip: bool = True,
         supplementary_context: str | None = None,
     ) -> StoryboardUnderstanding:
@@ -916,7 +916,7 @@ Return JSON:
         self,
         images_data: list[bytes],
         icp_preset: dict[str, Any] | None = None,
-        audience: str = "c_suite",
+        audience: str = "cto",
         sanitize_ip: bool = True,
         supplementary_context: str | None = None,
     ) -> StoryboardUnderstanding:
@@ -1061,7 +1061,7 @@ Return JSON:
         self,
         understanding: StoryboardUnderstanding,
         stage: str = "preview",
-        audience: str = "c_suite",
+        audience: str = "cto",
         output_format: str = "infographic",
         visual_style: str = "polished",
         artist_style: str | None = None,
@@ -1280,7 +1280,7 @@ DESIGN PRINCIPLES:
             logger.error(f"[GEMINI] Image generation failed: {e}")
             raise
 
-    def _build_language_guidelines(self, icp_preset: dict[str, Any], audience: str = "c_suite") -> str:
+    def _build_language_guidelines(self, icp_preset: dict[str, Any], audience: str = "cto") -> str:
         """Build language guidelines string for prompts, enriched with knowledge."""
         # Get static defaults from preset
         avoid = icp_preset.get("language_style", {}).get("avoid", [])
@@ -1343,25 +1343,43 @@ DESIGN PRINCIPLES:
         - EASE: How much simpler their life becomes
         """
         value_angles = {
-            "business_owner": """VALUE FRAMING: COI (Cost of Inaction) - AMPLIFIED
+            "av_integrator": """VALUE FRAMING: EASE (Simplicity + Reliability) - AMPLIFIED
 
-SPEAK TO THE FOUNDER'S WEIGHT:
-- What are they BLEEDING every day they don't act?
-- Cash walking out the door, jobs going sideways
-- Sleepless nights wondering what fell through the cracks
-- "Your competitors already figured this out"
+SPEAK TO THE INTEGRATOR'S REALITY:
+- Less time on-site configuring. More jobs per week.
+- Works with existing AV infrastructure — no rip and replace.
+- Reliable enough to stake your reputation on.
+- "The install just works. No callbacks."
 
-VOCABULARY THAT HITS:
-- "bleeding money", "my guys", "cash flow", "keeping the lights on"
-- "I built this", "sleepless nights", "finally get control"
-- "make payroll", "skin in the game"
+VOCABULARY THAT RESONATES:
+- "rack and stack", "plug and play", "zero callbacks"
+- "works with my existing racks", "field-proven", "one-touch setup"
+- "NDI|HX", "HDMI passthrough", "network discovery"
 
-FORBIDDEN (sounds corporate, not founder):
-- "stakeholders", "enterprise solution", "synergize", "leverage"
+FORBIDDEN (sounds like marketing):
+- "revolutionary", "game-changing", "paradigm shift", "synergize"
 
-EMOTIONAL CORE: Loss aversion. Fear of missing out. Founder anxiety meets pragmatic hope.
+EMOTIONAL CORE: Professional pride. Fewer truck rolls. Reliable installs that build reputation.
 """,
-            "c_suite": """VALUE FRAMING: ROI (Return on Investment) - AMPLIFIED
+            "it_director": """VALUE FRAMING: COI (Cost of Inaction) - AMPLIFIED
+
+SPEAK TO THE IT LEADER'S BURDEN:
+- Every manual AV request is a ticket your team shouldn't handle.
+- Centralized management across all campus locations.
+- Network-friendly, security-compliant, IT-manageable.
+- "Your AV shouldn't require a dedicated admin."
+
+VOCABULARY THAT RESONATES:
+- "centralized management", "SNMP monitoring", "firmware updates"
+- "LDAP/AD integration", "802.1X", "VLAN support"
+- "reduce support tickets", "self-service", "campus-wide"
+
+FORBIDDEN (sounds like AV marketing):
+- "stunning visuals", "immersive experience", "cutting-edge"
+
+EMOTIONAL CORE: Control and visibility. Fewer escalations. IT-grade manageability.
+""",
+            "cto": """VALUE FRAMING: ROI (Return on Investment) - AMPLIFIED
 
 SPEAK BOARDROOM LANGUAGE:
 - Every word must earn its place. Numbers speak louder than adjectives.
@@ -1369,8 +1387,8 @@ SPEAK BOARDROOM LANGUAGE:
 - Show the math they can take to the board.
 
 VOCABULARY THAT RESONATES:
-- "margin improvement", "operational leverage", "unit economics"
-- "payback period", "scale efficiently", "competitive moat"
+- "total cost of ownership", "operational leverage", "scalable infrastructure"
+- "payback period", "API-first", "future-proof"
 - "data-driven", "visibility", "reduce overhead"
 
 FORBIDDEN (sounds like marketing fluff):
@@ -1378,60 +1396,44 @@ FORBIDDEN (sounds like marketing fluff):
 
 EMOTIONAL CORE: Validation through data. Strategic advantage. Looking smart to the board.
 """,
-            "btl_champion": """VALUE FRAMING: COI (Cost of Inaction) - AMPLIFIED
+            "reseller": """VALUE FRAMING: ROI (Revenue Opportunity) - AMPLIFIED
 
-THE DAILY REALITY:
-- Every fire you're fighting today? There's a tool that prevents it
-- Finally get the coordination problem under control
-- Stop chasing updates and start getting ahead
+PARTNER GROWTH LANGUAGE:
+- Margin-rich product line that sells itself in demos.
+- Recurring revenue from support contracts and add-ons.
+- Easy to demo, easy to spec, easy to close.
+- "Your competitors are already quoting this."
 
 VOCABULARY THAT RESONATES:
-- "fires to put out", "chasing updates", "prove it works"
-- "the team will actually use this", "less headaches"
-- "one less thing", "finally under control", "save time"
+- "dealer margin", "attach rate", "recurring revenue"
+- "demo-in-a-box", "easy to spec", "competitive displacement"
+- "deal registration", "partner portal", "MDF available"
 
-FORBIDDEN (sounds like enterprise sales):
-- "enterprise-grade", "holistic solution", "comprehensive platform"
+FORBIDDEN (sounds like end-user marketing):
+- "user-friendly", "intuitive interface", "seamless experience"
 
-EMOTIONAL CORE: Daily grind empathy. Practical solutions for real frustrations.
+EMOTIONAL CORE: Revenue growth. Competitive differentiation. Easy wins.
 """,
-            "top_tier_vc": """VALUE FRAMING: ROI (Return on Investment) - AMPLIFIED
+            "bdr": """VALUE FRAMING: URGENCY (Act Now) - AMPLIFIED
 
-PATTERN-MATCHING INVESTOR BRAIN:
-- Show the moat. Prove the momentum. No fluff.
-- Market timing, founder-market fit, category creation potential
-- Unit economics that actually work
-
-VOCABULARY THAT RESONATES:
-- "defensible moat", "network effects", "land and expand"
-- "negative churn", "CAC payback", "LTV/CAC ratio"
-- "gross margin", "market timing", "founder-market fit"
-
-FORBIDDEN (every pitch deck says this):
-- "disruptive", "revolutionary", "game-changing", "Uber for X"
-
-EMOTIONAL CORE: Fear of missing the next big thing. Pattern recognition. Return potential.
-""",
-            "field_crew": """VALUE FRAMING: EASE (Simplicity) - AMPLIFIED
-
-BUDDY ON THE JOBSITE:
-- No corporate BS. Just show me it works.
-- Less hassle. Less paperwork. Get home on time.
-- One tap. Done. Works even offline.
+COLD OUTREACH TOOLKIT:
+- Lead with the pain. Follow with the proof.
+- One stat, one visual, one CTA.
+- Make it impossible to ignore.
+- "3 of your competitors switched last quarter."
 
 VOCABULARY THAT RESONATES:
-- "get it done", "no BS", "works offline", "one tap"
-- "no training needed", "my truck", "the job"
-- "clock out on time", "just works"
+- "quick win", "proof of concept", "live demo"
+- "pain point", "before/after", "case study"
+- "limited pilot", "no commitment", "see it in action"
 
-FORBIDDEN (sounds like office people):
-- "optimize", "leverage", "utilize", "streamline"
-- "stakeholder", "implementation", "enterprise", "scalable"
+FORBIDDEN (sounds like spam):
+- "touching base", "circling back", "just checking in"
 
-EMOTIONAL CORE: Make my day easier. Keep it simple. Let me get home on time.
+EMOTIONAL CORE: Urgency and curiosity. Pattern interrupt. Prove value fast.
 """,
         }
-        return value_angles.get(audience, value_angles["c_suite"])
+        return value_angles.get(audience, value_angles["cto"])
 
     def _build_language_guidelines_minimal(self, audience: str) -> str:
         """
@@ -1481,20 +1483,26 @@ EMOTIONAL CORE: Make my day easier. Keep it simple. Let me get home on time.
         forbidden = persona.get("forbidden_phrases", [])
         default_style = persona.get("default_visual_style", "polished")
 
-        # Field Crew: Super simple, 5th grade vocabulary
-        if audience == "field_crew":
-            style = persona.get("infographic_style", {})
-            language_rules = style.get('language_rules', ['Use 5th grade vocabulary'])[:3]
+        # AV Integrator: Reliability and ease of installation
+        if audience == "av_integrator":
             return f"""FOR: {title}
 VOICE: {voice_tone}
-VALUE ANGLE: EASE - show how this makes the job easier (no ROI/savings talk)
-VISUAL STYLE: {default_style} (hand-drawn, approachable, no corporate feel)
-DESIGN: {style.get('design', 'Simple icons, big text, minimal words')}
-LANGUAGE: {'; '.join(language_rules)}
+VALUE ANGLE: EASE - show reliability, simple installs, fewer truck rolls
+VISUAL STYLE: {default_style} (clean technical, rack-mount aesthetic)
+DESIGN: Before/after install comparison, spec highlights, compatibility callouts
 AVOID WORDS: {', '.join(forbidden[:5])}"""
 
-        # C-Suite: Data and numbers focus
-        if audience == "c_suite":
+        # IT Director: Management and security focus
+        if audience == "it_director":
+            return f"""FOR: {title}
+VOICE: {voice_tone}
+VALUE ANGLE: COI - the cost of unmanaged AV, support tickets, security gaps
+VISUAL STYLE: {default_style} (dashboard aesthetic, IT management feel)
+DESIGN: Network diagrams, management views, campus-wide deployment visuals
+AVOID WORDS: {', '.join(forbidden[:5])}"""
+
+        # CTO: Data and ROI focus
+        if audience == "cto":
             return f"""FOR: {title}
 VOICE: {voice_tone}
 VALUE ANGLE: ROI - show the math, metrics, and return on investment
@@ -1502,32 +1510,23 @@ VISUAL STYLE: {default_style} (charts, graphs, numbers prominent)
 DESIGN: Clean data visualization, McKinsey/BCG aesthetic, executive summary format
 AVOID WORDS: {', '.join(forbidden[:5])}"""
 
-        # Business Owner: Emotional pain→solution story
-        if audience == "business_owner":
+        # Reseller: Revenue opportunity
+        if audience == "reseller":
             return f"""FOR: {title}
 VOICE: {voice_tone}
-VALUE ANGLE: COI (Cost of Inaction) - emphasize what they LOSE by not acting
-VISUAL STYLE: {default_style} (modern SaaS, Stripe/Linear quality)
-DESIGN: Emotional hook, pain → solution narrative, relatable founder energy
+VALUE ANGLE: ROI - margin opportunity, competitive displacement, recurring revenue
+VISUAL STYLE: {default_style} (professional partner materials, co-brandable)
+DESIGN: Product comparison, margin highlights, partner program benefits
 AVOID WORDS: {', '.join(forbidden[:5])}"""
 
-        # BTL Champion: Day-in-life practical benefits
-        if audience == "btl_champion":
+        # BDR: Cold outreach urgency
+        if audience == "bdr":
             return f"""FOR: {title}
 VOICE: {voice_tone}
-VALUE ANGLE: COI - the daily cost of not having this, reduce daily frustration
-VISUAL STYLE: {default_style} (professional infographic, shareable internally)
-DESIGN: Day-in-life scenarios, practical benefits, before/after comparison
-AVOID WORDS: {', '.join(forbidden[:5])}"""
-
-        # VC/Investor: Investment thesis format
-        if audience == "top_tier_vc":
-            return f"""FOR: {title}
-VOICE: {voice_tone}
-VALUE ANGLE: ROI - market opportunity, defensibility, return profile
-VISUAL STYLE: {default_style} (bold, memorable pitch deck slide)
-DESIGN: Investment thesis format, show the moat, prove momentum with data
-AVOID WORDS: {', '.join(forbidden[:5])}, book a demo, contact sales, free trial"""
+VALUE ANGLE: URGENCY - pattern interrupt, quick proof of value, one clear CTA
+VISUAL STYLE: {default_style} (bold, shareable, email-attachment ready)
+DESIGN: Pain→solution narrative, one compelling stat, clear next step
+AVOID WORDS: {', '.join(forbidden[:5])}, touching base, circling back"""
 
         # Default fallback
         return f"""FOR: {title}

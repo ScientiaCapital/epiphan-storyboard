@@ -1,6 +1,7 @@
 # Environment and secrets
 .env
 .env.local
+.env.production
 .env.*.local
 
 # Python
@@ -14,18 +15,18 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+*.egg
 
-# RunPod
-runpod.toml
+# Virtual environments
+.venv/
+venv/
+env/
 
 # Testing
-test/*
 .pytest_cache/
 .coverage
 htmlcov/
-
-# vLLM
-vllm-base/vllm-*
+.mypy_cache/
 
 # OS
 .DS_Store
@@ -36,6 +37,7 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+*~
 
 # Supabase
 supabase/.temp/
@@ -48,8 +50,8 @@ supabase/.branches/
 *.log
 logs/
 
+# Vercel
+.vercel
+
 # Git Worktrees
 .worktrees/
-.vercel
-CLAUDE.md
-LICENSE.md

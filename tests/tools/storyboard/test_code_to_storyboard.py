@@ -81,9 +81,9 @@ class TestCodeToStoryboardParameters:
         tool = CodeToStoryboardTool()
         params = tool.definition.parameters["properties"]
         assert "audience" in params
-        assert "business_owner" in params["audience"]["enum"]
-        assert "c_suite" in params["audience"]["enum"]
-        assert "btl_champion" in params["audience"]["enum"]
+        assert "av_integrator" in params["audience"]["enum"]
+        assert "cto" in params["audience"]["enum"]
+        assert "bdr" in params["audience"]["enum"]
 
     def test_accepts_icp_preset_parameter(self):
         """Tool should accept icp_preset parameter."""
@@ -191,14 +191,14 @@ class TestCodeToStoryboardRun:
             "file_content": "def track_job(): return True",
             "file_name": "tracker.py",
             "stage": "preview",
-            "audience": "c_suite",
+            "audience": "cto",
         })
 
         assert result.success is True
         assert "storyboard_png" in result.result
         assert "understanding" in result.result
         assert result.result["stage"] == "preview"
-        assert result.result["audience"] == "c_suite"
+        assert result.result["audience"] == "cto"
 
     @pytest.mark.asyncio
     async def test_custom_headline_override(self):

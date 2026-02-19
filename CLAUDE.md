@@ -1,0 +1,40 @@
+# Epiphan Storyboard
+
+## Identity
+- Fork of Conductor AI, rebranded for Epiphan Video
+- Owner: THK Enterprises LLC
+- Deployed on Vercel
+
+## Dev Commands
+- `uvicorn src.api:app --reload` — Run dev server
+- `python -m pytest tests/ -v` — Run tests
+- `python -m mypy src/ --ignore-missing-imports` — Type check
+- `ruff check src/` — Lint
+- `ruff format src/` — Format
+
+## Code Conventions
+- Python 3.13+, async/await throughout
+- Pydantic v2 for all schemas
+- Type hints required on all functions
+- FastAPI routers in src/routers/
+- Agent logic in src/router/ (classifier + chains)
+- Tools in src/tools/ (storyboard, recording, video)
+
+## Key Architecture
+- src/api.py — FastAPI app entry point
+- src/tools/storyboard/ — Storyboard generation (Gemini Flash)
+- src/tools/storyboard/epiphan_presets.py — ICP presets and personas
+- src/router/ — Agent router (classification + chain execution)
+- src/knowledge/ — Knowledge brain (learning pipeline)
+- src/connectors/ — Data connectors (Gong, Fireflies, Close, etc.)
+- src/billing/ — Stripe billing integration
+
+## Epiphan Context
+- Products: Pearl Mini, Pearl Nano, Pearl Nexus, EC20 PTZ
+- Verticals: Higher Ed, K-12, Houses of Worship, Corporate, Healthcare
+- Personas: AV Integrator, IT Director, CTO, Reseller, BDR
+
+## Rules
+- NO OpenAI — use Anthropic, Google Gemini, or OpenRouter only
+- NO Coperniq references — this is an Epiphan product
+- All storyboard content must use epiphan_presets.py ICP

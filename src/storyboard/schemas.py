@@ -50,8 +50,8 @@ class CodeStoryboardRequest(BaseModel):
         "preview",
         description="Storyboard stage for BDR cadence",
     )
-    audience: Literal["business_owner", "c_suite", "btl_champion"] = Field(
-        "c_suite",
+    audience: Literal["av_integrator", "it_director", "cto", "reseller", "bdr"] = Field(
+        "cto",
         description="Target audience persona",
     )
     custom_headline: str | None = Field(
@@ -80,8 +80,8 @@ class RoadmapStoryboardRequest(BaseModel):
         "epiphan_av",
         description="ICP preset to use",
     )
-    audience: Literal["business_owner", "c_suite", "btl_champion"] = Field(
-        "c_suite",
+    audience: Literal["av_integrator", "it_director", "cto", "reseller", "bdr"] = Field(
+        "cto",
         description="Target audience persona",
     )
     custom_headline: str | None = Field(

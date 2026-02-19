@@ -52,7 +52,7 @@ class RoadmapToStoryboardTool(BaseTool):
         result = await tool.run({
             "image_data": base64_screenshot,
             "icp_preset": "epiphan_av",
-            "audience": "c_suite",
+            "audience": "cto",
         })
         # result.result["storyboard_png"] = base64 PNG teaser
     """
@@ -107,9 +107,9 @@ class RoadmapToStoryboardTool(BaseTool):
                     },
                     "audience": {
                         "type": "string",
-                        "enum": ["business_owner", "c_suite", "btl_champion"],
+                        "enum": ["av_integrator", "it_director", "cto", "reseller", "bdr"],
                         "description": "Target audience persona",
-                        "default": "c_suite",
+                        "default": "cto",
                     },
                     "custom_headline": {
                         "type": "string",
@@ -169,7 +169,7 @@ class RoadmapToStoryboardTool(BaseTool):
 
             # Get configuration
             icp_preset_name = arguments.get("icp_preset", "epiphan_av")
-            audience = arguments.get("audience", "c_suite")
+            audience = arguments.get("audience", "cto")
             custom_headline = arguments.get("custom_headline")
             sanitize_ip = arguments.get("sanitize_ip", True)
 

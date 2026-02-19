@@ -38,24 +38,27 @@ from src.tools.base import BaseTool, ToolCategory, ToolDefinition, ToolResult
 
 class VideoProvider(str, Enum):
     """Supported video generation providers."""
-    KLING = "kling"           # Kuaishou - Best value
-    HAILUO = "hailuo"         # MiniMax - Fast
-    RUNWAY = "runway"         # Gen-3 Alpha - High quality
-    PIKA = "pika"             # Quick iterations
-    LUMA = "luma"             # Dream Machine - Realistic
-    MINIMAX = "minimax"       # Alias for HaiLuo
+
+    KLING = "kling"  # Kuaishou - Best value
+    HAILUO = "hailuo"  # MiniMax - Fast
+    RUNWAY = "runway"  # Gen-3 Alpha - High quality
+    PIKA = "pika"  # Quick iterations
+    LUMA = "luma"  # Dream Machine - Realistic
+    MINIMAX = "minimax"  # Alias for HaiLuo
 
 
 class VideoAspectRatio(str, Enum):
     """Common aspect ratios for video generation."""
-    LANDSCAPE_16_9 = "16:9"   # Standard widescreen (1920x1080)
-    PORTRAIT_9_16 = "9:16"    # Vertical/mobile (1080x1920)
-    SQUARE_1_1 = "1:1"        # Social media square
-    CINEMATIC_21_9 = "21:9"   # Ultra-wide cinematic
+
+    LANDSCAPE_16_9 = "16:9"  # Standard widescreen (1920x1080)
+    PORTRAIT_9_16 = "9:16"  # Vertical/mobile (1080x1920)
+    SQUARE_1_1 = "1:1"  # Social media square
+    CINEMATIC_21_9 = "21:9"  # Ultra-wide cinematic
 
 
 class VideoStyle(str, Enum):
     """Video generation styles."""
+
     REALISTIC = "realistic"
     CINEMATIC = "cinematic"
     PROFESSIONAL = "professional"
@@ -66,6 +69,7 @@ class VideoStyle(str, Enum):
 @dataclass
 class ProviderConfig:
     """Configuration for a video provider."""
+
     name: str
     api_base: str
     env_key: str
@@ -185,7 +189,9 @@ class VideoGenerationRequest(BaseModel):
 class VideoGenerationResult(BaseModel):
     """Output schema for video generation."""
 
-    video_url: str = Field(..., description="URL to download/stream the generated video")
+    video_url: str = Field(
+        ..., description="URL to download/stream the generated video"
+    )
     thumbnail_url: str | None = Field(None, description="Video thumbnail URL")
     duration_seconds: float = Field(..., description="Actual video duration")
     resolution: str = Field(..., description="Video resolution (e.g., 1920x1080)")
@@ -193,7 +199,9 @@ class VideoGenerationResult(BaseModel):
     generation_id: str = Field(..., description="Unique ID for this generation")
     estimated_cost_usd: float = Field(..., description="Estimated cost in USD")
     generation_time_seconds: float = Field(..., description="Time taken to generate")
-    status: str = Field(..., description="Generation status (completed, processing, failed)")
+    status: str = Field(
+        ..., description="Generation status (completed, processing, failed)"
+    )
 
 
 class VideoGeneratorTool(BaseTool):
@@ -250,7 +258,14 @@ class VideoGeneratorTool(BaseTool):
                     "provider": {
                         "type": "string",
                         "description": "Video generation provider",
-                        "enum": ["kling", "hailuo", "minimax", "runway", "pika", "luma"],
+                        "enum": [
+                            "kling",
+                            "hailuo",
+                            "minimax",
+                            "runway",
+                            "pika",
+                            "luma",
+                        ],
                         "default": "kling",
                     },
                     "duration_seconds": {
@@ -269,7 +284,13 @@ class VideoGeneratorTool(BaseTool):
                     "style": {
                         "type": "string",
                         "description": "Visual style",
-                        "enum": ["realistic", "cinematic", "professional", "animated", "documentary"],
+                        "enum": [
+                            "realistic",
+                            "cinematic",
+                            "professional",
+                            "animated",
+                            "documentary",
+                        ],
                         "default": "professional",
                     },
                     "reference_image_url": {
@@ -571,7 +592,9 @@ class VideoGeneratorTool(BaseTool):
                 if status in ("completed", "succeeded", "done"):
                     return self._format_result(result, request, VideoProvider.KLING)
                 elif status in ("failed", "error"):
-                    raise ValueError(f"Generation failed: {result.get('error', 'Unknown error')}")
+                    raise ValueError(
+                        f"Generation failed: {result.get('error', 'Unknown error')}"
+                    )
 
                 await asyncio.sleep(self.POLL_INTERVAL_SECONDS)
 
@@ -604,7 +627,9 @@ class VideoGeneratorTool(BaseTool):
                 if status == "Success":
                     return self._format_result(result, request, VideoProvider.HAILUO)
                 elif status == "Fail":
-                    raise ValueError(f"Generation failed: {result.get('error', 'Unknown')}")
+                    raise ValueError(
+                        f"Generation failed: {result.get('error', 'Unknown')}"
+                    )
 
                 await asyncio.sleep(self.POLL_INTERVAL_SECONDS)
 
@@ -639,7 +664,9 @@ class VideoGeneratorTool(BaseTool):
                 if status == "SUCCEEDED":
                     return self._format_result(result, request, VideoProvider.RUNWAY)
                 elif status == "FAILED":
-                    raise ValueError(f"Runway generation failed: {result.get('failure')}")
+                    raise ValueError(
+                        f"Runway generation failed: {result.get('failure')}"
+                    )
 
                 await asyncio.sleep(self.POLL_INTERVAL_SECONDS)
 
@@ -671,7 +698,9 @@ class VideoGeneratorTool(BaseTool):
                 if state == "completed":
                     return self._format_result(result, request, VideoProvider.LUMA)
                 elif state == "failed":
-                    raise ValueError(f"Luma generation failed: {result.get('failure_reason')}")
+                    raise ValueError(
+                        f"Luma generation failed: {result.get('failure_reason')}"
+                    )
 
                 await asyncio.sleep(self.POLL_INTERVAL_SECONDS)
 
@@ -688,12 +717,13 @@ class VideoGeneratorTool(BaseTool):
 
         # Extract video URL based on provider response structure
         video_url = (
-            api_result.get("video_url") or
-            api_result.get("output", [{}])[0].get("url") if isinstance(api_result.get("output"), list) else None or
-            api_result.get("assets", {}).get("video") or
-            api_result.get("file_id") or
-            api_result.get("video", {}).get("url") or
-            ""
+            api_result.get("video_url") or api_result.get("output", [{}])[0].get("url")
+            if isinstance(api_result.get("output"), list)
+            else None
+            or api_result.get("assets", {}).get("video")
+            or api_result.get("file_id")
+            or api_result.get("video", {}).get("url")
+            or ""
         )
 
         # Handle nested video URL structures
@@ -716,11 +746,14 @@ class VideoGeneratorTool(BaseTool):
 
         return {
             "video_url": video_url,
-            "thumbnail_url": api_result.get("thumbnail") or api_result.get("thumbnail_url"),
+            "thumbnail_url": api_result.get("thumbnail")
+            or api_result.get("thumbnail_url"),
             "duration_seconds": request.duration_seconds,
             "resolution": resolution,
             "provider": config.name,
-            "generation_id": api_result.get("id") or api_result.get("task_id") or "unknown",
+            "generation_id": api_result.get("id")
+            or api_result.get("task_id")
+            or "unknown",
             "estimated_cost_usd": round(estimated_cost, 4),
             "status": "completed",
         }
@@ -826,7 +859,6 @@ class VideoGeneratorTool(BaseTool):
         try:
             timeout = aiohttp.ClientTimeout(total=600)  # 10 min timeout for generation
             async with aiohttp.ClientSession(timeout=timeout) as session:
-
                 if provider == VideoProvider.KLING:
                     result = await self._generate_with_kling(session, request, api_key)
                 elif provider in (VideoProvider.HAILUO, VideoProvider.MINIMAX):
@@ -911,8 +943,14 @@ class BatchVideoGeneratorTool(BaseTool):
                         "items": {
                             "type": "object",
                             "properties": {
-                                "name": {"type": "string", "description": "Scene name/ID"},
-                                "prompt": {"type": "string", "description": "Video prompt"},
+                                "name": {
+                                    "type": "string",
+                                    "description": "Scene name/ID",
+                                },
+                                "prompt": {
+                                    "type": "string",
+                                    "description": "Video prompt",
+                                },
                                 "duration_seconds": {"type": "integer", "default": 5},
                             },
                             "required": ["name", "prompt"],
@@ -989,24 +1027,32 @@ class BatchVideoGeneratorTool(BaseTool):
 
         for i, (scene, result) in enumerate(zip(scenes, results, strict=True)):
             if isinstance(result, Exception):
-                batch_results.append({
-                    "scene_name": scene.get("name", f"scene_{i}"),
-                    "success": False,
-                    "error": str(result),
-                })
+                batch_results.append(
+                    {
+                        "scene_name": scene.get("name", f"scene_{i}"),
+                        "success": False,
+                        "error": str(result),
+                    }
+                )
             elif isinstance(result, ToolResult):
                 result_data = result.result or {}
                 if result.success:
                     success_count += 1
                     total_cost += result_data.get("estimated_cost_usd", 0)
 
-                batch_results.append({
-                    "scene_name": scene.get("name", f"scene_{i}"),
-                    "success": result.success,
-                    "video_url": result_data.get("video_url") if result.success else None,
-                    "error": result.error if not result.success else None,
-                    "estimated_cost_usd": result_data.get("estimated_cost_usd", 0) if result.success else 0,
-                })
+                batch_results.append(
+                    {
+                        "scene_name": scene.get("name", f"scene_{i}"),
+                        "success": result.success,
+                        "video_url": result_data.get("video_url")
+                        if result.success
+                        else None,
+                        "error": result.error if not result.success else None,
+                        "estimated_cost_usd": result_data.get("estimated_cost_usd", 0)
+                        if result.success
+                        else 0,
+                    }
+                )
 
         end_time = perf_counter()
 

@@ -41,8 +41,8 @@ from src.knowledge.base import (
     SourceType,
 )
 from src.knowledge.cache import KnowledgeCache
-from src.knowledge.extraction import KnowledgeExtractor
 from src.knowledge.close_crm import CloseCRMIngester
+from src.knowledge.extraction import KnowledgeExtractor
 from src.knowledge.service import KnowledgeIngestionService
 
 __all__ = [

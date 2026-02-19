@@ -18,7 +18,6 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
 import httpx
@@ -52,8 +51,8 @@ class CloseCRMIngester:
 
     def __init__(
         self,
-        config: Optional[CloseCRMConfig] = None,
-        extractor: Optional[KnowledgeExtractor] = None,
+        config: CloseCRMConfig | None = None,
+        extractor: KnowledgeExtractor | None = None,
         supabase_client=None,
     ):
         self.config = config or CloseCRMConfig()
@@ -266,7 +265,9 @@ class CloseCRMIngester:
             source_title=f"Call with {call.get('contact_name', 'Unknown')}",
             source_date=datetime.fromisoformat(
                 call.get("date_created", "").replace("Z", "+00:00")
-            ) if call.get("date_created") else None,
+            )
+            if call.get("date_created")
+            else None,
             duration_seconds=call.get("duration"),
             participant_names=participants,
             raw_content=transcript,
@@ -293,7 +294,9 @@ class CloseCRMIngester:
             source_title=f"Note: {content[:50]}...",
             source_date=datetime.fromisoformat(
                 note.get("date_created", "").replace("Z", "+00:00")
-            ) if note.get("date_created") else None,
+            )
+            if note.get("date_created")
+            else None,
             participant_names=participants,
             raw_content=content,
             content_hash=content_hash,
@@ -305,11 +308,13 @@ class CloseCRMIngester:
             return False
 
         try:
-            response = self.supabase.table("knowledge_sources") \
-                .select("id") \
-                .eq("content_hash", content_hash) \
-                .limit(1) \
+            response = (
+                self.supabase.table("knowledge_sources")
+                .select("id")
+                .eq("content_hash", content_hash)
+                .limit(1)
                 .execute()
+            )
             return len(response.data) > 0
         except Exception:
             return False
@@ -321,7 +326,9 @@ class CloseCRMIngester:
             "external_id": source.external_id,
             "external_url": source.external_url,
             "source_title": source.source_title,
-            "source_date": source.source_date.isoformat() if source.source_date else None,
+            "source_date": source.source_date.isoformat()
+            if source.source_date
+            else None,
             "duration_seconds": source.duration_seconds,
             "participant_names": source.participant_names,
             "raw_content": source.raw_content,

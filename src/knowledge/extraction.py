@@ -11,7 +11,6 @@ import os
 import re
 from dataclasses import dataclass
 from time import perf_counter
-from typing import Optional
 
 import httpx
 
@@ -94,13 +93,13 @@ class KnowledgeExtractor:
     Extracts knowledge from raw content using LLMs.
     """
 
-    def __init__(self, config: Optional[ExtractorConfig] = None):
+    def __init__(self, config: ExtractorConfig | None = None):
         self.config = config or ExtractorConfig()
 
     async def extract(
         self,
         source: KnowledgeSource,
-        content: Optional[str] = None,
+        content: str | None = None,
         additional_context: str = "",
     ) -> ExtractionResult:
         """
@@ -134,7 +133,9 @@ class KnowledgeExtractor:
             context_parts.append(f"Participants: {', '.join(source.participant_names)}")
         if additional_context:
             context_parts.append(additional_context)
-        context_str = " | ".join(context_parts) if context_parts else "No additional context"
+        context_str = (
+            " | ".join(context_parts) if context_parts else "No additional context"
+        )
 
         # Build prompt
         prompt = EXTRACTION_PROMPT.format(
@@ -274,17 +275,17 @@ class KnowledgeExtractor:
             json_str = json_str + '"'
 
         # Add missing closing brackets
-        open_brackets = json_str.count('[') - json_str.count(']')
+        open_brackets = json_str.count("[") - json_str.count("]")
         if open_brackets > 0:
-            json_str = json_str + ']' * open_brackets
+            json_str = json_str + "]" * open_brackets
 
         # Add missing closing braces
-        open_braces = json_str.count('{') - json_str.count('}')
+        open_braces = json_str.count("{") - json_str.count("}")
         if open_braces > 0:
-            json_str = json_str + '}' * open_braces
+            json_str = json_str + "}" * open_braces
 
         # Remove trailing commas
-        json_str = re.sub(r',\s*}', '}', json_str)
-        json_str = re.sub(r',\s*]', ']', json_str)
+        json_str = re.sub(r",\s*}", "}", json_str)
+        json_str = re.sub(r",\s*]", "]", json_str)
 
         return json_str

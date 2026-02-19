@@ -65,30 +65,36 @@ class TestVideoScriptGeneratorRun:
     async def test_missing_prospect_name(self):
         """Test error when prospect_name is missing."""
         tool = VideoScriptGeneratorTool()
-        result = await tool.run({
-            "company_name": "SunPower Solar",
-            "industry": "solar",
-        })
+        result = await tool.run(
+            {
+                "company_name": "SunPower Solar",
+                "industry": "solar",
+            }
+        )
         assert result.success is False
 
     @pytest.mark.asyncio
     async def test_missing_company_name(self):
         """Test error when company_name is missing."""
         tool = VideoScriptGeneratorTool()
-        result = await tool.run({
-            "prospect_name": "John Smith",
-            "industry": "solar",
-        })
+        result = await tool.run(
+            {
+                "prospect_name": "John Smith",
+                "industry": "solar",
+            }
+        )
         assert result.success is False
 
     @pytest.mark.asyncio
     async def test_missing_industry(self):
         """Test error when industry is missing."""
         tool = VideoScriptGeneratorTool()
-        result = await tool.run({
-            "prospect_name": "John Smith",
-            "company_name": "SunPower Solar",
-        })
+        result = await tool.run(
+            {
+                "prospect_name": "John Smith",
+                "company_name": "SunPower Solar",
+            }
+        )
         assert result.success is False
 
 

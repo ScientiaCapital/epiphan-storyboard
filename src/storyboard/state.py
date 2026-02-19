@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timezone
 
 import redis.asyncio as aioredis
 
@@ -135,7 +134,9 @@ class StoryboardJobManager:
 
         return job
 
-    async def get_job(self, job_id: str, org_id: str | None = None) -> StoryboardJob | None:
+    async def get_job(
+        self, job_id: str, org_id: str | None = None
+    ) -> StoryboardJob | None:
         """Get job from Redis (fast path) or Supabase (cold storage).
 
         Args:
@@ -183,7 +184,9 @@ class StoryboardJobManager:
 
         except Exception as e:
             # Job not found in Supabase either
-            logger.debug(f"[STORYBOARD_JOB_MANAGER] Job {job_id} not found in Supabase: {e}")
+            logger.debug(
+                f"[STORYBOARD_JOB_MANAGER] Job {job_id} not found in Supabase: {e}"
+            )
             return None
 
         return None

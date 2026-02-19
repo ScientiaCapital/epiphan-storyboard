@@ -13,15 +13,13 @@ Architecture:
 
 from __future__ import annotations
 
-import json
 import os
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 
 import redis.asyncio as aioredis
-from supabase import create_client, Client
 
 from src.agents.schemas import AgentSession, AgentStep, SessionStatus
+from supabase import Client, create_client
 
 
 class StateManager:
@@ -56,9 +54,7 @@ class StateManager:
             )
 
         self._redis = aioredis.from_url(
-            self._redis_url,
-            encoding="utf-8",
-            decode_responses=True
+            self._redis_url, encoding="utf-8", decode_responses=True
         )
 
         # Supabase setup
@@ -108,11 +104,7 @@ class StateManager:
         session_data = session.model_dump_json()
         session_key = self._session_key(session.session_id)
 
-        await self._redis.setex(
-            session_key,
-            self._session_ttl,
-            session_data
-        )
+        await self._redis.setex(session_key, self._session_ttl, session_data)
 
         return session
 
@@ -138,9 +130,13 @@ class StateManager:
 
         # Fallback to Supabase (cold storage)
         try:
-            response = self._supabase.table("agent_sessions").select("*").eq(
-                "session_id", session_id
-            ).single().execute()
+            response = (
+                self._supabase.table("agent_sessions")
+                .select("*")
+                .eq("session_id", session_id)
+                .single()
+                .execute()
+            )
 
             if response.data:
                 # Convert Supabase response to AgentSession
@@ -148,21 +144,27 @@ class StateManager:
                 session_dict = response.data
 
                 # Fetch steps from agent_steps table
-                steps_response = self._supabase.table("agent_steps").select("*").eq(
-                    "session_id", session_id
-                ).order("created_at").execute()
+                steps_response = (
+                    self._supabase.table("agent_steps")
+                    .select("*")
+                    .eq("session_id", session_id)
+                    .order("created_at")
+                    .execute()
+                )
 
                 # Convert steps data to AgentStep objects
                 steps = []
                 if steps_response.data:
                     for step_data in steps_response.data:
-                        steps.append(AgentStep(
-                            thought=step_data["thought"],
-                            action=step_data.get("action"),
-                            observation=step_data.get("observation"),
-                            is_final=step_data.get("is_final", False),
-                            final_answer=step_data.get("final_answer"),
-                        ))
+                        steps.append(
+                            AgentStep(
+                                thought=step_data["thought"],
+                                action=step_data.get("action"),
+                                observation=step_data.get("observation"),
+                                is_final=step_data.get("is_final", False),
+                                final_answer=step_data.get("final_answer"),
+                            )
+                        )
 
                 session_dict["steps"] = steps
                 return AgentSession.model_validate(session_dict)
@@ -182,16 +184,12 @@ class StateManager:
         Raises:
             redis.RedisError: If Redis operations fail
         """
-        session.updated_at = datetime.now(timezone.utc)
+        session.updated_at = datetime.now(UTC)
         session_data = session.model_dump_json()
         session_key = self._session_key(session.session_id)
 
         # Update with fresh TTL
-        await self._redis.setex(
-            session_key,
-            self._session_ttl,
-            session_data
-        )
+        await self._redis.setex(session_key, self._session_ttl, session_data)
 
     async def add_step(self, session_id: str, step: AgentStep) -> None:
         """Append a step to the session's step list in Redis.

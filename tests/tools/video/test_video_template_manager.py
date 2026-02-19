@@ -108,9 +108,11 @@ class TestVideoTemplateManagerRun:
     async def test_list_templates_operation(self):
         """Test listing available templates."""
         tool = VideoTemplateManagerTool()
-        result = await tool.run({
-            "operation": "list_templates",
-        })
+        result = await tool.run(
+            {
+                "operation": "list_templates",
+            }
+        )
 
         assert result.success is True
         assert "templates" in result.result or "industries" in result.result
@@ -119,12 +121,14 @@ class TestVideoTemplateManagerRun:
     async def test_customize_template_for_industry(self):
         """Test customizing template for specific industry."""
         tool = VideoTemplateManagerTool()
-        result = await tool.run({
-            "operation": "customize_template",
-            "industry": "solar",
-            "product_name": "SolarMax CRM",
-            "prospect_segment": "residential installers",
-        })
+        result = await tool.run(
+            {
+                "operation": "customize_template",
+                "industry": "solar",
+                "product_name": "SolarMax CRM",
+                "prospect_segment": "residential installers",
+            }
+        )
 
         # customize_template returns success with template_id and template
         assert result.success is True
@@ -137,20 +141,24 @@ class TestVideoTemplateManagerRun:
         tool = VideoTemplateManagerTool()
 
         # First create a template
-        create_result = await tool.run({
-            "operation": "customize_template",
-            "industry": "hvac",
-            "product_name": "TestCRM",
-            "prospect_segment": "contractors",
-        })
+        create_result = await tool.run(
+            {
+                "operation": "customize_template",
+                "industry": "hvac",
+                "product_name": "TestCRM",
+                "prospect_segment": "contractors",
+            }
+        )
         assert create_result.success is True
         template_id = create_result.result["template_id"]
 
         # Now retrieve it
-        get_result = await tool.run({
-            "operation": "get_template",
-            "template_id": template_id,
-        })
+        get_result = await tool.run(
+            {
+                "operation": "get_template",
+                "template_id": template_id,
+            }
+        )
 
         assert get_result.success is True
         assert "template" in get_result.result
@@ -159,9 +167,11 @@ class TestVideoTemplateManagerRun:
     async def test_invalid_operation(self):
         """Test error for invalid operation."""
         tool = VideoTemplateManagerTool()
-        result = await tool.run({
-            "operation": "invalid_operation",
-        })
+        result = await tool.run(
+            {
+                "operation": "invalid_operation",
+            }
+        )
 
         assert result.success is False
 

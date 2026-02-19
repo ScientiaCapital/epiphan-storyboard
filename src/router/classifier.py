@@ -234,13 +234,9 @@ class TaskClassifier:
         self._http_client: httpx.AsyncClient | None = None
 
         # LLM model for classification (NO OpenAI)
-        self.model = os.getenv(
-            "CLASSIFIER_LLM_MODEL", "deepseek/deepseek-chat-v3"
-        )
+        self.model = os.getenv("CLASSIFIER_LLM_MODEL", "deepseek/deepseek-chat-v3")
 
-    async def classify(
-        self, request: ClassificationRequest
-    ) -> ClassificationResult:
+    async def classify(self, request: ClassificationRequest) -> ClassificationResult:
         """Classify a task into a task type.
 
         Uses 3-stage classification:
@@ -302,9 +298,7 @@ class TaskClassifier:
             recommended_model=self._get_model_recommendation(TaskType.KNOWLEDGE),
         )
 
-    def _pattern_match(
-        self, text: str
-    ) -> tuple[TaskType, float, str] | None:
+    def _pattern_match(self, text: str) -> tuple[TaskType, float, str] | None:
         """Stage 1: Fast pattern matching using regex.
 
         Returns:
@@ -441,9 +435,7 @@ class TaskClassifier:
             model = mapping.get("model", "deepseek/deepseek-chat-v3")
             return str(model) if model else "deepseek/deepseek-chat-v3"
 
-    def _extract_params(
-        self, text: str, task_type: TaskType
-    ) -> dict[str, Any]:
+    def _extract_params(self, text: str, task_type: TaskType) -> dict[str, Any]:
         """Extract relevant parameters from the query.
 
         Returns:

@@ -14,11 +14,10 @@ from pathlib import Path
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Response
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from src.tools.storyboard.unified_storyboard import UnifiedStoryboardTool
 from src.tools.storyboard.storage import get_storage
+from src.tools.storyboard.unified_storyboard import UnifiedStoryboardTool
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +136,16 @@ class GenerateRequest(BaseModel):
         "infographic",
         description="Output format: 'infographic' (horizontal 16:9) or 'storyboard' (vertical 9:16)",
     )
-    visual_style: Literal["clean", "polished", "photo_realistic", "minimalist", "isometric", "sketch", "data_viz", "bold"] = Field(
+    visual_style: Literal[
+        "clean",
+        "polished",
+        "photo_realistic",
+        "minimalist",
+        "isometric",
+        "sketch",
+        "data_viz",
+        "bold",
+    ] = Field(
         "polished",
         description="Visual style: 'clean', 'polished', 'photo_realistic', 'minimalist', 'isometric' (3D Stripe/Linear), 'sketch' (whiteboard), 'data_viz' (charts), 'bold' (Bauhaus)",
     )
@@ -295,7 +303,9 @@ async def get_example_code(name: str) -> ExampleCodeResponse:
     },
     summary="Generate storyboard from image or code",
 )
-async def generate_storyboard(request: GenerateRequest, response: Response) -> GenerateResponse:
+async def generate_storyboard(
+    request: GenerateRequest, response: Response
+) -> GenerateResponse:
     """
     Generate executive storyboard PNG from image or code.
 
@@ -346,7 +356,9 @@ async def generate_storyboard(request: GenerateRequest, response: Response) -> G
             # Use image as primary, text as supplementary context
             input_type = "image"
             supplementary_context = request.code.strip()
-            logger.info(f"[MIXED INPUT] Image ({image_count}) + text context ({len(supplementary_context)} chars)")
+            logger.info(
+                f"[MIXED INPUT] Image ({image_count}) + text context ({len(supplementary_context)} chars)"
+            )
         elif image_count > 0:
             input_type = "image"
         elif has_code:

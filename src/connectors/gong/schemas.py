@@ -43,12 +43,14 @@ class GongCall(BaseModel):
         # Parse parties
         parties = []
         for p in parties_data:
-            parties.append(GongParty(
-                id=p.get("id"),
-                name=p.get("name"),
-                email=p.get("emailAddress"),
-                role=p.get("affiliation"),
-            ))
+            parties.append(
+                GongParty(
+                    id=p.get("id"),
+                    name=p.get("name"),
+                    email=p.get("emailAddress"),
+                    role=p.get("affiliation"),
+                )
+            )
 
         return cls(
             metaData=metadata.get("id", ""),

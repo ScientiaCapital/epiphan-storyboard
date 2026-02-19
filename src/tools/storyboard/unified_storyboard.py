@@ -132,8 +132,14 @@ class UnifiedStoryboardTool(BaseTool):
                     "audience": {
                         "type": "string",
                         "enum": [
-                            "av_director", "ld_director", "sim_center_director", "court_admin",
-                            "corp_comms", "ehs_manager", "law_firm_it", "technical_director",
+                            "av_director",
+                            "ld_director",
+                            "sim_center_director",
+                            "court_admin",
+                            "corp_comms",
+                            "ehs_manager",
+                            "law_firm_it",
+                            "technical_director",
                         ],
                         "description": "Target audience persona",
                         "default": "av_director",
@@ -209,32 +215,63 @@ class UnifiedStoryboardTool(BaseTool):
         """
         # Code indicators (more = likely code)
         code_patterns = [
-            "def ", "class ", "function ", "import ", "from ",
-            "const ", "let ", "var ", "async ", "await ",
-            "return ", "if (", "for (", "while (",
-            "->", "=>", "self.", "this.",
-            "#!/", "# coding:", "# -*- coding",
+            "def ",
+            "class ",
+            "function ",
+            "import ",
+            "from ",
+            "const ",
+            "let ",
+            "var ",
+            "async ",
+            "await ",
+            "return ",
+            "if (",
+            "for (",
+            "while (",
+            "->",
+            "=>",
+            "self.",
+            "this.",
+            "#!/",
+            "# coding:",
+            "# -*- coding",
         ]
 
         # Transcript indicators (more = likely transcript)
         transcript_patterns = [
-            ": ", "Speaker", "said", "talked about",
-            "we discussed", "they mentioned", "the call",
-            "meeting", "demo", "presentation",
-            "thank you", "thanks for", "let me",
-            "I think", "we can", "going to",
-            ". And ", ". So ", ". But ",
+            ": ",
+            "Speaker",
+            "said",
+            "talked about",
+            "we discussed",
+            "they mentioned",
+            "the call",
+            "meeting",
+            "demo",
+            "presentation",
+            "thank you",
+            "thanks for",
+            "let me",
+            "I think",
+            "we can",
+            "going to",
+            ". And ",
+            ". So ",
+            ". But ",
         ]
 
         content_lower = content.lower()
         first_2000 = content_lower[:2000]  # Check start of content
 
         code_score = sum(1 for p in code_patterns if p.lower() in first_2000)
-        transcript_score = sum(1 for p in transcript_patterns if p.lower() in first_2000)
+        transcript_score = sum(
+            1 for p in transcript_patterns if p.lower() in first_2000
+        )
 
         # Check for speaker patterns like "Name:" at line starts
-        lines = content[:2000].split('\n')
-        speaker_lines = sum(1 for line in lines if ':' in line[:30] and line.strip())
+        lines = content[:2000].split("\n")
+        speaker_lines = sum(1 for line in lines if ":" in line[:30] and line.strip())
         if speaker_lines > 3:
             transcript_score += 3
 
@@ -242,7 +279,9 @@ class UnifiedStoryboardTool(BaseTool):
         if len(content) > 3000 and code_score < 3:
             transcript_score += 2
 
-        logger.info(f"[INPUT DETECT] code_score={code_score}, transcript_score={transcript_score}")
+        logger.info(
+            f"[INPUT DETECT] code_score={code_score}, transcript_score={transcript_score}"
+        )
 
         return transcript_score > code_score
 
@@ -339,9 +378,13 @@ class UnifiedStoryboardTool(BaseTool):
         audience = arguments.get("audience", "av_director")
         output_format = arguments.get("output_format", "infographic")
         visual_style = arguments.get("visual_style", "polished")
-        artist_style = arguments.get("artist_style")  # Optional: salvador_dali, monet, etc.
+        artist_style = arguments.get(
+            "artist_style"
+        )  # Optional: salvador_dali, monet, etc.
         open_browser = arguments.get("open_browser", True)
-        supplementary_context = arguments.get("supplementary_context")  # Optional text context for mixed input
+        supplementary_context = arguments.get(
+            "supplementary_context"
+        )  # Optional text context for mixed input
 
         # Handle multiple images (input can be a list of base64 strings)
         is_multi_image = isinstance(input_value, list)
@@ -350,7 +393,9 @@ class UnifiedStoryboardTool(BaseTool):
             # Detect input type (use first item if list)
             if is_multi_image:
                 input_type = self.detect_input_type(input_value[0])
-                logger.info(f"Detected input type: {input_type} (multi-image: {len(input_value)} images)")
+                logger.info(
+                    f"Detected input type: {input_type} (multi-image: {len(input_value)} images)"
+                )
             else:
                 input_type = self.detect_input_type(input_value)
                 logger.info(f"Detected input type: {input_type}")
@@ -392,7 +437,9 @@ class UnifiedStoryboardTool(BaseTool):
                             content.append(base64.b64decode(img_data.split(",")[1]))
                         else:
                             content.append(base64.b64decode(img_data))
-                    logger.info(f"Decoded {len(content)} images for multi-image processing")
+                    logger.info(
+                        f"Decoded {len(content)} images for multi-image processing"
+                    )
                 else:
                     if "," in input_value:
                         # Data URL format: data:image/png;base64,XXXX
@@ -421,12 +468,18 @@ class UnifiedStoryboardTool(BaseTool):
             persona = get_audience_persona(audience)
 
             # Stage 1: Understand the content
-            context_msg = f" with supplementary context ({len(supplementary_context)} chars)" if supplementary_context else ""
+            context_msg = (
+                f" with supplementary context ({len(supplementary_context)} chars)"
+                if supplementary_context
+                else ""
+            )
             logger.info(f"Stage 1: Understanding content...{context_msg}")
             if is_image:
                 if isinstance(content, list):
                     # Multiple images - understand all of them together
-                    logger.info(f"Understanding {len(content)} images together{context_msg}...")
+                    logger.info(
+                        f"Understanding {len(content)} images together{context_msg}..."
+                    )
                     understanding = await self.gemini_client.understand_multiple_images(
                         images_data=content,
                         icp_preset=icp,
@@ -445,7 +498,9 @@ class UnifiedStoryboardTool(BaseTool):
                 assert isinstance(content, str)
                 # Auto-detect: is this code or a transcript?
                 if self.is_transcript(content):
-                    logger.info("Detected TRANSCRIPT input - using transcript understanding")
+                    logger.info(
+                        "Detected TRANSCRIPT input - using transcript understanding"
+                    )
                     understanding = await self.gemini_client.understand_transcript(
                         transcript=content,
                         icp_preset=icp,
@@ -463,7 +518,9 @@ class UnifiedStoryboardTool(BaseTool):
 
             # Stage 2: Generate storyboard
             artist_msg = f", artist_style={artist_style}" if artist_style else ""
-            logger.info(f"Stage 2: Generating {output_format} ({visual_style}{artist_msg}) for audience={audience}...")
+            logger.info(
+                f"Stage 2: Generating {output_format} ({visual_style}{artist_msg}) for audience={audience}..."
+            )
             png_bytes = await self.gemini_client.generate_storyboard(
                 understanding=understanding,
                 icp_preset=icp,

@@ -20,14 +20,12 @@ Usage:
 
 from __future__ import annotations
 
-import asyncio
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
-from src.tools.base import BaseTool, ToolDefinition, ToolResult
 from src.agents.schemas import AgentSession, AgentStep, SessionStatus
+from src.tools.base import BaseTool, ToolDefinition, ToolResult
 
 
 class MockRegistry:
@@ -92,9 +90,7 @@ class MockRegistry:
         """
         return [tool.definition for tool in self._tools.values()]
 
-    def get_tools_for_llm(
-        self, tool_names: list[str] | None = None
-    ) -> list[dict]:
+    def get_tools_for_llm(self, tool_names: list[str] | None = None) -> list[dict]:
         """Get LLM-compatible schemas for tools.
 
         Args:
@@ -183,7 +179,7 @@ class MockStateManager:
         Args:
             session: Updated session object
         """
-        session.updated_at = datetime.now(timezone.utc)
+        session.updated_at = datetime.now(UTC)
         self._sessions[session.session_id] = session
 
     async def add_step(self, session_id: str, step: AgentStep) -> None:
@@ -292,7 +288,7 @@ class ToolTestBase:
             AssertionError: If result is not successful
         """
         assert result.success, f"Expected success but got error: {result.error}"
-        assert result.error is None, f"Success result should have no error"
+        assert result.error is None, "Success result should have no error"
 
         if expected_result is not None:
             assert result.result == expected_result, (

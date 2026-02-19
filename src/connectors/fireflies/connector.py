@@ -6,7 +6,6 @@ from src.connectors.base import (
     AuthType,
     BaseConnector,
     ConnectorInstance,
-    ConnectorStatus,
     ConnectorType,
     SyncResult,
 )
@@ -77,7 +76,9 @@ class FirefliesConnector(BaseConnector):
             async with FirefliesGraphQLClient(api_key) as client:
                 response = await client.get_transcripts(limit=1)
 
-            logger.info(f"[FIREFLIES] Connection test successful: found {len(response.transcripts)} transcripts")
+            logger.info(
+                f"[FIREFLIES] Connection test successful: found {len(response.transcripts)} transcripts"
+            )
             return True
 
         except Exception as e:
@@ -109,7 +110,9 @@ class FirefliesConnector(BaseConnector):
             try:
                 offset = int(instance.sync_cursor)
             except ValueError:
-                logger.warning(f"[FIREFLIES] Invalid sync cursor: {instance.sync_cursor}, starting from 0")
+                logger.warning(
+                    f"[FIREFLIES] Invalid sync cursor: {instance.sync_cursor}, starting from 0"
+                )
                 offset = 0
 
         logger.info(f"[FIREFLIES] Starting incremental sync from offset {offset}")
@@ -180,7 +183,9 @@ class FirefliesConnector(BaseConnector):
                 has_more = True
 
                 while has_more:
-                    response = await client.get_transcripts(limit=limit, skip=current_skip)
+                    response = await client.get_transcripts(
+                        limit=limit, skip=current_skip
+                    )
 
                     if not response.transcripts:
                         has_more = False
@@ -206,17 +211,23 @@ class FirefliesConnector(BaseConnector):
 
                             # Save entries
                             if entries:
-                                saved_count = await knowledge_service._save_entries(entries)
+                                saved_count = await knowledge_service._save_entries(
+                                    entries
+                                )
                                 result.items_created += saved_count
 
                             result.items_extracted += 1
 
                         except Exception as e:
-                            logger.exception(f"[FIREFLIES] Failed to process transcript {transcript.id}: {e}")
-                            result.errors.append({
-                                "transcript_id": transcript.id,
-                                "error": str(e),
-                            })
+                            logger.exception(
+                                f"[FIREFLIES] Failed to process transcript {transcript.id}: {e}"
+                            )
+                            result.errors.append(
+                                {
+                                    "transcript_id": transcript.id,
+                                    "error": str(e),
+                                }
+                            )
                             continue
 
                     # Update for next iteration

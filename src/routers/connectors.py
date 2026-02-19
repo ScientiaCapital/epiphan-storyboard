@@ -18,11 +18,11 @@ from __future__ import annotations
 import logging
 import os
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 
 import redis.asyncio as aioredis
-from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
 from pydantic import BaseModel, Field
 
 try:
@@ -37,7 +37,6 @@ from src.connectors.base import (
     ConnectorStatus,
     ConnectorType,
     OAuthTokens,
-    SyncResult,
 )
 from src.connectors.registry import ConnectorRegistry
 
@@ -57,7 +56,9 @@ class ConnectorInfo(BaseModel):
     type: str = Field(..., description="Connector type identifier")
     display_name: str = Field(..., description="Human-readable connector name")
     description: str = Field(..., description="Brief description")
-    auth_type: str = Field(..., description="Authentication type: oauth2, api_key, manual")
+    auth_type: str = Field(
+        ..., description="Authentication type: oauth2, api_key, manual"
+    )
     supports_webhook: bool = Field(..., description="Whether webhooks are supported")
     required_config_fields: list[str] = Field(
         ..., description="Required config field names"
@@ -83,7 +84,9 @@ class ConnectorInstanceResponse(BaseModel):
 class OAuthAuthorizeResponse(BaseModel):
     """OAuth authorization URL response."""
 
-    authorize_url: str = Field(..., description="OAuth authorization URL to redirect to")
+    authorize_url: str = Field(
+        ..., description="OAuth authorization URL to redirect to"
+    )
     state: str = Field(..., description="State parameter for CSRF protection")
 
 
@@ -139,7 +142,7 @@ class OAuthCallbackRequest(BaseModel):
 # ============================================================================
 
 
-@lru_cache()
+@lru_cache
 def get_supabase_client() -> Client:
     """Get Supabase client singleton."""
     supabase_url = os.getenv("SUPABASE_URL")
@@ -151,12 +154,14 @@ def get_supabase_client() -> Client:
         )
 
     if create_client is None:
-        raise ImportError("supabase package is required. Install with: pip install supabase")
+        raise ImportError(
+            "supabase package is required. Install with: pip install supabase"
+        )
 
     return create_client(supabase_url, supabase_key)
 
 
-@lru_cache()
+@lru_cache
 def get_redis_client() -> aioredis.Redis:
     """Get Redis client singleton."""
     redis_url = os.getenv("REDIS_URL")
@@ -205,13 +210,21 @@ def _serialize_instance(row: dict) -> ConnectorInstanceResponse:
         org_id=row["org_id"],
         connector_type=row["connector_type"],
         status=row["status"],
-        last_sync_at=row["last_sync_at"].isoformat() if row.get("last_sync_at") else None,
-        next_sync_at=row["next_sync_at"].isoformat() if row.get("next_sync_at") else None,
+        last_sync_at=row["last_sync_at"].isoformat()
+        if row.get("last_sync_at")
+        else None,
+        next_sync_at=row["next_sync_at"].isoformat()
+        if row.get("next_sync_at")
+        else None,
         items_synced=row.get("items_synced", 0),
         error_message=row.get("error_message"),
         error_count=row.get("error_count", 0),
-        created_at=row["created_at"].isoformat() if row.get("created_at") else datetime.now(timezone.utc).isoformat(),
-        updated_at=row["updated_at"].isoformat() if row.get("updated_at") else datetime.now(timezone.utc).isoformat(),
+        created_at=row["created_at"].isoformat()
+        if row.get("created_at")
+        else datetime.now(UTC).isoformat(),
+        updated_at=row["updated_at"].isoformat()
+        if row.get("updated_at")
+        else datetime.now(UTC).isoformat(),
     )
 
 
@@ -247,7 +260,9 @@ async def _run_sync_task(
             org_id=row["org_id"],
             connector_type=ConnectorType(row["connector_type"]),
             status=ConnectorStatus(row["status"]),
-            oauth_tokens=OAuthTokens(**row["oauth_tokens"]) if row.get("oauth_tokens") else None,
+            oauth_tokens=OAuthTokens(**row["oauth_tokens"])
+            if row.get("oauth_tokens")
+            else None,
             config=row.get("config", {}),
             last_sync_at=row.get("last_sync_at"),
             next_sync_at=row.get("next_sync_at"),
@@ -255,13 +270,16 @@ async def _run_sync_task(
             items_synced=row.get("items_synced", 0),
             error_message=row.get("error_message"),
             error_count=row.get("error_count", 0),
-            created_at=row.get("created_at", datetime.now(timezone.utc)),
-            updated_at=row.get("updated_at", datetime.now(timezone.utc)),
+            created_at=row.get("created_at", datetime.now(UTC)),
+            updated_at=row.get("updated_at", datetime.now(UTC)),
         )
 
         # Update status to syncing
         supabase.table("connector_instances").update(
-            {"status": ConnectorStatus.SYNCING.value, "updated_at": datetime.now(timezone.utc).isoformat()}
+            {
+                "status": ConnectorStatus.SYNCING.value,
+                "updated_at": datetime.now(UTC).isoformat(),
+            }
         ).eq("id", instance_id).execute()
 
         # Create sync run record
@@ -289,10 +307,12 @@ async def _run_sync_task(
 
         # Update instance
         update_data = {
-            "status": ConnectorStatus.CONNECTED.value if result.success else ConnectorStatus.ERROR.value,
-            "last_sync_at": datetime.now(timezone.utc).isoformat(),
+            "status": ConnectorStatus.CONNECTED.value
+            if result.success
+            else ConnectorStatus.ERROR.value,
+            "last_sync_at": datetime.now(UTC).isoformat(),
             "items_synced": instance.items_synced + result.items_created,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
         }
 
         if result.success:
@@ -301,28 +321,36 @@ async def _run_sync_task(
             if result.cursor_after:
                 update_data["sync_cursor"] = result.cursor_after
             # Schedule next sync in 1 hour
-            update_data["next_sync_at"] = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+            update_data["next_sync_at"] = (
+                datetime.now(UTC) + timedelta(hours=1)
+            ).isoformat()
         else:
             update_data["error_count"] = instance.error_count + 1
             update_data["error_message"] = result.error_message
 
-        supabase.table("connector_instances").update(update_data).eq("id", instance_id).execute()
+        supabase.table("connector_instances").update(update_data).eq(
+            "id", instance_id
+        ).execute()
 
         # Update sync run
         supabase.table("sync_runs").update(
             {
                 "status": "success" if result.success else "failed",
-                "completed_at": datetime.now(timezone.utc).isoformat(),
+                "completed_at": datetime.now(UTC).isoformat(),
                 "items_fetched": result.items_fetched,
                 "items_extracted": result.items_extracted,
                 "items_created": result.items_created,
                 "items_skipped": result.items_skipped,
                 "cursor_after": result.cursor_after,
-                "error_log": {"message": result.error_message, "errors": result.errors} if not result.success else None,
+                "error_log": {"message": result.error_message, "errors": result.errors}
+                if not result.success
+                else None,
             }
         ).eq("id", sync_run_id).execute()
 
-        logger.info(f"Sync completed for instance {instance_id}: {result.items_created} items created")
+        logger.info(
+            f"Sync completed for instance {instance_id}: {result.items_created} items created"
+        )
 
     except Exception as e:
         logger.error(f"Sync task failed for instance {instance_id}: {e}")
@@ -332,12 +360,16 @@ async def _run_sync_task(
                 {
                     "status": ConnectorStatus.ERROR.value,
                     "error_message": str(e),
-                    "error_count": instance.error_count + 1 if 'instance' in locals() else 1,
-                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                    "error_count": instance.error_count + 1
+                    if "instance" in locals()
+                    else 1,
+                    "updated_at": datetime.now(UTC).isoformat(),
                 }
             ).eq("id", instance_id).execute()
         except Exception as persist_error:
-            logger.error(f"Failed to persist error for instance {instance_id}: {persist_error}")
+            logger.error(
+                f"Failed to persist error for instance {instance_id}: {persist_error}"
+            )
 
 
 # ============================================================================
@@ -423,13 +455,17 @@ async def get_connector_instance(
         )
 
         if not response.data:
-            raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Instance '{instance_id}' not found"
+            )
 
         return _serialize_instance(response.data)
 
     except Exception as e:
         if "PGRST116" in str(e):  # Supabase error code for no rows
-            raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Instance '{instance_id}' not found"
+            )
         raise
 
 
@@ -453,7 +489,9 @@ async def start_oauth(
     try:
         ConnectorType(connector_type)
     except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid connector type: {connector_type}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid connector type: {connector_type}"
+        )
 
     # Get OAuth provider
     try:
@@ -473,7 +511,9 @@ async def start_oauth(
     )
 
     # Build authorization URL
-    default_redirect = os.getenv("OAUTH_REDIRECT_URI", "http://localhost:8000/connectors/oauth/callback")
+    default_redirect = os.getenv(
+        "OAUTH_REDIRECT_URI", "http://localhost:8000/connectors/oauth/callback"
+    )
     auth_url = provider.build_authorize_url(redirect_uri or default_redirect, state)
 
     logger.info(f"Started OAuth flow for {connector_type} (org={org_id})")
@@ -501,7 +541,9 @@ async def oauth_callback(
     # Verify state and get org_id
     state_data = await redis.get(f"oauth:state:{request.state}")
     if not state_data:
-        raise HTTPException(status_code=400, detail="Invalid or expired state parameter")
+        raise HTTPException(
+            status_code=400, detail="Invalid or expired state parameter"
+        )
 
     org_id, stored_connector_type = state_data.split(":", 1)
 
@@ -514,11 +556,15 @@ async def oauth_callback(
     # Get OAuth provider and exchange code
     try:
         provider = get_oauth_provider(connector_type)
-        redirect_uri = os.getenv("OAUTH_REDIRECT_URI", "http://localhost:8000/connectors/oauth/callback")
+        redirect_uri = os.getenv(
+            "OAUTH_REDIRECT_URI", "http://localhost:8000/connectors/oauth/callback"
+        )
         token_response = await provider.exchange_code(request.code, redirect_uri)
     except Exception as e:
         logger.error(f"OAuth code exchange failed for {connector_type}: {e}")
-        raise HTTPException(status_code=400, detail=f"Failed to exchange authorization code: {e}")
+        raise HTTPException(
+            status_code=400, detail=f"Failed to exchange authorization code: {e}"
+        )
 
     # Create connector instance
     supabase = get_supabase_client()
@@ -546,13 +592,15 @@ async def oauth_callback(
         "oauth_tokens": {
             "access_token": token_response.access_token,
             "refresh_token": token_response.refresh_token,
-            "expires_at": token_response.expires_at.isoformat() if token_response.expires_at else None,
+            "expires_at": token_response.expires_at.isoformat()
+            if token_response.expires_at
+            else None,
             "token_type": token_response.token_type,
             "scope": token_response.scope,
         },
         "config": {},
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
     }
 
     response = supabase.table("connector_instances").insert(instance_data).execute()
@@ -585,7 +633,9 @@ async def connect_api_key(
     try:
         ct = ConnectorType(connector_type)
     except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid connector type: {connector_type}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid connector type: {connector_type}"
+        )
 
     # Get connector and validate auth type
     registry = ConnectorRegistry.get()
@@ -617,7 +667,9 @@ async def connect_api_key(
     try:
         connection_ok = await connector.test_connection(instance)
         if not connection_ok:
-            raise HTTPException(status_code=400, detail="Connection test failed - invalid credentials")
+            raise HTTPException(
+                status_code=400, detail="Connection test failed - invalid credentials"
+            )
     except Exception as e:
         logger.error(f"Connection test failed for {connector_type}: {e}")
         raise HTTPException(status_code=400, detail=f"Connection test failed: {e}")
@@ -645,8 +697,8 @@ async def connect_api_key(
         "connector_type": connector_type,
         "status": ConnectorStatus.CONNECTED.value,
         "config": config,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
     }
 
     response = supabase.table("connector_instances").insert(instance_data).execute()
@@ -690,7 +742,9 @@ async def trigger_sync(
         )
 
         if not response.data:
-            raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Instance '{instance_id}' not found"
+            )
 
         row = response.data
 
@@ -702,7 +756,9 @@ async def trigger_sync(
         raise
     except Exception as e:
         if "PGRST116" in str(e):
-            raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Instance '{instance_id}' not found"
+            )
         raise
 
     # Add sync task to background
@@ -714,7 +770,9 @@ async def trigger_sync(
         supabase=supabase,
     )
 
-    logger.info(f"Triggered {'full' if full else 'incremental'} sync for instance {instance_id}")
+    logger.info(
+        f"Triggered {'full' if full else 'incremental'} sync for instance {instance_id}"
+    )
 
     return {
         "message": "Sync started",
@@ -753,13 +811,17 @@ async def get_sync_history(
         )
 
         if not instance_response.data:
-            raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Instance '{instance_id}' not found"
+            )
 
     except HTTPException:
         raise
     except Exception as e:
         if "PGRST116" in str(e):
-            raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Instance '{instance_id}' not found"
+            )
         raise
 
     # Get sync runs
@@ -817,13 +879,17 @@ async def disconnect(
         )
 
         if not response.data:
-            raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Instance '{instance_id}' not found"
+            )
 
     except HTTPException:
         raise
     except Exception as e:
         if "PGRST116" in str(e):
-            raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Instance '{instance_id}' not found"
+            )
         raise
 
     # Delete instance (cascade deletes sync_runs)
@@ -867,7 +933,9 @@ async def manual_upload(
         )
 
         if not response.data:
-            raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Instance '{instance_id}' not found"
+            )
 
         row = response.data
         connector_type = ConnectorType(row["connector_type"])
@@ -882,10 +950,14 @@ async def manual_upload(
         raise
     except Exception as e:
         if "PGRST116" in str(e):
-            raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Instance '{instance_id}' not found"
+            )
         raise
 
-    logger.info(f"Manual upload to instance {instance_id} (type={connector_type.value})")
+    logger.info(
+        f"Manual upload to instance {instance_id} (type={connector_type.value})"
+    )
 
     # Get connector and run upload
     registry = ConnectorRegistry.get()
@@ -898,8 +970,8 @@ async def manual_upload(
         connector_type=connector_type,
         status=ConnectorStatus(row["status"]),
         config=row.get("config", {}),
-        created_at=row.get("created_at", datetime.now(timezone.utc)),
-        updated_at=row.get("updated_at", datetime.now(timezone.utc)),
+        created_at=row.get("created_at", datetime.now(UTC)),
+        updated_at=row.get("updated_at", datetime.now(UTC)),
     )
 
     # Call upload method based on connector type
@@ -912,6 +984,7 @@ async def manual_upload(
         )
     elif connector_type == ConnectorType.MIRO:
         import base64
+
         result = await connector.upload_screenshot(
             instance,
             image_data=base64.b64decode(request.content),
@@ -919,7 +992,9 @@ async def manual_upload(
             title=request.title,
         )
     else:
-        raise HTTPException(status_code=400, detail=f"Upload not supported for: {connector_type.value}")
+        raise HTTPException(
+            status_code=400, detail=f"Upload not supported for: {connector_type.value}"
+        )
 
     return SyncResponse(
         success=result.success,

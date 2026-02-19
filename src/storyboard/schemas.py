@@ -6,7 +6,7 @@ Defines request/response models for async storyboard generation jobs.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Literal
 from uuid import uuid4
@@ -51,8 +51,14 @@ class CodeStoryboardRequest(BaseModel):
         description="Storyboard stage for BDR cadence",
     )
     audience: Literal[
-        "av_director", "ld_director", "sim_center_director", "court_admin",
-        "corp_comms", "ehs_manager", "law_firm_it", "technical_director",
+        "av_director",
+        "ld_director",
+        "sim_center_director",
+        "court_admin",
+        "corp_comms",
+        "ehs_manager",
+        "law_firm_it",
+        "technical_director",
     ] = Field(
         "av_director",
         description="Target audience persona",
@@ -84,8 +90,14 @@ class RoadmapStoryboardRequest(BaseModel):
         description="ICP preset to use",
     )
     audience: Literal[
-        "av_director", "ld_director", "sim_center_director", "court_admin",
-        "corp_comms", "ehs_manager", "law_firm_it", "technical_director",
+        "av_director",
+        "ld_director",
+        "sim_center_director",
+        "court_admin",
+        "corp_comms",
+        "ehs_manager",
+        "law_firm_it",
+        "technical_director",
     ] = Field(
         "av_director",
         description="Target audience persona",
@@ -198,7 +210,7 @@ class StoryboardJob(BaseModel):
         description="Error details if job failed",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Job creation timestamp",
     )
     completed_at: datetime | None = Field(

@@ -9,7 +9,7 @@ This module defines the core data models for the agent system including:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -64,12 +64,8 @@ class AgentStep(BaseModel):
     """
 
     thought: str = Field(..., description="The agent's reasoning")
-    action: ToolCall | None = Field(
-        None, description="Optional tool call to execute"
-    )
-    observation: str | None = Field(
-        None, description="Result from tool execution"
-    )
+    action: ToolCall | None = Field(None, description="Optional tool call to execute")
+    observation: str | None = Field(None, description="Result from tool execution")
     is_final: bool = Field(
         default=False, description="True if this is the final answer"
     )
@@ -78,7 +74,7 @@ class AgentStep(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_final_answer(self) -> "AgentStep":
+    def validate_final_answer(self) -> AgentStep:
         """Validate that final_answer is set when is_final=True."""
         if self.is_final and not self.final_answer:
             raise ValueError("final_answer must be set when is_final=True")
@@ -122,15 +118,13 @@ class AgentSession(BaseModel):
     output_tokens: int = Field(
         default=0, ge=0, description="Total output tokens generated"
     )
-    total_cost_usd: float = Field(
-        default=0.0, ge=0.0, description="Total cost in USD"
-    )
+    total_cost_usd: float = Field(default=0.0, ge=0.0, description="Total cost in USD")
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Session creation time",
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Last update time",
     )
 
@@ -160,9 +154,7 @@ class AgentRunRequest(BaseModel):
         default="claude-sonnet-4-5-20250929",
         description="Model identifier",
     )
-    tools: list[str] | None = Field(
-        None, description="Tool names to enable"
-    )
+    tools: list[str] | None = Field(None, description="Tool names to enable")
     max_steps: int = Field(
         default=10, ge=1, le=100, description="Maximum reasoning steps"
     )
@@ -177,9 +169,7 @@ class AgentRunRequest(BaseModel):
             if "content" not in msg:
                 raise ValueError(f"Message {i} missing 'content' field")
             if msg["role"] not in ("user", "assistant", "system"):
-                raise ValueError(
-                    f"Message {i} has invalid role: {msg['role']}"
-                )
+                raise ValueError(f"Message {i} has invalid role: {msg['role']}")
         return v
 
 

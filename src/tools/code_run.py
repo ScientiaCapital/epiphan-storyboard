@@ -13,11 +13,14 @@ logger = logging.getLogger(__name__)
 try:
     import docker
     from docker.errors import DockerException
+
     DOCKER_AVAILABLE = True
 except ImportError:
     DOCKER_AVAILABLE = False
     DockerException = Exception  # Fallback for when docker is not installed
-    logger.warning("Docker SDK not available - code execution will fall back to subprocess")
+    logger.warning(
+        "Docker SDK not available - code execution will fall back to subprocess"
+    )
 
 
 class CodeRunTool(BaseTool):
@@ -145,8 +148,7 @@ class CodeRunTool(BaseTool):
             # Pull image if not present (run in executor to avoid blocking)
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(
-                None,
-                lambda: self._docker_client.images.pull(image)
+                None, lambda: self._docker_client.images.pull(image)
             )
 
             # Run container with security restrictions
@@ -163,20 +165,17 @@ class CodeRunTool(BaseTool):
                     cpu_quota=self.CPU_QUOTA,  # CPU quota (50% of one core)
                     read_only=True,  # Read-only root filesystem
                     tmpfs={"/tmp": "rw,noexec,nosuid,size=10m"},  # Writable /tmp
-                )
+                ),
             )
 
             # Wait for container to finish with timeout
             try:
                 result = await asyncio.wait_for(
-                    loop.run_in_executor(
-                        None,
-                        lambda: container.wait(timeout=timeout)
-                    ),
+                    loop.run_in_executor(None, lambda: container.wait(timeout=timeout)),
                     timeout=timeout + 1,  # Give extra second for cleanup
                 )
                 exit_code = result.get("StatusCode", -1)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Kill container if it times out
                 await loop.run_in_executor(None, container.kill)
                 stdout = b""
@@ -186,8 +185,7 @@ class CodeRunTool(BaseTool):
                 # Get logs - Docker interleaves stdout and stderr
                 # We'll get both in combined output
                 combined_logs = await loop.run_in_executor(
-                    None,
-                    lambda: container.logs(stdout=True, stderr=True)
+                    None, lambda: container.logs(stdout=True, stderr=True)
                 )
                 # For simplicity, put all output in stdout
                 # (Docker doesn't separate them easily without demux)
@@ -258,7 +256,7 @@ class CodeRunTool(BaseTool):
                     timeout=timeout,
                 )
                 exit_code = process.returncode
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Kill process if it times out
                 process.kill()
                 await process.wait()
@@ -333,7 +331,9 @@ class CodeRunTool(BaseTool):
             if docker_available:
                 result_data = await self._run_in_docker(code, language, timeout)
             else:
-                logger.warning("Using subprocess fallback for code execution (less secure)")
+                logger.warning(
+                    "Using subprocess fallback for code execution (less secure)"
+                )
                 result_data = await self._run_in_subprocess(code, language, timeout)
 
             return ToolResult(

@@ -151,7 +151,9 @@ class GoogleDocsAPIClient:
 
                     for cell in cells:
                         cell_content = cell.get("content", [])
-                        cell_text = self.extract_text_from_body({"content": cell_content})
+                        cell_text = self.extract_text_from_body(
+                            {"content": cell_content}
+                        )
                         if cell_text:
                             row_text_parts.append(cell_text)
 

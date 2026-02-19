@@ -103,11 +103,13 @@ class TestSSRFValidation:
         tool = VideoGeneratorTool()
 
         with patch.dict("os.environ", {"KLING_API_KEY": "test-key"}):
-            result = await tool.run({
-                "prompt": "Test video",
-                "provider": "kling",
-                "reference_image_url": "http://localhost:8080/image.png",
-            })
+            result = await tool.run(
+                {
+                    "prompt": "Test video",
+                    "provider": "kling",
+                    "reference_image_url": "http://localhost:8080/image.png",
+                }
+            )
 
         assert result.success is False
         assert "SSRF" in result.error or "blocked" in result.error.lower()
@@ -118,11 +120,13 @@ class TestSSRFValidation:
         tool = VideoGeneratorTool()
 
         with patch.dict("os.environ", {"KLING_API_KEY": "test-key"}):
-            result = await tool.run({
-                "prompt": "Test video",
-                "provider": "kling",
-                "reference_image_url": "http://192.168.1.1/image.png",
-            })
+            result = await tool.run(
+                {
+                    "prompt": "Test video",
+                    "provider": "kling",
+                    "reference_image_url": "http://192.168.1.1/image.png",
+                }
+            )
 
         assert result.success is False
         assert "SSRF" in result.error or "blocked" in result.error.lower()
@@ -133,11 +137,13 @@ class TestSSRFValidation:
         tool = VideoGeneratorTool()
 
         with patch.dict("os.environ", {"KLING_API_KEY": "test-key"}):
-            result = await tool.run({
-                "prompt": "Test video",
-                "provider": "kling",
-                "reference_image_url": "http://169.254.169.254/latest/meta-data/",
-            })
+            result = await tool.run(
+                {
+                    "prompt": "Test video",
+                    "provider": "kling",
+                    "reference_image_url": "http://169.254.169.254/latest/meta-data/",
+                }
+            )
 
         assert result.success is False
         assert "SSRF" in result.error or "blocked" in result.error.lower()
@@ -150,9 +156,11 @@ class TestVideoGeneratorRun:
     async def test_missing_prompt(self):
         """Test error when prompt is missing."""
         tool = VideoGeneratorTool()
-        result = await tool.run({
-            "provider": "kling",
-        })
+        result = await tool.run(
+            {
+                "provider": "kling",
+            }
+        )
         assert result.success is False
 
     @pytest.mark.asyncio
@@ -161,10 +169,12 @@ class TestVideoGeneratorRun:
         tool = VideoGeneratorTool()
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await tool.run({
-                "prompt": "Test video",
-                "provider": "kling",
-            })
+            result = await tool.run(
+                {
+                    "prompt": "Test video",
+                    "provider": "kling",
+                }
+            )
 
         assert result.success is False
         assert "API key" in result.error or "key" in result.error.lower()
@@ -185,9 +195,11 @@ class TestBatchVideoGeneratorRun:
     async def test_no_scenes_error(self):
         """Test error when no scenes provided."""
         tool = BatchVideoGeneratorTool()
-        result = await tool.run({
-            "scenes": [],
-        })
+        result = await tool.run(
+            {
+                "scenes": [],
+            }
+        )
         assert result.success is False
         assert "scene" in result.error.lower()
 
@@ -198,13 +210,15 @@ class TestBatchVideoGeneratorRun:
 
         # Mock the VideoGeneratorTool to fail (no API key)
         with patch.dict("os.environ", {}, clear=True):
-            result = await tool.run({
-                "scenes": [
-                    {"prompt": "Scene 1", "name": "intro"},
-                    {"prompt": "Scene 2", "name": "outro"},
-                ],
-                "provider": "kling",
-            })
+            result = await tool.run(
+                {
+                    "scenes": [
+                        {"prompt": "Scene 1", "name": "intro"},
+                        {"prompt": "Scene 2", "name": "outro"},
+                    ],
+                    "provider": "kling",
+                }
+            )
 
         # Should have attempted both scenes
         assert "scenes" in result.result

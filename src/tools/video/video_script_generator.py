@@ -362,9 +362,7 @@ Output valid JSON with hook, value, proof, cta sections, timestamps, and notes."
         # Get API key from environment
         api_key = os.getenv("OPENROUTER_API_KEY")
         if not api_key:
-            raise ValueError(
-                "OPENROUTER_API_KEY not found in environment variables"
-            )
+            raise ValueError("OPENROUTER_API_KEY not found in environment variables")
 
         # Build request
         url = f"{self.OPENROUTER_BASE_URL}/chat/completions"
@@ -464,9 +462,7 @@ Output valid JSON with hook, value, proof, cta sections, timestamps, and notes."
 
             # Generate script
             try:
-                script_data = await self._call_llm(
-                    system_prompt, user_prompt, model
-                )
+                script_data = await self._call_llm(system_prompt, user_prompt, model)
             except Exception as primary_error:
                 # Fallback to Qwen if DeepSeek fails
                 try:

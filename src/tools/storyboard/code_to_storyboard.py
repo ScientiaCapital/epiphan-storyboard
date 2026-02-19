@@ -14,21 +14,18 @@ Target audience: MEP+energy contractors ($5M+ ICP)
 NO OpenAI - Gemini only.
 """
 
-import os
 import base64
 import logging
+import os
 from time import perf_counter
-from typing import Any
 
 from src.tools.base import BaseTool, ToolCategory, ToolDefinition, ToolResult
-from src.tools.storyboard.gemini_client import GeminiStoryboardClient, StoryboardUnderstanding
 from src.tools.storyboard.epiphan_presets import (
-    EPIPHAN_ICP,
     get_icp_preset,
-    get_audience_persona,
     sanitize_content,
-    AudiencePersona,
-    StoryboardStage,
+)
+from src.tools.storyboard.gemini_client import (
+    GeminiStoryboardClient,
 )
 
 logger = logging.getLogger(__name__)
@@ -122,8 +119,14 @@ class CodeToStoryboardTool(BaseTool):
                     "audience": {
                         "type": "string",
                         "enum": [
-                            "av_director", "ld_director", "sim_center_director", "court_admin",
-                            "corp_comms", "ehs_manager", "law_firm_it", "technical_director",
+                            "av_director",
+                            "ld_director",
+                            "sim_center_director",
+                            "court_admin",
+                            "corp_comms",
+                            "ehs_manager",
+                            "law_firm_it",
+                            "technical_director",
                         ],
                         "description": "Target audience persona",
                         "default": "av_director",
@@ -177,7 +180,7 @@ class CodeToStoryboardTool(BaseTool):
                         error=f"File not found: {file_path}",
                         execution_time_ms=int((perf_counter() - start_time) * 1000),
                     )
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     file_content = f.read()
                 if not file_name or file_name == "unknown":
                     file_name = os.path.basename(file_path)
@@ -215,7 +218,7 @@ class CodeToStoryboardTool(BaseTool):
                 understanding.headline = custom_headline
 
             # Stage 2: Generate the storyboard
-            logger.info(f"[CODE_STORYBOARD] Stage 2: Generating storyboard")
+            logger.info("[CODE_STORYBOARD] Stage 2: Generating storyboard")
             png_bytes = await self.gemini_client.generate_storyboard(
                 understanding=understanding,
                 stage=stage,

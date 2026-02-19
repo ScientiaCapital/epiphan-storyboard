@@ -6,11 +6,11 @@ Handles auto-saving generated storyboards to Supabase Storage
 and tracking metadata in the storyboard_assets table.
 """
 
-import os
 import logging
+import os
+import uuid
 from datetime import datetime
 from typing import Any
-import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +44,7 @@ class StoryboardStorage:
 
         try:
             from supabase import create_client
+
             self._client = create_client(url, key)
             self._initialized = True
             logger.info("[STORAGE] Supabase client initialized")
@@ -96,23 +97,27 @@ class StoryboardStorage:
             result = self._client.storage.from_("epiphan-assets").upload(
                 path=storage_path,
                 file=png_bytes,
-                file_options={"content-type": "image/png"}
+                file_options={"content-type": "image/png"},
             )
 
             # Get public URL
-            public_url = self._client.storage.from_("epiphan-assets").get_public_url(storage_path)
+            public_url = self._client.storage.from_("epiphan-assets").get_public_url(
+                storage_path
+            )
 
             # Track in database
-            self._client.table("storyboard_assets").insert({
-                "storage_path": storage_path,
-                "public_url": public_url,
-                "audience": audience,
-                "stage": stage,
-                "input_type": input_type,
-                "headline": headline,
-                "understanding": understanding,
-                "org_id": org_id,
-            }).execute()
+            self._client.table("storyboard_assets").insert(
+                {
+                    "storage_path": storage_path,
+                    "public_url": public_url,
+                    "audience": audience,
+                    "stage": stage,
+                    "input_type": input_type,
+                    "headline": headline,
+                    "understanding": understanding,
+                    "org_id": org_id,
+                }
+            ).execute()
 
             logger.info(f"[STORAGE] Saved storyboard: {storage_path}")
 
@@ -148,11 +153,13 @@ class StoryboardStorage:
             return []
 
         try:
-            query = self._client.table("storyboard_assets") \
-                .select("*") \
-                .eq("org_id", org_id) \
-                .order("created_at", desc=True) \
+            query = (
+                self._client.table("storyboard_assets")
+                .select("*")
+                .eq("org_id", org_id)
+                .order("created_at", desc=True)
                 .limit(limit)
+            )
 
             if audience:
                 query = query.eq("audience", audience)

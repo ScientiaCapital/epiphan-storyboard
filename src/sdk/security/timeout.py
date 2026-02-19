@@ -19,8 +19,10 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import builtins
 import functools
-from typing import Any, Awaitable, Callable, TypeVar
+from collections.abc import Awaitable, Callable
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
@@ -63,7 +65,7 @@ class TimeoutContext:
         self.operation = operation
         self._task: asyncio.Task[Any] | None = None
 
-    async def __aenter__(self) -> "TimeoutContext":
+    async def __aenter__(self) -> TimeoutContext:
         """Enter the timeout context."""
         return self
 
@@ -98,9 +100,7 @@ def with_timeout(
             ...
     """
 
-    def decorator(
-        func: Callable[..., Awaitable[T]]
-    ) -> Callable[..., Awaitable[T]]:
+    def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> T:
             try:
@@ -108,7 +108,7 @@ def with_timeout(
                     func(*args, **kwargs),
                     timeout=seconds,
                 )
-            except asyncio.TimeoutError:
+            except builtins.TimeoutError:
                 raise TimeoutError(seconds, operation or func.__name__)
 
         return wrapper
@@ -143,5 +143,5 @@ async def run_with_timeout(
     """
     try:
         return await asyncio.wait_for(coro, timeout=seconds)
-    except asyncio.TimeoutError:
+    except builtins.TimeoutError:
         raise TimeoutError(seconds, operation)

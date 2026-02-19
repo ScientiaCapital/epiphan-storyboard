@@ -1,7 +1,5 @@
 """Tool registry for managing available tools in the agent system."""
 
-from typing import Callable
-
 from src.tools.base import BaseTool, ToolDefinition
 
 
@@ -83,9 +81,7 @@ class ToolRegistry:
         """
         return [tool.definition for tool in self._tools.values()]
 
-    def get_tools_for_llm(
-        self, tool_names: list[str] | None = None
-    ) -> list[dict]:
+    def get_tools_for_llm(self, tool_names: list[str] | None = None) -> list[dict]:
         """
         Get OpenAI/Anthropic-compatible function schemas for specified tools.
 

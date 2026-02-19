@@ -1,13 +1,12 @@
 """Gong connector implementation."""
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from src.connectors.base import (
     AuthType,
     BaseConnector,
     ConnectorInstance,
-    ConnectorStatus,
     ConnectorType,
     OAuthConfig,
     SyncResult,
@@ -70,12 +69,14 @@ class GongConnector(BaseConnector):
 
         try:
             # Test by fetching calls from last 24 hours
-            from_date = datetime.now(timezone.utc) - timedelta(days=1)
+            from_date = datetime.now(UTC) - timedelta(days=1)
 
             async with GongAPIClient(instance.oauth_tokens.access_token) as client:
                 response = await client.get_calls(from_date=from_date)
 
-            logger.info(f"[GONG] Connection test successful: found {len(response.calls)} recent calls")
+            logger.info(
+                f"[GONG] Connection test successful: found {len(response.calls)} recent calls"
+            )
             return True
 
         except Exception as e:
@@ -105,18 +106,20 @@ class GongConnector(BaseConnector):
             try:
                 from_date = datetime.fromisoformat(instance.sync_cursor)
             except ValueError:
-                logger.warning(f"[GONG] Invalid sync cursor: {instance.sync_cursor}, falling back to 7 days")
-                from_date = datetime.now(timezone.utc) - timedelta(days=7)
+                logger.warning(
+                    f"[GONG] Invalid sync cursor: {instance.sync_cursor}, falling back to 7 days"
+                )
+                from_date = datetime.now(UTC) - timedelta(days=7)
         else:
             # First sync - get last 7 days
-            from_date = datetime.now(timezone.utc) - timedelta(days=7)
+            from_date = datetime.now(UTC) - timedelta(days=7)
 
         logger.info(f"[GONG] Starting incremental sync from {from_date.isoformat()}")
 
         return await self._sync_calls(
             instance=instance,
             from_date=from_date,
-            to_date=datetime.now(timezone.utc),
+            to_date=datetime.now(UTC),
         )
 
     async def full_sync(self, instance: ConnectorInstance) -> SyncResult:
@@ -135,13 +138,13 @@ class GongConnector(BaseConnector):
                 error_message="No OAuth access token configured",
             )
 
-        from_date = datetime.now(timezone.utc) - timedelta(days=30)
+        from_date = datetime.now(UTC) - timedelta(days=30)
         logger.info(f"[GONG] Starting full sync from {from_date.isoformat()}")
 
         return await self._sync_calls(
             instance=instance,
             from_date=from_date,
-            to_date=datetime.now(timezone.utc),
+            to_date=datetime.now(UTC),
         )
 
     async def _sync_calls(
@@ -213,12 +216,16 @@ class GongConnector(BaseConnector):
                         # Get transcript
                         transcript = transcript_map.get(call_id)
                         if not transcript:
-                            logger.warning(f"[GONG] No transcript for call {call_id}, skipping")
+                            logger.warning(
+                                f"[GONG] No transcript for call {call_id}, skipping"
+                            )
                             result.items_skipped += 1
                             continue
 
                         # Transform to source
-                        source = transformer.call_to_source(call=call, transcript=transcript)
+                        source = transformer.call_to_source(
+                            call=call, transcript=transcript
+                        )
 
                         # Save source to database
                         source.id = await knowledge_service._save_source(source)
@@ -234,11 +241,15 @@ class GongConnector(BaseConnector):
                         result.items_extracted += 1
 
                     except Exception as e:
-                        logger.exception(f"[GONG] Failed to process call {call_id}: {e}")
-                        result.errors.append({
-                            "call_id": call_id,
-                            "error": str(e),
-                        })
+                        logger.exception(
+                            f"[GONG] Failed to process call {call_id}: {e}"
+                        )
+                        result.errors.append(
+                            {
+                                "call_id": call_id,
+                                "error": str(e),
+                            }
+                        )
                         continue
 
                 # Update cursor to current time

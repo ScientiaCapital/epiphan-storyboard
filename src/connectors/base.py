@@ -6,9 +6,8 @@ This module defines the core types and base class for all data connectors.
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
 
 
 class ConnectorType(str, Enum):
@@ -86,8 +85,8 @@ class ConnectorInstance:
     items_synced: int = 0
     error_message: str | None = None
     error_count: int = 0
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
     def create_new(

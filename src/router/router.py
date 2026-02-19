@@ -115,7 +115,9 @@ class AgentRouter:
             chain = self._chain_registry.get(classification.task_type)
             if not chain:
                 job.status = RouterJobStatus.FAILED
-                job.error_message = f"No chain found for task type: {classification.task_type}"
+                job.error_message = (
+                    f"No chain found for task type: {classification.task_type}"
+                )
                 job.execution_time_ms = int((perf_counter() - start_time) * 1000)
                 job.completed_at = datetime.now(UTC)
                 return job

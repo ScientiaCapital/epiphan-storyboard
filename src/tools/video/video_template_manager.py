@@ -203,7 +203,11 @@ class VideoTemplateManagerTool(BaseTool):
                     "operation": {
                         "type": "string",
                         "description": "Operation to perform: customize_template, get_template, list_templates",
-                        "enum": ["customize_template", "get_template", "list_templates"],
+                        "enum": [
+                            "customize_template",
+                            "get_template",
+                            "list_templates",
+                        ],
                     },
                     "industry": {
                         "type": "string",
@@ -351,7 +355,9 @@ class VideoTemplateManagerTool(BaseTool):
             )
 
         # Generate template ID and store
-        template_id = self._generate_template_id(industry_enum, prospect_segment, product_name)
+        template_id = self._generate_template_id(
+            industry_enum, prospect_segment, product_name
+        )
         self._templates[template_id] = customized_template
 
         return ToolResult(
@@ -469,76 +475,83 @@ class VideoTemplateManagerTool(BaseTool):
         scenes: list[dict[str, Any]] = []
 
         # INTRO_SCENE (0-15s)
-        scenes.append({
-            "scene_type": SceneType.INTRO_SCENE.value,
-            "timing": SCENE_TIMING[SceneType.INTRO_SCENE],
-            "title": "Introduction",
-            "description": f"Personalized greeting for {prospect_segment} with agenda preview",
-            "talking_points": [
-                f"Welcome to {product_name} demo",
-                f"Tailored for {prospect_segment} in {industry.value}",
-                "Quick overview of what we'll cover today",
-            ],
-            "suggested_broll": [
-                "Company logo animation",
-                "Quick montage of industry-specific work",
-                "Presenter intro card",
-            ],
-        })
+        scenes.append(
+            {
+                "scene_type": SceneType.INTRO_SCENE.value,
+                "timing": SCENE_TIMING[SceneType.INTRO_SCENE],
+                "title": "Introduction",
+                "description": f"Personalized greeting for {prospect_segment} with agenda preview",
+                "talking_points": [
+                    f"Welcome to {product_name} demo",
+                    f"Tailored for {prospect_segment} in {industry.value}",
+                    "Quick overview of what we'll cover today",
+                ],
+                "suggested_broll": [
+                    "Company logo animation",
+                    "Quick montage of industry-specific work",
+                    "Presenter intro card",
+                ],
+            }
+        )
 
         # PROBLEM_SCENE (15-45s)
-        scenes.append({
-            "scene_type": SceneType.PROBLEM_SCENE.value,
-            "timing": SCENE_TIMING[SceneType.PROBLEM_SCENE],
-            "title": "Industry Pain Points",
-            "description": f"Visualization of key challenges facing {prospect_segment}",
-            "talking_points": [
-                f"Challenge: {pain_point}"
-                for pain_point in relevant_pain_points
-            ],
-            "suggested_broll": [
-                "Split-screen showing current vs ideal workflow",
-                "Animation of pain point scenarios",
-                "Customer testimonial quotes (optional)",
-            ],
-        })
+        scenes.append(
+            {
+                "scene_type": SceneType.PROBLEM_SCENE.value,
+                "timing": SCENE_TIMING[SceneType.PROBLEM_SCENE],
+                "title": "Industry Pain Points",
+                "description": f"Visualization of key challenges facing {prospect_segment}",
+                "talking_points": [
+                    f"Challenge: {pain_point}" for pain_point in relevant_pain_points
+                ],
+                "suggested_broll": [
+                    "Split-screen showing current vs ideal workflow",
+                    "Animation of pain point scenarios",
+                    "Customer testimonial quotes (optional)",
+                ],
+            }
+        )
 
         # SOLUTION_SCENE (45-90s)
-        scenes.append({
-            "scene_type": SceneType.SOLUTION_SCENE.value,
-            "timing": SCENE_TIMING[SceneType.SOLUTION_SCENE],
-            "title": "Product Walkthrough",
-            "description": f"{product_name} feature demonstration",
-            "talking_points": [
-                f"Feature: {feature}"
-                for feature in (key_features if key_features else relevant_features)
-            ],
-            "suggested_broll": [
-                "Screen recording: Dashboard overview",
-                "Screen recording: Key feature demos",
-                "Screen recording: Mobile app preview",
-                "UI/UX highlights with callouts",
-            ],
-        })
+        scenes.append(
+            {
+                "scene_type": SceneType.SOLUTION_SCENE.value,
+                "timing": SCENE_TIMING[SceneType.SOLUTION_SCENE],
+                "title": "Product Walkthrough",
+                "description": f"{product_name} feature demonstration",
+                "talking_points": [
+                    f"Feature: {feature}"
+                    for feature in (key_features if key_features else relevant_features)
+                ],
+                "suggested_broll": [
+                    "Screen recording: Dashboard overview",
+                    "Screen recording: Key feature demos",
+                    "Screen recording: Mobile app preview",
+                    "UI/UX highlights with callouts",
+                ],
+            }
+        )
 
         # DIFFERENTIATION_SCENE (90-120s) - only if competitor mentioned
         if competitor_mentioned:
-            scenes.append({
-                "scene_type": SceneType.DIFFERENTIATION_SCENE.value,
-                "timing": SCENE_TIMING[SceneType.DIFFERENTIATION_SCENE],
-                "title": "Competitive Differentiation",
-                "description": f"Why {product_name} vs {competitor_mentioned}",
-                "talking_points": [
-                    f"Unlike {competitor_mentioned}, we offer...",
-                    "Unique value propositions",
-                    "Customer success stories switching from competitors",
-                ],
-                "suggested_broll": [
-                    "Side-by-side feature comparison table",
-                    "Customer testimonials",
-                    "Pricing transparency graphic",
-                ],
-            })
+            scenes.append(
+                {
+                    "scene_type": SceneType.DIFFERENTIATION_SCENE.value,
+                    "timing": SCENE_TIMING[SceneType.DIFFERENTIATION_SCENE],
+                    "title": "Competitive Differentiation",
+                    "description": f"Why {product_name} vs {competitor_mentioned}",
+                    "talking_points": [
+                        f"Unlike {competitor_mentioned}, we offer...",
+                        "Unique value propositions",
+                        "Customer success stories switching from competitors",
+                    ],
+                    "suggested_broll": [
+                        "Side-by-side feature comparison table",
+                        "Customer testimonials",
+                        "Pricing transparency graphic",
+                    ],
+                }
+            )
         else:
             # Skip differentiation scene, use time for extended solution demo
             scenes[2]["timing"]["end"] = 120  # Extend solution scene
@@ -546,41 +559,42 @@ class VideoTemplateManagerTool(BaseTool):
         # RESULTS_SCENE (120-150s)
         results_start = 120 if competitor_mentioned else 120
         results_end = 150 if competitor_mentioned else 150
-        scenes.append({
-            "scene_type": SceneType.RESULTS_SCENE.value,
-            "timing": {"start": results_start, "end": results_end, "duration": 30},
-            "title": "ROI & Results",
-            "description": f"Case study and metrics for {industry.value} vertical",
-            "talking_points": [
-                f"Result: {metric}"
-                for metric in roi_metrics
-            ],
-            "suggested_broll": [
-                "Animated charts showing ROI metrics",
-                "Case study customer logo",
-                "Before/after workflow comparison",
-                "Time/cost savings visualization",
-            ],
-        })
+        scenes.append(
+            {
+                "scene_type": SceneType.RESULTS_SCENE.value,
+                "timing": {"start": results_start, "end": results_end, "duration": 30},
+                "title": "ROI & Results",
+                "description": f"Case study and metrics for {industry.value} vertical",
+                "talking_points": [f"Result: {metric}" for metric in roi_metrics],
+                "suggested_broll": [
+                    "Animated charts showing ROI metrics",
+                    "Case study customer logo",
+                    "Before/after workflow comparison",
+                    "Time/cost savings visualization",
+                ],
+            }
+        )
 
         # CTA_SCENE (150-180s)
-        scenes.append({
-            "scene_type": SceneType.CTA_SCENE.value,
-            "timing": SCENE_TIMING[SceneType.CTA_SCENE],
-            "title": "Next Steps",
-            "description": "Clear call-to-action and calendar link",
-            "talking_points": [
-                "Schedule your personalized demo",
-                "Get started with free trial",
-                "Contact information and resources",
-            ],
-            "suggested_broll": [
-                "Calendar booking interface",
-                "Contact card with team info",
-                "Resource links (docs, pricing, case studies)",
-                "Thank you card with social proof badges",
-            ],
-        })
+        scenes.append(
+            {
+                "scene_type": SceneType.CTA_SCENE.value,
+                "timing": SCENE_TIMING[SceneType.CTA_SCENE],
+                "title": "Next Steps",
+                "description": "Clear call-to-action and calendar link",
+                "talking_points": [
+                    "Schedule your personalized demo",
+                    "Get started with free trial",
+                    "Contact information and resources",
+                ],
+                "suggested_broll": [
+                    "Calendar booking interface",
+                    "Contact card with team info",
+                    "Resource links (docs, pricing, case studies)",
+                    "Thank you card with social proof badges",
+                ],
+            }
+        )
 
         return {
             "industry": industry.value,
@@ -679,7 +693,9 @@ class VideoTemplateManagerTool(BaseTool):
                     llm_response = data["choices"][0]["message"]["content"]
 
                     # Parse LLM response and enhance template
-                    enhanced_template = self._merge_llm_suggestions(base_template, llm_response)
+                    enhanced_template = self._merge_llm_suggestions(
+                        base_template, llm_response
+                    )
                     return enhanced_template
 
         except Exception:
@@ -731,7 +747,9 @@ Return ONLY a JSON object with the enhanced template structure. Keep the same ov
 """
         return prompt
 
-    def _merge_llm_suggestions(self, base_template: dict[str, Any], llm_response: str) -> dict[str, Any]:
+    def _merge_llm_suggestions(
+        self, base_template: dict[str, Any], llm_response: str
+    ) -> dict[str, Any]:
         """
         Merge LLM suggestions into base template.
 
@@ -754,7 +772,9 @@ Return ONLY a JSON object with the enhanced template structure. Keep the same ov
 
                 # Merge enhanced content while preserving structure
                 if isinstance(enhanced, dict) and "scenes" in enhanced:
-                    base_template["scenes"] = enhanced.get("scenes", base_template["scenes"])
+                    base_template["scenes"] = enhanced.get(
+                        "scenes", base_template["scenes"]
+                    )
 
                     # Update other fields if provided
                     for key in ["talking_points", "metadata", "key_features"]:
@@ -770,7 +790,9 @@ Return ONLY a JSON object with the enhanced template structure. Keep the same ov
             # Fallback to base template on parse error
             return base_template
 
-    def _generate_template_id(self, industry: Industry, prospect_segment: str, product_name: str) -> str:
+    def _generate_template_id(
+        self, industry: Industry, prospect_segment: str, product_name: str
+    ) -> str:
         """
         Generate unique template ID.
 

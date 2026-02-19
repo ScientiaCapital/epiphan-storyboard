@@ -1,7 +1,6 @@
 """Transform Notion data to KnowledgeEntry objects."""
 
 import logging
-from datetime import datetime
 
 from src.connectors.notion.schemas import (
     NotionBlock,
@@ -11,7 +10,6 @@ from src.connectors.notion.schemas import (
 from src.knowledge.base import (
     KnowledgeEntry,
     KnowledgeSource,
-    KnowledgeType,
     SourceType,
 )
 from src.knowledge.extraction import KnowledgeExtractor
@@ -63,13 +61,19 @@ class NotionTransformer:
         # Infer knowledge types from page title and content
         title_lower = page.get_title().lower()
 
-        if any(keyword in title_lower for keyword in ["roadmap", "feature", "spec", "prd"]):
+        if any(
+            keyword in title_lower for keyword in ["roadmap", "feature", "spec", "prd"]
+        ):
             context_parts.append("Extract features and use cases")
         elif any(keyword in title_lower for keyword in ["meeting", "notes", "call"]):
             context_parts.append("Extract pain points, quotes, and metrics")
-        elif any(keyword in title_lower for keyword in ["docs", "wiki", "guide", "how to"]):
+        elif any(
+            keyword in title_lower for keyword in ["docs", "wiki", "guide", "how to"]
+        ):
             context_parts.append("Extract features and approved terms")
-        elif any(keyword in title_lower for keyword in ["customer", "user", "feedback"]):
+        elif any(
+            keyword in title_lower for keyword in ["customer", "user", "feedback"]
+        ):
             context_parts.append("Extract pain points, quotes, and use cases")
 
         additional_context = " | ".join(context_parts)
@@ -120,14 +124,20 @@ class NotionTransformer:
         db_desc = database.get_description() or ""
         db_desc_lower = db_desc.lower()
 
-        if any(keyword in db_title_lower or keyword in db_desc_lower
-               for keyword in ["feature", "roadmap", "spec"]):
+        if any(
+            keyword in db_title_lower or keyword in db_desc_lower
+            for keyword in ["feature", "roadmap", "spec"]
+        ):
             context_parts.append("Extract features and use cases")
-        elif any(keyword in db_title_lower or keyword in db_desc_lower
-                 for keyword in ["feedback", "customer", "user"]):
+        elif any(
+            keyword in db_title_lower or keyword in db_desc_lower
+            for keyword in ["feedback", "customer", "user"]
+        ):
             context_parts.append("Extract pain points and quotes")
-        elif any(keyword in db_title_lower or keyword in db_desc_lower
-                 for keyword in ["competitor", "market"]):
+        elif any(
+            keyword in db_title_lower or keyword in db_desc_lower
+            for keyword in ["competitor", "market"]
+        ):
             context_parts.append("Extract competitors and market insights")
 
         additional_context = " | ".join(context_parts)
@@ -220,14 +230,18 @@ class NotionTransformer:
                     if prop_type == "rich_text":
                         text_array = prop_value.get("rich_text", [])
                         if text_array:
-                            text = "".join(item.get("plain_text", "") for item in text_array)
+                            text = "".join(
+                                item.get("plain_text", "") for item in text_array
+                            )
                             if text:
                                 parts.append(f"   {prop_name}: {text}")
 
                     elif prop_type == "select":
                         select_value = prop_value.get("select")
                         if select_value:
-                            parts.append(f"   {prop_name}: {select_value.get('name', '')}")
+                            parts.append(
+                                f"   {prop_name}: {select_value.get('name', '')}"
+                            )
 
                     elif prop_type == "multi_select":
                         multi_select = prop_value.get("multi_select", [])

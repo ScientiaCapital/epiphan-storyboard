@@ -146,7 +146,9 @@ class RouterJobManager:
         # Fallback to Supabase
         if self._supabase:
             try:
-                query = self._supabase.table("router_jobs").select("*").eq("job_id", job_id)
+                query = (
+                    self._supabase.table("router_jobs").select("*").eq("job_id", job_id)
+                )
                 if org_id:
                     query = query.eq("org_id", org_id)
 

@@ -7,13 +7,14 @@ Provides full audit trail for all tool calls with:
 - Error capture
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Callable, Optional
-from uuid import UUID, uuid4
 import functools
-import time
 import inspect
+import time
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from typing import Any
+from uuid import UUID, uuid4
 
 
 @dataclass
@@ -24,26 +25,26 @@ class AuditRecord:
     """
 
     # Required fields
-    action: str              # 'tool_call', 'scrape', 'enrich', 'outreach'
-    tool_name: str           # Tool that was executed
-    org_id: str              # Organization context
-    success: bool            # Whether action succeeded
+    action: str  # 'tool_call', 'scrape', 'enrich', 'outreach'
+    tool_name: str  # Tool that was executed
+    org_id: str  # Organization context
+    success: bool  # Whether action succeeded
 
     # Auto-generated fields
     id: UUID = field(default_factory=uuid4)
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     # Optional context fields
-    session_id: Optional[str] = None        # Links to agent session
-    input_params: Optional[dict] = None     # Input arguments (sanitized)
-    output_summary: Optional[str] = None    # Brief result description
-    target_entity: Optional[str] = None     # 'lead:123', 'contractor:456'
-    source_project: Optional[str] = None    # 'dealer-scraper', 'sales-agent'
+    session_id: str | None = None  # Links to agent session
+    input_params: dict | None = None  # Input arguments (sanitized)
+    output_summary: str | None = None  # Brief result description
+    target_entity: str | None = None  # 'lead:123', 'contractor:456'
+    source_project: str | None = None  # 'dealer-scraper', 'sales-agent'
 
     # Outcome details
-    error_message: Optional[str] = None     # Error if failed
-    duration_ms: Optional[int] = None       # Execution time
-    cost_usd: Optional[float] = None        # API cost if applicable
+    error_message: str | None = None  # Error if failed
+    duration_ms: int | None = None  # Execution time
+    cost_usd: float | None = None  # API cost if applicable
 
     def to_dict(self) -> dict:
         """Convert to dictionary for storage/serialization."""
@@ -85,7 +86,7 @@ class AuditLogger:
         failures = logger.get_failure_logs()
     """
 
-    def __init__(self, org_id: str, source_project: Optional[str] = None):
+    def __init__(self, org_id: str, source_project: str | None = None):
         """Initialize logger.
 
         Args:
@@ -101,12 +102,12 @@ class AuditLogger:
         tool_name: str,
         input_params: dict,
         success: bool,
-        output_summary: Optional[str] = None,
-        error_message: Optional[str] = None,
-        duration_ms: Optional[int] = None,
-        cost_usd: Optional[float] = None,
-        session_id: Optional[str] = None,
-        target_entity: Optional[str] = None,
+        output_summary: str | None = None,
+        error_message: str | None = None,
+        duration_ms: int | None = None,
+        cost_usd: float | None = None,
+        session_id: str | None = None,
+        target_entity: str | None = None,
     ) -> AuditRecord:
         """Log a tool execution.
 
@@ -187,10 +188,17 @@ class AuditLogger:
             return {}
 
         sensitive_keys = {
-            "api_key", "apikey", "api-key",
-            "password", "passwd", "secret",
-            "token", "auth", "authorization",
-            "credential", "key",
+            "api_key",
+            "apikey",
+            "api-key",
+            "password",
+            "passwd",
+            "secret",
+            "token",
+            "auth",
+            "authorization",
+            "credential",
+            "key",
         }
 
         sanitized = {}
@@ -226,6 +234,7 @@ def audit_logged(
     Returns:
         Decorated function
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
@@ -260,4 +269,5 @@ def audit_logged(
                 )
 
         return wrapper
+
     return decorator

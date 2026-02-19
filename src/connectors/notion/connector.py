@@ -1,13 +1,11 @@
 """Notion connector implementation."""
 
 import logging
-from datetime import datetime, timezone
 
 from src.connectors.base import (
     AuthType,
     BaseConnector,
     ConnectorInstance,
-    ConnectorStatus,
     ConnectorType,
     OAuthConfig,
     SyncResult,
@@ -197,7 +195,9 @@ class NotionConnector(BaseConnector):
 
             # Sync databases
             if sync_databases:
-                logger.info(f"[NOTION] Syncing databases from cursor: {databases_cursor}")
+                logger.info(
+                    f"[NOTION] Syncing databases from cursor: {databases_cursor}"
+                )
 
                 # If specific database IDs are configured, sync those
                 if database_ids:
@@ -238,7 +238,9 @@ class NotionConnector(BaseConnector):
                             items_skipped += result.items_skipped
 
                         except Exception as e:
-                            logger.error(f"[NOTION] Failed to process database {db_id}: {e}")
+                            logger.error(
+                                f"[NOTION] Failed to process database {db_id}: {e}"
+                            )
                             errors.append({"database_id": db_id, "error": str(e)})
 
                 else:
@@ -286,7 +288,9 @@ class NotionConnector(BaseConnector):
                             items_skipped += result.items_skipped
 
                         except Exception as e:
-                            logger.error(f"[NOTION] Failed to process database {database.id}: {e}")
+                            logger.error(
+                                f"[NOTION] Failed to process database {database.id}: {e}"
+                            )
                             errors.append({"database_id": database.id, "error": str(e)})
 
                     databases_cursor = next_databases_cursor

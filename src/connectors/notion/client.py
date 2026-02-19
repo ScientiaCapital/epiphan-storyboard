@@ -91,7 +91,9 @@ class NotionAPIClient:
 
         next_cursor = response.next_cursor if response.has_more else None
 
-        logger.info(f"[NOTION] Searched {len(items)} items (cursor: {cursor} -> {next_cursor})")
+        logger.info(
+            f"[NOTION] Searched {len(items)} items (cursor: {cursor} -> {next_cursor})"
+        )
         return items, next_cursor
 
     async def get_page(self, page_id: str) -> NotionPage:

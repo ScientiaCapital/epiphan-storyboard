@@ -13,7 +13,6 @@ import logging
 import os
 import tempfile
 from datetime import datetime
-from pathlib import Path
 from time import perf_counter
 from typing import Any
 
@@ -21,13 +20,9 @@ from src.tools.base import BaseTool, ToolCategory, ToolDefinition, ToolResult
 from src.tools.recording.browserbase import BrowserbaseClient
 from src.tools.recording.config import BrowserbaseConfig
 from src.tools.recording.schemas import (
-    ActionType,
     AuthConfig,
     AuthType,
-    RecordingAction,
     RecordingConfig,
-    RecordingResult,
-    TimingEvent,
 )
 
 logger = logging.getLogger(__name__)
@@ -105,7 +100,15 @@ class ScreenRecorderTool(BaseTool):
                             "properties": {
                                 "action": {
                                     "type": "string",
-                                    "enum": ["navigate", "click", "type", "scroll", "wait", "screenshot", "hover"],
+                                    "enum": [
+                                        "navigate",
+                                        "click",
+                                        "type",
+                                        "scroll",
+                                        "wait",
+                                        "screenshot",
+                                        "hover",
+                                    ],
                                     "description": "Action type",
                                 },
                                 "target": {
@@ -131,7 +134,13 @@ class ScreenRecorderTool(BaseTool):
                         "properties": {
                             "type": {
                                 "type": "string",
-                                "enum": ["none", "cookies", "headers", "basic", "oauth"],
+                                "enum": [
+                                    "none",
+                                    "cookies",
+                                    "headers",
+                                    "basic",
+                                    "oauth",
+                                ],
                             },
                             "cookies": {
                                 "type": "object",
@@ -224,7 +233,15 @@ class ScreenRecorderTool(BaseTool):
                     error=f"Invalid action at index {i}: must have 'action' key",
                     execution_time_ms=int((perf_counter() - start_time) * 1000),
                 )
-            if action["action"] not in ["navigate", "click", "type", "scroll", "wait", "screenshot", "hover"]:
+            if action["action"] not in [
+                "navigate",
+                "click",
+                "type",
+                "scroll",
+                "wait",
+                "screenshot",
+                "hover",
+            ]:
                 return ToolResult(
                     tool_name=self.definition.name,
                     success=False,
@@ -279,12 +296,16 @@ class ScreenRecorderTool(BaseTool):
                     result = await self._execute_action(page, action)
 
                     # Track timing
-                    timing_events.append({
-                        "step": i,
-                        "action": action["action"],
-                        "target": action.get("target"),
-                        "timestamp_ms": int((action_start - recording_start) * 1000),
-                    })
+                    timing_events.append(
+                        {
+                            "step": i,
+                            "action": action["action"],
+                            "target": action.get("target"),
+                            "timestamp_ms": int(
+                                (action_start - recording_start) * 1000
+                            ),
+                        }
+                    )
 
                     # Capture screenshot if action returned one
                     if isinstance(result, bytes):

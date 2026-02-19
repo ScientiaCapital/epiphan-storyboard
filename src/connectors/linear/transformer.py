@@ -1,13 +1,11 @@
 """Transform Linear data to KnowledgeEntry objects."""
 
 import logging
-from datetime import datetime
 
 from src.connectors.linear.schemas import LinearIssue, LinearProject
 from src.knowledge.base import (
     KnowledgeEntry,
     KnowledgeSource,
-    KnowledgeType,
     SourceType,
 )
 from src.knowledge.extraction import KnowledgeExtractor
@@ -65,7 +63,9 @@ class LinearTransformer:
             # Hint knowledge types based on labels
             if any(label in ["bug", "issue", "problem"] for label in label_names):
                 context_parts.append("Extract as pain points")
-            elif any(label in ["feature", "enhancement", "request"] for label in label_names):
+            elif any(
+                label in ["feature", "enhancement", "request"] for label in label_names
+            ):
                 context_parts.append("Extract as features and use cases")
 
         if issue.project:

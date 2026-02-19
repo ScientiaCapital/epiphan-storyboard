@@ -36,7 +36,6 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -167,7 +166,7 @@ class StoryboardClient:
             await self._client.aclose()
             self._client = None
 
-    async def __aenter__(self) -> "StoryboardClient":
+    async def __aenter__(self) -> StoryboardClient:
         """Context manager entry."""
         return self
 

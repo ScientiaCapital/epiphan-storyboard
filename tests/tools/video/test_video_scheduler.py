@@ -103,10 +103,12 @@ class TestTimezoneHandling:
     async def test_valid_timezone_accepted(self):
         """Valid timezone should be accepted."""
         tool = VideoSchedulerTool()
-        result = await tool.run({
-            "prospect_timezone": "America/Los_Angeles",
-            "industry": "solar",
-        })
+        result = await tool.run(
+            {
+                "prospect_timezone": "America/Los_Angeles",
+                "industry": "solar",
+            }
+        )
         # Should not fail on timezone validation
         # May fail on other reasons (no LLM key), but timezone should be valid
         if not result.success:
@@ -116,10 +118,12 @@ class TestTimezoneHandling:
     async def test_invalid_timezone_rejected(self):
         """Invalid timezone should be rejected."""
         tool = VideoSchedulerTool()
-        result = await tool.run({
-            "prospect_timezone": "Invalid/Timezone",
-            "industry": "solar",
-        })
+        result = await tool.run(
+            {
+                "prospect_timezone": "Invalid/Timezone",
+                "industry": "solar",
+            }
+        )
         assert result.success is False
         assert "timezone" in result.error.lower()
 
@@ -131,12 +135,14 @@ class TestVideoSchedulerRun:
     async def test_returns_optimal_times(self):
         """Test that run returns optimal send times."""
         tool = VideoSchedulerTool()
-        result = await tool.run({
-            "prospect_timezone": "America/New_York",
-            "industry": "solar",
-            "role_level": "manager",
-            "use_llm": False,  # Skip LLM for faster test
-        })
+        result = await tool.run(
+            {
+                "prospect_timezone": "America/New_York",
+                "industry": "solar",
+                "role_level": "manager",
+                "use_llm": False,  # Skip LLM for faster test
+            }
+        )
 
         assert result.success is True
         assert "top_3_windows" in result.result
@@ -145,12 +151,14 @@ class TestVideoSchedulerRun:
     async def test_returns_reasoning(self):
         """Test that run returns reasoning."""
         tool = VideoSchedulerTool()
-        result = await tool.run({
-            "prospect_timezone": "America/New_York",
-            "industry": "hvac",
-            "role_level": "director",
-            "use_llm": False,
-        })
+        result = await tool.run(
+            {
+                "prospect_timezone": "America/New_York",
+                "industry": "hvac",
+                "role_level": "director",
+                "use_llm": False,
+            }
+        )
 
         assert result.success is True
         assert "reasoning" in result.result
@@ -159,11 +167,13 @@ class TestVideoSchedulerRun:
     async def test_returns_avoid_times(self):
         """Test that run returns times to avoid."""
         tool = VideoSchedulerTool()
-        result = await tool.run({
-            "prospect_timezone": "America/Chicago",
-            "industry": "electrical",
-            "use_llm": False,
-        })
+        result = await tool.run(
+            {
+                "prospect_timezone": "America/Chicago",
+                "industry": "electrical",
+                "use_llm": False,
+            }
+        )
 
         assert result.success is True
         assert "avoid_times" in result.result

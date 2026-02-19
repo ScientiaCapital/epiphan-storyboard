@@ -1,6 +1,5 @@
 """Web fetch tool for retrieving content from URLs via HTTP."""
 
-import asyncio
 import ipaddress
 import socket
 from typing import Any
@@ -28,14 +27,14 @@ class WebFetchTool(BaseTool):
 
     # Private IP ranges for SSRF protection
     PRIVATE_IP_RANGES = [
-        ipaddress.ip_network("127.0.0.0/8"),      # Loopback
-        ipaddress.ip_network("10.0.0.0/8"),       # Private class A
-        ipaddress.ip_network("172.16.0.0/12"),    # Private class B
-        ipaddress.ip_network("192.168.0.0/16"),   # Private class C
-        ipaddress.ip_network("169.254.0.0/16"),   # Link-local
-        ipaddress.ip_network("::1/128"),          # IPv6 loopback
-        ipaddress.ip_network("fc00::/7"),         # IPv6 private
-        ipaddress.ip_network("fe80::/10"),        # IPv6 link-local
+        ipaddress.ip_network("127.0.0.0/8"),  # Loopback
+        ipaddress.ip_network("10.0.0.0/8"),  # Private class A
+        ipaddress.ip_network("172.16.0.0/12"),  # Private class B
+        ipaddress.ip_network("192.168.0.0/16"),  # Private class C
+        ipaddress.ip_network("169.254.0.0/16"),  # Link-local
+        ipaddress.ip_network("::1/128"),  # IPv6 loopback
+        ipaddress.ip_network("fc00::/7"),  # IPv6 private
+        ipaddress.ip_network("fe80::/10"),  # IPv6 link-local
     ]
 
     @property
@@ -127,7 +126,9 @@ class WebFetchTool(BaseTool):
 
         # Check scheme
         if parsed.scheme not in ["http", "https"]:
-            raise ValueError(f"Invalid URL scheme: {parsed.scheme}. Only http:// and https:// are allowed")
+            raise ValueError(
+                f"Invalid URL scheme: {parsed.scheme}. Only http:// and https:// are allowed"
+            )
 
         # Check hostname exists
         if not parsed.hostname:
@@ -287,7 +288,7 @@ class WebFetchTool(BaseTool):
                 error="HTTP client error occurred",
                 execution_time_ms=0,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return ToolResult(
                 tool_name=self.definition.name,
                 success=False,

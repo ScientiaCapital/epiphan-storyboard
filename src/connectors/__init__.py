@@ -37,7 +37,6 @@ from src.connectors.base import (
     OAuthTokens,
     SyncResult,
 )
-from src.connectors.registry import ConnectorRegistry, connector
 
 # Import all connectors to trigger @connector decorator registration
 from src.connectors.close.connector import CloseConnector  # noqa: F401
@@ -48,6 +47,7 @@ from src.connectors.linear.connector import LinearConnector  # noqa: F401
 from src.connectors.loom.connector import LoomConnector  # noqa: F401
 from src.connectors.miro.connector import MiroConnector  # noqa: F401
 from src.connectors.notion.connector import NotionConnector  # noqa: F401
+from src.connectors.registry import ConnectorRegistry, connector
 
 __all__ = [
     # Core types

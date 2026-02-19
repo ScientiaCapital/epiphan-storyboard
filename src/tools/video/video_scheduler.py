@@ -26,26 +26,76 @@ class VideoSchedulerTool(BaseTool):
     # Industry-specific optimal time windows (24-hour format)
     INDUSTRY_PATTERNS = {
         "construction": [
-            {"start": time(6, 0), "end": time(7, 30), "confidence": 0.85, "reason": "Before job site departure"},
+            {
+                "start": time(6, 0),
+                "end": time(7, 30),
+                "confidence": 0.85,
+                "reason": "Before job site departure",
+            },
         ],
         "mep": [
-            {"start": time(6, 0), "end": time(7, 30), "confidence": 0.85, "reason": "Before job site departure"},
+            {
+                "start": time(6, 0),
+                "end": time(7, 30),
+                "confidence": 0.85,
+                "reason": "Before job site departure",
+            },
         ],
         "tech": [
-            {"start": time(9, 0), "end": time(10, 30), "confidence": 0.80, "reason": "Mid-morning focus time"},
-            {"start": time(15, 0), "end": time(16, 30), "confidence": 0.75, "reason": "Late afternoon break"},
+            {
+                "start": time(9, 0),
+                "end": time(10, 30),
+                "confidence": 0.80,
+                "reason": "Mid-morning focus time",
+            },
+            {
+                "start": time(15, 0),
+                "end": time(16, 30),
+                "confidence": 0.75,
+                "reason": "Late afternoon break",
+            },
         ],
         "saas": [
-            {"start": time(9, 0), "end": time(10, 30), "confidence": 0.80, "reason": "Mid-morning focus time"},
-            {"start": time(15, 0), "end": time(16, 30), "confidence": 0.75, "reason": "Late afternoon break"},
+            {
+                "start": time(9, 0),
+                "end": time(10, 30),
+                "confidence": 0.80,
+                "reason": "Mid-morning focus time",
+            },
+            {
+                "start": time(15, 0),
+                "end": time(16, 30),
+                "confidence": 0.75,
+                "reason": "Late afternoon break",
+            },
         ],
         "finance": [
-            {"start": time(7, 0), "end": time(8, 30), "confidence": 0.82, "reason": "Pre-market preparation"},
-            {"start": time(17, 0), "end": time(18, 30), "confidence": 0.78, "reason": "Post-market review"},
+            {
+                "start": time(7, 0),
+                "end": time(8, 30),
+                "confidence": 0.82,
+                "reason": "Pre-market preparation",
+            },
+            {
+                "start": time(17, 0),
+                "end": time(18, 30),
+                "confidence": 0.78,
+                "reason": "Post-market review",
+            },
         ],
         "default": [
-            {"start": time(9, 0), "end": time(10, 30), "confidence": 0.70, "reason": "Standard business hours"},
-            {"start": time(14, 0), "end": time(15, 30), "confidence": 0.65, "reason": "Afternoon focus time"},
+            {
+                "start": time(9, 0),
+                "end": time(10, 30),
+                "confidence": 0.70,
+                "reason": "Standard business hours",
+            },
+            {
+                "start": time(14, 0),
+                "end": time(15, 30),
+                "confidence": 0.65,
+                "reason": "Afternoon focus time",
+            },
         ],
     }
 
@@ -141,13 +191,11 @@ class VideoSchedulerTool(BaseTool):
             List of time windows with confidence scores
         """
         industry_key = industry.lower()
-        return self.INDUSTRY_PATTERNS.get(industry_key, self.INDUSTRY_PATTERNS["default"])
+        return self.INDUSTRY_PATTERNS.get(
+            industry_key, self.INDUSTRY_PATTERNS["default"]
+        )
 
-    def _apply_role_adjustment(
-        self,
-        window: dict[str, Any],
-        role_level: str
-    ) -> float:
+    def _apply_role_adjustment(self, window: dict[str, Any], role_level: str) -> float:
         """
         Apply role-level adjustments to confidence score.
 
@@ -199,7 +247,9 @@ class VideoSchedulerTool(BaseTool):
         """
         # Filter out weekends and sort by score
         weekdays: list[tuple[int, float]] = [
-            (day, float(info["score"])) for day, info in self.DAY_SCORES.items() if day < 5
+            (day, float(info["score"]))
+            for day, info in self.DAY_SCORES.items()
+            if day < 5
         ]
         weekdays.sort(key=lambda x: x[1], reverse=True)
         return [day for day, _ in weekdays[:3]]  # Top 3 days
@@ -220,10 +270,7 @@ class VideoSchedulerTool(BaseTool):
         return f"{start.strftime('%I:%M %p')} - {end.strftime('%I:%M %p')} {tz_abbr}"
 
     def _calculate_recommendations(
-        self,
-        industry: str,
-        role_level: str,
-        timezone_str: str
+        self, industry: str, role_level: str, timezone_str: str
     ) -> dict[str, Any]:
         """
         Calculate optimal send time recommendations using rule-based logic.
@@ -243,12 +290,14 @@ class VideoSchedulerTool(BaseTool):
         adjusted_windows = []
         for window in base_windows:
             adjusted_conf = self._apply_role_adjustment(window, role_level)
-            adjusted_windows.append({
-                "start": window["start"],
-                "end": window["end"],
-                "confidence": adjusted_conf,
-                "reason": window["reason"],
-            })
+            adjusted_windows.append(
+                {
+                    "start": window["start"],
+                    "end": window["end"],
+                    "confidence": adjusted_conf,
+                    "reason": window["reason"],
+                }
+            )
 
         # Sort by adjusted confidence
         adjusted_windows.sort(key=lambda x: x["confidence"], reverse=True)
@@ -260,18 +309,26 @@ class VideoSchedulerTool(BaseTool):
         top_3_windows = []
         for i, day_idx in enumerate(top_days):
             day_info = self.DAY_SCORES[day_idx]
-            window = adjusted_windows[0] if i == 0 else adjusted_windows[min(i, len(adjusted_windows) - 1)]
+            window = (
+                adjusted_windows[0]
+                if i == 0
+                else adjusted_windows[min(i, len(adjusted_windows) - 1)]
+            )
 
             # Apply day score to confidence
             final_confidence = window["confidence"] * day_info["score"]
 
-            top_3_windows.append({
-                "day": day_info["name"],
-                "time_range": self._format_time_range(window["start"], window["end"], timezone_str),
-                "timezone": timezone_str,
-                "confidence_score": round(final_confidence, 2),
-                "reason": window["reason"],
-            })
+            top_3_windows.append(
+                {
+                    "day": day_info["name"],
+                    "time_range": self._format_time_range(
+                        window["start"], window["end"], timezone_str
+                    ),
+                    "timezone": timezone_str,
+                    "confidence_score": round(final_confidence, 2),
+                    "reason": window["reason"],
+                }
+            )
 
         # Generate reasoning
         reasoning_parts = [
@@ -300,7 +357,7 @@ class VideoSchedulerTool(BaseTool):
         prospect_email: str,
         industry: str,
         company_size: str,
-        role_level: str
+        role_level: str,
     ) -> str:
         """
         Optionally enhance reasoning with LLM-generated insights.
@@ -331,10 +388,10 @@ Prospect Data:
 - Role Level: {role_level}
 
 Rule-Based Recommendations:
-{base_recommendations['reasoning']}
+{base_recommendations["reasoning"]}
 
 Top Windows:
-{chr(10).join(f"- {w['day']} {w['time_range']} (confidence: {w['confidence_score']})" for w in base_recommendations['top_3_windows'])}
+{chr(10).join(f"- {w['day']} {w['time_range']} (confidence: {w['confidence_score']})" for w in base_recommendations["top_3_windows"])}
 
 Provide personalized insight in 2-3 sentences focusing on WHY these times work for this specific prospect profile."""
 
@@ -366,7 +423,9 @@ Provide personalized insight in 2-3 sentences focusing on WHY these times work f
         """
         # Extract arguments with defaults
         prospect_email: str = arguments.get("prospect_email", "unknown@example.com")
-        prospect_timezone: str = arguments.get("prospect_timezone", self.DEFAULT_TIMEZONE)
+        prospect_timezone: str = arguments.get(
+            "prospect_timezone", self.DEFAULT_TIMEZONE
+        )
         industry: str = arguments.get("industry", "general")
         company_size: str = arguments.get("company_size", "Unknown")
         role_level: str = arguments.get("role_level", "manager")
@@ -387,9 +446,7 @@ Provide personalized insight in 2-3 sentences focusing on WHY these times work f
         # Calculate rule-based recommendations
         try:
             recommendations = self._calculate_recommendations(
-                industry=industry,
-                role_level=role_level,
-                timezone_str=prospect_timezone
+                industry=industry, role_level=role_level, timezone_str=prospect_timezone
             )
 
             # Optionally enhance with LLM
@@ -399,7 +456,7 @@ Provide personalized insight in 2-3 sentences focusing on WHY these times work f
                     prospect_email=prospect_email,
                     industry=industry,
                     company_size=company_size,
-                    role_level=role_level
+                    role_level=role_level,
                 )
                 recommendations["reasoning"] = enhanced_reasoning
 

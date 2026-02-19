@@ -17,7 +17,9 @@ class LoomViewer(BaseModel):
     email: str | None = Field(None, description="Viewer email address")
     view_id: str = Field(..., description="Unique view identifier")
     watch_duration_seconds: int = Field(..., description="Total watch time in seconds")
-    completion_rate: float = Field(..., ge=0, le=100, description="Percentage of video watched")
+    completion_rate: float = Field(
+        ..., ge=0, le=100, description="Percentage of video watched"
+    )
     rewatch_count: int = Field(0, description="Number of times viewer rewatched")
     first_viewed_at: str = Field(..., description="ISO timestamp of first view")
     last_viewed_at: str = Field(..., description="ISO timestamp of last view")
@@ -30,8 +32,12 @@ class ViewAnalytics(BaseModel):
     video_id: str = Field(..., description="Loom video identifier")
     total_views: int = Field(..., description="Total number of views")
     unique_viewers: int = Field(..., description="Number of unique viewers")
-    average_completion_rate: float = Field(..., description="Average completion rate across all views")
-    viewers: list[LoomViewer] = Field(default_factory=list, description="Individual viewer data")
+    average_completion_rate: float = Field(
+        ..., description="Average completion rate across all views"
+    )
+    viewers: list[LoomViewer] = Field(
+        default_factory=list, description="Individual viewer data"
+    )
 
 
 class EnrichedViewer(BaseModel):
@@ -46,7 +52,9 @@ class EnrichedViewer(BaseModel):
     employee_count: int | None = Field(None, description="Company employee count")
     linkedin_url: str | None = Field(None, description="LinkedIn profile URL")
     enrichment_source: str = Field(..., description="Which API provided the data")
-    engagement_score: float | None = Field(None, ge=0, le=100, description="Engagement score 0-100")
+    engagement_score: float | None = Field(
+        None, ge=0, le=100, description="Engagement score 0-100"
+    )
     is_hot_lead: bool = Field(False, description="Whether this is a high-priority lead")
 
 
@@ -148,7 +156,9 @@ class LoomViewTrackerTool(BaseTool):
         email_component = 20 if email_opened else 0
 
         # Total score
-        total_score = completion_component + rewatch_component + time_component + email_component
+        total_score = (
+            completion_component + rewatch_component + time_component + email_component
+        )
 
         return round(min(total_score, 100), 2)
 
@@ -303,7 +313,9 @@ class LoomViewTrackerTool(BaseTool):
                 result_data = {
                     "video_id": video_id,
                     "total_views": len(viewers),
-                    "unique_viewers": len({v.get("email") for v in viewers if v.get("email")}),
+                    "unique_viewers": len(
+                        {v.get("email") for v in viewers if v.get("email")}
+                    ),
                     "average_completion_rate": round(avg_completion, 2),
                     "hot_leads_count": len(hot_leads),
                     "hot_leads": hot_leads,
@@ -449,13 +461,25 @@ class ViewerEnrichmentTool(BaseTool):
                 if response.status_code == 200:
                     data = response.json()
                     return {
-                        "full_name": data.get("person", {}).get("name", {}).get("fullName"),
+                        "full_name": data.get("person", {})
+                        .get("name", {})
+                        .get("fullName"),
                         "company": data.get("company", {}).get("name"),
-                        "title": data.get("person", {}).get("employment", {}).get("title"),
-                        "industry": data.get("company", {}).get("category", {}).get("industry"),
-                        "revenue": data.get("company", {}).get("metrics", {}).get("annualRevenue"),
-                        "employee_count": data.get("company", {}).get("metrics", {}).get("employees"),
-                        "linkedin_url": data.get("person", {}).get("linkedin", {}).get("handle"),
+                        "title": data.get("person", {})
+                        .get("employment", {})
+                        .get("title"),
+                        "industry": data.get("company", {})
+                        .get("category", {})
+                        .get("industry"),
+                        "revenue": data.get("company", {})
+                        .get("metrics", {})
+                        .get("annualRevenue"),
+                        "employee_count": data.get("company", {})
+                        .get("metrics", {})
+                        .get("employees"),
+                        "linkedin_url": data.get("person", {})
+                        .get("linkedin", {})
+                        .get("handle"),
                     }
         except Exception:
             pass
@@ -581,7 +605,9 @@ class ViewerEnrichmentTool(BaseTool):
         """
         # Extract arguments
         viewer_email = arguments.get("viewer_email")
-        enrichment_sources = arguments.get("enrichment_sources", ["clearbit", "apollo", "clay"])
+        enrichment_sources = arguments.get(
+            "enrichment_sources", ["clearbit", "apollo", "clay"]
+        )
         include_engagement = arguments.get("include_engagement", False)
         engagement_data = arguments.get("engagement_data", {})
         timeout = arguments.get("timeout", self.DEFAULT_TIMEOUT)
@@ -600,7 +626,7 @@ class ViewerEnrichmentTool(BaseTool):
         enriched_data = None
         source_used = None
 
-        for source in enrichment_sources[:self.MAX_SOURCES]:
+        for source in enrichment_sources[: self.MAX_SOURCES]:
             if source == "clearbit":
                 enriched_data = await self._enrich_clearbit(viewer_email, timeout)
             elif source == "apollo":

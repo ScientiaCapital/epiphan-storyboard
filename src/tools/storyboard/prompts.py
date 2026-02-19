@@ -8,8 +8,6 @@ These are pure functions (no class state) extracted from GeminiStoryboardClient.
 Each function takes an audience/style string and returns a prompt fragment.
 """
 
-from typing import Any
-
 
 def get_value_angle_instruction(audience: str) -> str:
     """
@@ -149,7 +147,6 @@ FORBIDDEN (sounds risky):
 
 EMOTIONAL CORE: Security, reliability, and zero complaints from demanding attorneys.
 """,
-
         # ── BTL: Operators ────────────────────────────────────────
         "technical_director": """VALUE FRAMING: EASE (Operator Reliability) - AMPLIFIED
 
@@ -182,43 +179,36 @@ def get_persona_extraction_focus(audience: str, audience_info: dict) -> str:
 - What UPTIME and RELIABILITY across multiple rooms/venues?
 - How does this REDUCE TRUCK ROLLS and vendor dependency?
 - What VENDOR CONSOLIDATION or simplified support?""",
-
         "ld_director": """FOCUS FOR L&D DIRECTOR:
 - What KNOWLEDGE CAPTURE or TRAINING SCALABILITY was discussed?
 - What LMS INTEGRATION or content library capabilities?
 - How does this help COMPLIANCE DOCUMENTATION (OSHA, accreditation)?
 - What measurable LEARNING OUTCOMES or training ROI?""",
-
         "sim_center_director": """FOCUS FOR SIMULATION CENTER DIRECTOR:
 - What MULTI-ANGLE RECORDING or DEBRIEF quality improvements?
 - What HIPAA COMPLIANCE or data security for patient recordings?
 - How does this integrate with SIMCAPTURE or CAE systems?
 - What LOCAL RECORDING capabilities (no cloud dependency)?""",
-
         "court_admin": """FOCUS FOR COURT ADMINISTRATOR:
 - What RECORD INTEGRITY or CHAIN OF CUSTODY features?
 - What UNATTENDED RECORDING reliability for proceedings?
 - How does this address COURT REPORTER SHORTAGE?
 - What PUBLIC ACCESS STREAMING compliance?""",
-
         "corp_comms": """FOCUS FOR CORPORATE COMMUNICATIONS DIRECTOR:
 - What BROADCAST QUALITY from any room?
 - How does this prevent PRODUCTION FAILURES in town halls?
 - What MULTI-PLATFORM DISTRIBUTION (Teams + YouTube + intranet)?
 - What EXECUTIVE PRESENCE and brand consistency?""",
-
         "ehs_manager": """FOCUS FOR EHS MANAGER:
 - What OSHA COMPLIANCE documentation capabilities?
 - What SAFETY TRAINING CAPTURE for SOPs and procedures?
 - How does this capture TRIBAL KNOWLEDGE from retiring workers?
 - What AUDIT READINESS for safety procedures?""",
-
         "law_firm_it": """FOCUS FOR LAW FIRM IT DIRECTOR:
 - What ON-PREMISES RECORDING (no cloud risk)?
 - What DEPOSITION QUALITY and reliability?
 - How does this address E-DISCOVERY and privilege concerns?
 - What PARTNER SATISFACTION through zero-complaint AV?""",
-
         # ── BTL: Operators ────────────────────────────────────────
         "technical_director": """FOCUS FOR TECHNICAL DIRECTOR / AV OPERATOR:
 - What EASE OF USE or ONE-BUTTON operation?
@@ -255,64 +245,60 @@ VOICE: {voice_tone}
 VALUE ANGLE: COI - fleet standardization, fewer truck rolls, managed from anywhere
 VISUAL STYLE: {default_style} (fleet dashboard, multi-room management aesthetic)
 DESIGN: Before/after fleet comparison, reference stories (NC State 300+), campus map
-AVOID WORDS: {', '.join(forbidden[:5])}""",
-
+AVOID WORDS: {", ".join(forbidden[:5])}""",
         "ld_director": f"""FOR: {title}
 VOICE: {voice_tone}
 VALUE ANGLE: ROI - knowledge capture, training scalability, compliance documentation
 VISUAL STYLE: {default_style} (learning platform aesthetic, content library view)
 DESIGN: Training workflow, knowledge capture funnel, LMS integration diagram
-AVOID WORDS: {', '.join(forbidden[:5])}""",
-
+AVOID WORDS: {", ".join(forbidden[:5])}""",
         "sim_center_director": f"""FOR: {title}
 VOICE: {voice_tone}
 VALUE ANGLE: COI - every sim without recording is a missed learning opportunity
 VISUAL STYLE: {default_style} (clinical simulation, multi-angle debrief view)
 DESIGN: Multi-camera sim layout, debrief comparison, HIPAA compliance badge
-AVOID WORDS: {', '.join(forbidden[:5])}""",
-
+AVOID WORDS: {", ".join(forbidden[:5])}""",
         "court_admin": f"""FOR: {title}
 VOICE: {voice_tone}
 VALUE ANGLE: COI - legal risk from failed recordings, chain of custody
 VISUAL STYLE: {default_style} (judicial gravity, clean institutional aesthetic)
 DESIGN: Courtroom recording layout, chain of custody flow, public access streaming
-AVOID WORDS: {', '.join(forbidden[:5])}""",
-
+AVOID WORDS: {", ".join(forbidden[:5])}""",
         "corp_comms": f"""FOR: {title}
 VOICE: {voice_tone}
 VALUE ANGLE: ROI - broadcast quality from any room, zero production failures
 VISUAL STYLE: {default_style} (broadcast studio aesthetic, executive communications)
 DESIGN: Town hall setup, multi-platform distribution, before/after quality comparison
-AVOID WORDS: {', '.join(forbidden[:5])}""",
-
+AVOID WORDS: {", ".join(forbidden[:5])}""",
         "ehs_manager": f"""FOR: {title}
 VOICE: {voice_tone}
 VALUE ANGLE: COI - OSHA compliance risk, knowledge loss from retiring workers
 VISUAL STYLE: {default_style} (safety-first, industrial, compliance documentation)
 DESIGN: Training capture workflow, OSHA compliance checklist, audit trail view
-AVOID WORDS: {', '.join(forbidden[:5])}""",
-
+AVOID WORDS: {", ".join(forbidden[:5])}""",
         "law_firm_it": f"""FOR: {title}
 VOICE: {voice_tone}
 VALUE ANGLE: COI - data security risk, partner frustration from failed depositions
 VISUAL STYLE: {default_style} (secure, on-premises, professional law firm aesthetic)
 DESIGN: Network security diagram, deposition setup, data sovereignty flow
-AVOID WORDS: {', '.join(forbidden[:5])}""",
-
+AVOID WORDS: {", ".join(forbidden[:5])}""",
         # ── BTL: Operators ────────────────────────────────────────
         "technical_director": f"""FOR: {title}
 VOICE: {voice_tone}
 VALUE ANGLE: EASE - one-button operation, reliability under pressure
 VISUAL STYLE: {default_style} (operator's view, control room aesthetic, multiview)
 DESIGN: Show flow layout, one-touch control panel, confidence monitoring view
-AVOID WORDS: {', '.join(forbidden[:5])}""",
+AVOID WORDS: {", ".join(forbidden[:5])}""",
     }
 
-    return persona_contexts.get(audience, f"""FOR: {title}
+    return persona_contexts.get(
+        audience,
+        f"""FOR: {title}
 VOICE: {voice_tone}
 VALUE ANGLE: Show clear business value
 VISUAL STYLE: {default_style}
-DESIGN: Professional and polished""")
+DESIGN: Professional and polished""",
+    )
 
 
 def get_visual_style_instructions(visual_style: str) -> str:

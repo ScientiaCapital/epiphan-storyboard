@@ -273,7 +273,9 @@ class StripeClient:
                 "current_period_end": datetime.fromtimestamp(period_end, tz=UTC),
                 "cancel_at_period_end": subscription.cancel_at_period_end,
                 "customer": subscription.customer,
-                "metadata": dict(subscription.metadata) if subscription.metadata else {},
+                "metadata": dict(subscription.metadata)
+                if subscription.metadata
+                else {},
             }
 
         except stripe_error.StripeError as e:

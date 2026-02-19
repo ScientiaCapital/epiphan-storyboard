@@ -156,7 +156,9 @@ class WebhookEvent(BaseModel):
     """Parsed Stripe webhook event."""
 
     event_id: str = Field(..., description="Stripe event ID")
-    event_type: str = Field(..., description="Event type (e.g., checkout.session.completed)")
+    event_type: str = Field(
+        ..., description="Event type (e.g., checkout.session.completed)"
+    )
     data: dict[str, Any] = Field(..., description="Event data payload")
     created_at: datetime = Field(..., description="Event creation timestamp")
 

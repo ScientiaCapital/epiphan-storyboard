@@ -7,9 +7,6 @@ Coordinates ingestion from all sources and provides a unified API.
 import logging
 import os
 from dataclasses import dataclass
-from typing import Optional
-
-from supabase import Client, create_client
 
 from src.knowledge.base import (
     ExtractionResult,
@@ -18,6 +15,7 @@ from src.knowledge.base import (
 )
 from src.knowledge.close_crm import CloseCRMIngester
 from src.knowledge.extraction import KnowledgeExtractor
+from supabase import Client, create_client
 
 logger = logging.getLogger(__name__)
 
@@ -59,10 +57,10 @@ class KnowledgeIngestionService:
         )
     """
 
-    def __init__(self, config: Optional[ServiceConfig] = None):
+    def __init__(self, config: ServiceConfig | None = None):
         self.config = config or ServiceConfig()
-        self._supabase: Optional[Client] = None
-        self._extractor: Optional[KnowledgeExtractor] = None
+        self._supabase: Client | None = None
+        self._extractor: KnowledgeExtractor | None = None
 
     @property
     def supabase(self) -> Client:
@@ -155,7 +153,7 @@ class KnowledgeIngestionService:
         self,
         video_url: str,
         transcript: str,
-        title: Optional[str] = None,
+        title: str | None = None,
     ) -> ExtractionResult:
         """
         Ingest a Loom video transcript.
@@ -168,8 +166,9 @@ class KnowledgeIngestionService:
         Returns:
             ExtractionResult with extracted knowledge
         """
-        from src.knowledge.base import KnowledgeSource, SourceType
         import hashlib
+
+        from src.knowledge.base import KnowledgeSource, SourceType
 
         source = KnowledgeSource(
             source_type=SourceType.LOOM_TRANSCRIPT,
@@ -197,8 +196,8 @@ class KnowledgeIngestionService:
     async def ingest_miro_board(
         self,
         image_data: bytes,
-        board_url: Optional[str] = None,
-        title: Optional[str] = None,
+        board_url: str | None = None,
+        title: str | None = None,
     ) -> ExtractionResult:
         """
         Ingest a Miro board screenshot.
@@ -214,9 +213,10 @@ class KnowledgeIngestionService:
         Returns:
             ExtractionResult with extracted knowledge
         """
+        import hashlib
+
         from src.knowledge.base import KnowledgeSource, SourceType
         from src.tools.storyboard.gemini_client import GeminiStoryboardClient
-        import hashlib
 
         # First, use vision model to understand the board
         gemini = GeminiStoryboardClient()
@@ -263,8 +263,8 @@ Raw Extracted: {understanding.raw_extracted_text}
     async def ingest_code(
         self,
         code_content: str,
-        file_path: Optional[str] = None,
-        author: Optional[str] = None,
+        file_path: str | None = None,
+        author: str | None = None,
     ) -> ExtractionResult:
         """
         Ingest engineer code to extract feature information.
@@ -277,8 +277,9 @@ Raw Extracted: {understanding.raw_extracted_text}
         Returns:
             ExtractionResult with extracted knowledge
         """
-        from src.knowledge.base import KnowledgeSource, SourceType
         import hashlib
+
+        from src.knowledge.base import KnowledgeSource, SourceType
 
         source = KnowledgeSource(
             source_type=SourceType.ENGINEER_CODE,
@@ -364,8 +365,8 @@ Raw Extracted: {understanding.raw_extracted_text}
     async def get_knowledge_for_storyboard(
         self,
         audience: str = "c_suite",
-        industry: Optional[str] = None,
-        knowledge_types: Optional[list[str]] = None,
+        industry: str | None = None,
+        knowledge_types: list[str] | None = None,
         limit: int = 50,
     ) -> list[KnowledgeEntry]:
         """
@@ -384,25 +385,23 @@ Raw Extracted: {understanding.raw_extracted_text}
             knowledge_types = ["pain_point", "metric", "approved_term", "feature"]
 
         # Build query
-        query = self.supabase.table("knowledge") \
-            .select("*") \
-            .in_("knowledge_type", knowledge_types) \
-            .gte("confidence_score", 0.7) \
-            .order("usage_count", desc=True) \
-            .order("confidence_score", desc=True) \
+        query = (
+            self.supabase.table("knowledge")
+            .select("*")
+            .in_("knowledge_type", knowledge_types)
+            .gte("confidence_score", 0.7)
+            .order("usage_count", desc=True)
+            .order("confidence_score", desc=True)
             .limit(limit)
+        )
 
         # Add audience filter if applicable
         # Note: PostgreSQL array contains syntax
         if audience:
-            query = query.or_(
-                f"audience.cs.{{{audience}}},audience.eq.{{}}"
-            )
+            query = query.or_(f"audience.cs.{{{audience}}},audience.eq.{{}}")
 
         if industry:
-            query = query.or_(
-                f"industries.cs.{{{industry}}},industries.eq.{{}}"
-            )
+            query = query.or_(f"industries.cs.{{{industry}}},industries.eq.{{}}")
 
         response = query.execute()
 
@@ -427,18 +426,22 @@ Raw Extracted: {understanding.raw_extracted_text}
 
     async def get_banned_terms(self) -> list[str]:
         """Get all banned terms from knowledge base."""
-        response = self.supabase.table("knowledge") \
-            .select("content") \
-            .eq("knowledge_type", "banned_term") \
+        response = (
+            self.supabase.table("knowledge")
+            .select("content")
+            .eq("knowledge_type", "banned_term")
             .execute()
+        )
 
         return [row["content"] for row in response.data]
 
-    async def get_approved_terms(self, audience: Optional[str] = None) -> list[str]:
+    async def get_approved_terms(self, audience: str | None = None) -> list[str]:
         """Get approved terms, optionally filtered by audience."""
-        query = self.supabase.table("knowledge") \
-            .select("content, audience") \
+        query = (
+            self.supabase.table("knowledge")
+            .select("content, audience")
             .eq("knowledge_type", "approved_term")
+        )
 
         response = query.execute()
 
@@ -453,7 +456,7 @@ Raw Extracted: {understanding.raw_extracted_text}
     async def search_knowledge(
         self,
         query: str,
-        knowledge_types: Optional[list[str]] = None,
+        knowledge_types: list[str] | None = None,
         limit: int = 20,
     ) -> list[KnowledgeEntry]:
         """
@@ -475,7 +478,7 @@ Raw Extracted: {understanding.raw_extracted_text}
                 "knowledge_types": knowledge_types,
                 "min_confidence": 0.5,
                 "max_results": limit,
-            }
+            },
         ).execute()
 
         entries = []
@@ -492,16 +495,13 @@ Raw Extracted: {understanding.raw_extracted_text}
 
     async def increment_usage(self, entry_id: str) -> None:
         """Increment usage count for a knowledge entry (for learning)."""
-        self.supabase.rpc(
-            "increment_usage_count",
-            {"entry_id": entry_id}
-        ).execute()
+        self.supabase.rpc("increment_usage_count", {"entry_id": entry_id}).execute()
 
     # =========================================================================
     # PRIVATE HELPERS
     # =========================================================================
 
-    async def _save_source(self, source, org_id: Optional[str] = None) -> str:
+    async def _save_source(self, source, org_id: str | None = None) -> str:
         """Save source to database.
 
         Args:
@@ -514,7 +514,9 @@ Raw Extracted: {understanding.raw_extracted_text}
             "external_url": source.external_url,
             "file_path": source.file_path,
             "source_title": source.source_title,
-            "source_date": source.source_date.isoformat() if source.source_date else None,
+            "source_date": source.source_date.isoformat()
+            if source.source_date
+            else None,
             "duration_seconds": source.duration_seconds,
             "participant_names": source.participant_names,
             "raw_content": source.raw_content,
@@ -523,7 +525,7 @@ Raw Extracted: {understanding.raw_extracted_text}
         }
 
         # Include org_id for multi-tenant isolation
-        effective_org_id = org_id or getattr(source, 'org_id', None)
+        effective_org_id = org_id or getattr(source, "org_id", None)
         if effective_org_id:
             data["org_id"] = effective_org_id
 

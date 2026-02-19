@@ -7,23 +7,25 @@ Enables unified API across Anthropic, Google Gemini, OpenRouter, and local vLLM.
 NOTE: OpenAI is NOT supported in this project. Use Anthropic Claude, Google Gemini, or OpenRouter.
 """
 
+import asyncio
+import json
+import logging
 import os
 import time
-import asyncio
-import logging
-import aiohttp
-import json
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any, List, AsyncGenerator
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from collections.abc import AsyncGenerator
+from dataclasses import dataclass
 from enum import Enum
+from typing import Any
+
+import aiohttp
 
 logging.basicConfig(level=logging.INFO)
 
 
 class ProviderType(Enum):
     """Supported provider types - NO OPENAI, NO GROQ"""
+
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
     OPENROUTER = "openrouter"
@@ -33,10 +35,11 @@ class ProviderType(Enum):
 @dataclass
 class ProviderConfig:
     """Configuration for a provider"""
+
     name: str
     provider_type: ProviderType
-    api_key: Optional[str] = None
-    base_url: Optional[str] = None
+    api_key: str | None = None
+    base_url: str | None = None
     enabled: bool = True
 
     # Rate limiting
@@ -54,6 +57,7 @@ class ProviderConfig:
 @dataclass
 class ProviderResponse:
     """Unified response from any provider"""
+
     content: str
     model: str
     provider: str
@@ -67,27 +71,29 @@ class ProviderResponse:
     cost_cents: float = 0.0
 
     # Metadata
-    finish_reason: Optional[str] = None
+    finish_reason: str | None = None
     latency_ms: float = 0.0
 
     # Raw response for debugging
-    raw_response: Optional[Dict] = None
+    raw_response: dict | None = None
 
-    def to_openai_format(self) -> Dict[str, Any]:
+    def to_openai_format(self) -> dict[str, Any]:
         """Convert to OpenAI-compatible response format"""
         return {
             "id": f"chatcmpl-{int(time.time() * 1000)}",
             "object": "chat.completion",
             "created": int(time.time()),
             "model": self.model,
-            "choices": [{
-                "index": 0,
-                "message": {
-                    "role": "assistant",
-                    "content": self.content,
-                },
-                "finish_reason": self.finish_reason or "stop",
-            }],
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": self.content,
+                    },
+                    "finish_reason": self.finish_reason or "stop",
+                }
+            ],
             "usage": {
                 "prompt_tokens": self.input_tokens,
                 "completion_tokens": self.output_tokens,
@@ -115,12 +121,12 @@ class ProviderAdapter(ABC):
     @abstractmethod
     async def complete(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model: str,
         temperature: float = 1.0,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         stream: bool = False,
-        **kwargs
+        **kwargs,
     ) -> ProviderResponse:
         """Execute a completion request"""
         pass
@@ -128,17 +134,17 @@ class ProviderAdapter(ABC):
     @abstractmethod
     async def stream(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model: str,
         temperature: float = 1.0,
-        max_tokens: Optional[int] = None,
-        **kwargs
-    ) -> AsyncGenerator[str, None]:
+        max_tokens: int | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[str]:
         """Stream a completion request"""
         pass
 
     @abstractmethod
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """List available models for this provider"""
         pass
 
@@ -155,7 +161,7 @@ class ProviderAdapter(ABC):
         self.total_cost_cents += response.cost_cents
         self.total_latency_ms += response.latency_ms
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get provider statistics"""
         return {
             "name": self.name,
@@ -165,7 +171,9 @@ class ProviderAdapter(ABC):
             "total_tokens": self.total_tokens,
             "total_cost_cents": round(self.total_cost_cents, 2),
             "total_errors": self.total_errors,
-            "avg_latency_ms": round(self.total_latency_ms / self.total_requests, 2) if self.total_requests else 0,
+            "avg_latency_ms": round(self.total_latency_ms / self.total_requests, 2)
+            if self.total_requests
+            else 0,
         }
 
 
@@ -173,8 +181,11 @@ class AnthropicAdapter(ProviderAdapter):
     """Adapter for Anthropic API"""
 
     MODELS = [
-        "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022",
-        "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307",
+        "claude-3-5-sonnet-20241022",
+        "claude-3-5-haiku-20241022",
+        "claude-3-opus-20240229",
+        "claude-3-sonnet-20240229",
+        "claude-3-haiku-20240307",
     ]
 
     def __init__(self, config: ProviderConfig):
@@ -184,12 +195,12 @@ class AnthropicAdapter(ProviderAdapter):
 
     async def complete(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model: str,
         temperature: float = 1.0,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         stream: bool = False,
-        **kwargs
+        **kwargs,
     ) -> ProviderResponse:
         start_time = time.time()
 
@@ -223,13 +234,15 @@ class AnthropicAdapter(ProviderAdapter):
                 f"{self.base_url}/messages",
                 headers=headers,
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
             ) as resp:
                 data = await resp.json()
 
                 if resp.status >= 400:
                     self.total_errors += 1
-                    raise ProviderError(f"Anthropic error: {data.get('error', {}).get('message', 'Unknown')}")
+                    raise ProviderError(
+                        f"Anthropic error: {data.get('error', {}).get('message', 'Unknown')}"
+                    )
 
         latency_ms = (time.time() - start_time) * 1000
 
@@ -260,12 +273,12 @@ class AnthropicAdapter(ProviderAdapter):
 
     async def stream(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model: str,
         temperature: float = 1.0,
-        max_tokens: Optional[int] = None,
-        **kwargs
-    ) -> AsyncGenerator[str, None]:
+        max_tokens: int | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[str]:
         # Similar to complete but with streaming
         headers = {
             "x-api-key": self.api_key,
@@ -295,7 +308,7 @@ class AnthropicAdapter(ProviderAdapter):
                 f"{self.base_url}/messages",
                 headers=headers,
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
             ) as resp:
                 async for line in resp.content:
                     line = line.decode().strip()
@@ -306,7 +319,7 @@ class AnthropicAdapter(ProviderAdapter):
                             if content:
                                 yield content
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         return self.MODELS
 
 
@@ -314,23 +327,28 @@ class GoogleAdapter(ProviderAdapter):
     """Adapter for Google Gemini API"""
 
     MODELS = [
-        "gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.5-flash-8b",
-        "gemini-2.0-flash-exp", "gemini-1.0-pro",
+        "gemini-1.5-pro",
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-8b",
+        "gemini-2.0-flash-exp",
+        "gemini-1.0-pro",
     ]
 
     def __init__(self, config: ProviderConfig):
         super().__init__(config)
-        self.base_url = config.base_url or "https://generativelanguage.googleapis.com/v1beta"
+        self.base_url = (
+            config.base_url or "https://generativelanguage.googleapis.com/v1beta"
+        )
         self.api_key = config.api_key or os.getenv("GOOGLE_API_KEY")
 
     async def complete(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model: str,
         temperature: float = 1.0,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         stream: bool = False,
-        **kwargs
+        **kwargs,
     ) -> ProviderResponse:
         start_time = time.time()
 
@@ -342,22 +360,20 @@ class GoogleAdapter(ProviderAdapter):
             if msg["role"] == "system":
                 system_instruction = msg["content"]
             elif msg["role"] == "user":
-                gemini_contents.append({
-                    "role": "user",
-                    "parts": [{"text": msg["content"]}]
-                })
+                gemini_contents.append(
+                    {"role": "user", "parts": [{"text": msg["content"]}]}
+                )
             elif msg["role"] == "assistant":
-                gemini_contents.append({
-                    "role": "model",
-                    "parts": [{"text": msg["content"]}]
-                })
+                gemini_contents.append(
+                    {"role": "model", "parts": [{"text": msg["content"]}]}
+                )
 
         payload = {
             "contents": gemini_contents,
             "generationConfig": {
                 "temperature": temperature,
                 "maxOutputTokens": max_tokens or 4096,
-            }
+            },
         }
 
         if system_instruction:
@@ -369,7 +385,7 @@ class GoogleAdapter(ProviderAdapter):
             async with session.post(
                 url,
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
             ) as resp:
                 data = await resp.json()
 
@@ -408,12 +424,12 @@ class GoogleAdapter(ProviderAdapter):
 
     async def stream(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model: str,
         temperature: float = 1.0,
-        max_tokens: Optional[int] = None,
-        **kwargs
-    ) -> AsyncGenerator[str, None]:
+        max_tokens: int | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[str]:
         # Convert messages to Gemini format
         gemini_contents = []
         system_instruction = None
@@ -422,22 +438,20 @@ class GoogleAdapter(ProviderAdapter):
             if msg["role"] == "system":
                 system_instruction = msg["content"]
             elif msg["role"] == "user":
-                gemini_contents.append({
-                    "role": "user",
-                    "parts": [{"text": msg["content"]}]
-                })
+                gemini_contents.append(
+                    {"role": "user", "parts": [{"text": msg["content"]}]}
+                )
             elif msg["role"] == "assistant":
-                gemini_contents.append({
-                    "role": "model",
-                    "parts": [{"text": msg["content"]}]
-                })
+                gemini_contents.append(
+                    {"role": "model", "parts": [{"text": msg["content"]}]}
+                )
 
         payload = {
             "contents": gemini_contents,
             "generationConfig": {
                 "temperature": temperature,
                 "maxOutputTokens": max_tokens or 4096,
-            }
+            },
         }
 
         if system_instruction:
@@ -452,7 +466,11 @@ class GoogleAdapter(ProviderAdapter):
                     if line.startswith("data: "):
                         try:
                             data = json.loads(line[6:])
-                            parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+                            parts = (
+                                data.get("candidates", [{}])[0]
+                                .get("content", {})
+                                .get("parts", [])
+                            )
                             for part in parts:
                                 text = part.get("text", "")
                                 if text:
@@ -460,7 +478,7 @@ class GoogleAdapter(ProviderAdapter):
                         except json.JSONDecodeError:
                             continue
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         return self.MODELS
 
 
@@ -479,19 +497,19 @@ class OpenRouterAdapter(ProviderAdapter):
 
     MODELS = [
         # Google Gemini via OpenRouter (2025 Latest)
-        "google/gemini-2.5-flash",              # Main workhorse + thinking
-        "google/gemini-2.5-flash-image-preview", # NANO BANANA - Image gen
-        "google/gemini-2.0-flash-001",          # Stable 2.0
-        "google/gemini-2.0-flash-exp:free",     # FREE tier
+        "google/gemini-2.5-flash",  # Main workhorse + thinking
+        "google/gemini-2.5-flash-image-preview",  # NANO BANANA - Image gen
+        "google/gemini-2.0-flash-001",  # Stable 2.0
+        "google/gemini-2.0-flash-exp:free",  # FREE tier
         "google/gemma-2-27b-it",
         # Chinese LLMs (Best Value)
         "qwen/qwen-2.5-72b-instruct",
         "qwen/qwen-2.5-coder-32b-instruct",
         "deepseek/deepseek-chat",
-        "deepseek/deepseek-chat-v3",            # 671B MoE flagship
-        "deepseek/deepseek-r1",                 # Deep reasoning
+        "deepseek/deepseek-chat-v3",  # 671B MoE flagship
+        "deepseek/deepseek-r1",  # Deep reasoning
         "deepseek/deepseek-coder",
-        "moonshotai/kimi-k2",                   # 1T MoE coding
+        "moonshotai/kimi-k2",  # 1T MoE coding
         # Meta Llama
         "meta-llama/llama-3.1-70b-instruct",
         "meta-llama/llama-3.1-8b-instruct",
@@ -508,12 +526,12 @@ class OpenRouterAdapter(ProviderAdapter):
 
     async def complete(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model: str,
         temperature: float = 1.0,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         stream: bool = False,
-        **kwargs
+        **kwargs,
     ) -> ProviderResponse:
         start_time = time.time()
 
@@ -537,7 +555,7 @@ class OpenRouterAdapter(ProviderAdapter):
                 f"{self.base_url}/chat/completions",
                 headers=headers,
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
             ) as resp:
                 data = await resp.json()
 
@@ -570,12 +588,12 @@ class OpenRouterAdapter(ProviderAdapter):
 
     async def stream(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model: str,
         temperature: float = 1.0,
-        max_tokens: Optional[int] = None,
-        **kwargs
-    ) -> AsyncGenerator[str, None]:
+        max_tokens: int | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[str]:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -597,25 +615,28 @@ class OpenRouterAdapter(ProviderAdapter):
                 f"{self.base_url}/chat/completions",
                 headers=headers,
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
             ) as resp:
                 async for line in resp.content:
                     line = line.decode().strip()
                     if line.startswith("data: ") and line != "data: [DONE]":
                         try:
                             data = json.loads(line[6:])
-                            content = data["choices"][0].get("delta", {}).get("content", "")
+                            content = (
+                                data["choices"][0].get("delta", {}).get("content", "")
+                            )
                             if content:
                                 yield content
                         except (json.JSONDecodeError, KeyError, IndexError):
                             continue
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         return self.MODELS
 
 
 class ProviderError(Exception):
     """Error from a provider"""
+
     pass
 
 
@@ -630,8 +651,8 @@ class ProviderManager:
     """
 
     def __init__(self):
-        self._providers: Dict[str, ProviderAdapter] = {}
-        self._model_to_provider: Dict[str, str] = {}
+        self._providers: dict[str, ProviderAdapter] = {}
+        self._model_to_provider: dict[str, str] = {}
         self._lock = asyncio.Lock()
 
         # Auto-configure from environment
@@ -648,7 +669,7 @@ class ProviderManager:
                 name="anthropic",
                 provider_type=ProviderType.ANTHROPIC,
                 api_key=os.getenv("ANTHROPIC_API_KEY"),
-                input_cost_per_1k=0.3,   # Claude 3.5 Sonnet pricing
+                input_cost_per_1k=0.3,  # Claude 3.5 Sonnet pricing
                 output_cost_per_1k=1.5,
             )
             self.register_provider(AnthropicAdapter(config))
@@ -659,7 +680,7 @@ class ProviderManager:
                 name="google",
                 provider_type=ProviderType.GOOGLE,
                 api_key=os.getenv("GOOGLE_API_KEY"),
-                input_cost_per_1k=0.075,   # Gemini 1.5 Flash pricing
+                input_cost_per_1k=0.075,  # Gemini 1.5 Flash pricing
                 output_cost_per_1k=0.30,
             )
             self.register_provider(GoogleAdapter(config))
@@ -670,7 +691,7 @@ class ProviderManager:
                 name="openrouter",
                 provider_type=ProviderType.OPENROUTER,
                 api_key=os.getenv("OPENROUTER_API_KEY"),
-                input_cost_per_1k=0.1,    # Varies by model
+                input_cost_per_1k=0.1,  # Varies by model
                 output_cost_per_1k=0.3,
             )
             self.register_provider(OpenRouterAdapter(config))
@@ -683,44 +704,42 @@ class ProviderManager:
         for model in adapter.list_models():
             self._model_to_provider[model] = adapter.name
 
-        logging.info(f"[PROVIDERS] Registered {adapter.name} with {len(adapter.list_models())} models")
+        logging.info(
+            f"[PROVIDERS] Registered {adapter.name} with {len(adapter.list_models())} models"
+        )
 
-    def get_provider_for_model(self, model: str) -> Optional[ProviderAdapter]:
+    def get_provider_for_model(self, model: str) -> ProviderAdapter | None:
         """Get the provider adapter for a model"""
         provider_name = self._model_to_provider.get(model)
         if provider_name:
             return self._providers.get(provider_name)
         return None
 
-    def get_provider(self, name: str) -> Optional[ProviderAdapter]:
+    def get_provider(self, name: str) -> ProviderAdapter | None:
         """Get a provider by name"""
         return self._providers.get(name)
 
-    def list_all_models(self) -> List[Dict[str, Any]]:
+    def list_all_models(self) -> list[dict[str, Any]]:
         """List all available models across providers"""
         models = []
         for provider_name, adapter in self._providers.items():
             for model in adapter.list_models():
-                models.append({
-                    "id": model,
-                    "provider": provider_name,
-                    "input_cost_per_1k": adapter.config.input_cost_per_1k,
-                    "output_cost_per_1k": adapter.config.output_cost_per_1k,
-                })
+                models.append(
+                    {
+                        "id": model,
+                        "provider": provider_name,
+                        "input_cost_per_1k": adapter.config.input_cost_per_1k,
+                        "output_cost_per_1k": adapter.config.output_cost_per_1k,
+                    }
+                )
         return models
 
-    def get_all_stats(self) -> Dict[str, Any]:
+    def get_all_stats(self) -> dict[str, Any]:
         """Get statistics for all providers"""
-        return {
-            name: adapter.get_stats()
-            for name, adapter in self._providers.items()
-        }
+        return {name: adapter.get_stats() for name, adapter in self._providers.items()}
 
     async def complete(
-        self,
-        model: str,
-        messages: List[Dict[str, str]],
-        **kwargs
+        self, model: str, messages: list[dict[str, str]], **kwargs
     ) -> ProviderResponse:
         """Route a completion to the appropriate provider"""
         adapter = self.get_provider_for_model(model)
@@ -731,7 +750,7 @@ class ProviderManager:
 
 
 # Global provider manager
-_provider_manager: Optional[ProviderManager] = None
+_provider_manager: ProviderManager | None = None
 
 
 def get_provider_manager() -> ProviderManager:
@@ -742,7 +761,7 @@ def get_provider_manager() -> ProviderManager:
     return _provider_manager
 
 
-def handle_providers_stats_request() -> Dict[str, Any]:
+def handle_providers_stats_request() -> dict[str, Any]:
     """Handle /providers/stats request"""
     manager = get_provider_manager()
     return {
@@ -751,7 +770,7 @@ def handle_providers_stats_request() -> Dict[str, Any]:
     }
 
 
-def handle_providers_models_request() -> Dict[str, Any]:
+def handle_providers_models_request() -> dict[str, Any]:
     """Handle /providers/models request"""
     manager = get_provider_manager()
     models = manager.list_all_models()

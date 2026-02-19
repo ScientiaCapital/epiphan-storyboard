@@ -32,7 +32,7 @@ class KnowledgeCache:
     # Cached data
     approved_terms: dict[str, list[str]]  # audience -> terms
     banned_terms: list[str]
-    pain_points: dict[str, list[str]]     # audience -> pain points
+    pain_points: dict[str, list[str]]  # audience -> pain points
     features: list[str]
     metrics: list[str]
     quotes: list[str]
@@ -79,9 +79,12 @@ class KnowledgeCache:
             client = create_client(url, key)
 
             # Query all knowledge
-            response = client.table("knowledge").select(
-                "knowledge_type, content, audience, confidence_score"
-            ).gte("confidence_score", 0.7).execute()
+            response = (
+                client.table("knowledge")
+                .select("knowledge_type, content, audience, confidence_score")
+                .gte("confidence_score", 0.7)
+                .execute()
+            )
 
             if not response.data:
                 logger.info("No knowledge data found in database")
@@ -106,7 +109,13 @@ class KnowledgeCache:
                             self.approved_terms[aud].append(content)
                     else:
                         # No audience = applies to all
-                        for aud in ["business_owner", "c_suite", "btl_champion", "top_tier_vc", "field_crew"]:
+                        for aud in [
+                            "business_owner",
+                            "c_suite",
+                            "btl_champion",
+                            "top_tier_vc",
+                            "field_crew",
+                        ]:
                             if aud not in self.approved_terms:
                                 self.approved_terms[aud] = []
                             self.approved_terms[aud].append(content)
@@ -119,7 +128,13 @@ class KnowledgeCache:
                             self.pain_points[aud].append(content)
                     else:
                         # No audience = applies to all
-                        for aud in ["business_owner", "c_suite", "btl_champion", "top_tier_vc", "field_crew"]:
+                        for aud in [
+                            "business_owner",
+                            "c_suite",
+                            "btl_champion",
+                            "top_tier_vc",
+                            "field_crew",
+                        ]:
                             if aud not in self.pain_points:
                                 self.pain_points[aud] = []
                             self.pain_points[aud].append(content)

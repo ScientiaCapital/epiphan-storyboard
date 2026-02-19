@@ -5,14 +5,13 @@ Provides API key validation, user identification for billing,
 and per-key rate limiting for abuse prevention.
 """
 
-import os
-import time
 import hashlib
 import logging
-from typing import Optional, Dict, Any, Tuple
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+import os
+import time
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,24 +19,26 @@ logging.basicConfig(level=logging.INFO)
 @dataclass
 class APIKeyInfo:
     """Information about an API key"""
+
     key_id: str
     user_id: str
-    organization_id: Optional[str] = None
+    organization_id: str | None = None
     tier: str = "free"  # free, basic, pro, enterprise
     rate_limit_rpm: int = 60  # requests per minute
     rate_limit_tpd: int = 100000  # tokens per day
     is_active: bool = True
     created_at: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class AuthResult:
     """Result of authentication attempt"""
+
     authenticated: bool
-    key_info: Optional[APIKeyInfo] = None
-    error_code: Optional[str] = None
-    error_message: Optional[str] = None
+    key_info: APIKeyInfo | None = None
+    error_code: str | None = None
+    error_message: str | None = None
 
 
 class RateLimiter:
@@ -49,17 +50,17 @@ class RateLimiter:
 
     def __init__(self):
         # Track requests per key: {key_id: [(timestamp, tokens), ...]}
-        self._requests: Dict[str, list] = defaultdict(list)
-        self._daily_tokens: Dict[str, int] = defaultdict(int)
-        self._daily_reset: Dict[str, float] = {}
+        self._requests: dict[str, list] = defaultdict(list)
+        self._daily_tokens: dict[str, int] = defaultdict(int)
+        self._daily_reset: dict[str, float] = {}
 
     def check_rate_limit(
         self,
         key_id: str,
         rate_limit_rpm: int,
         rate_limit_tpd: int,
-        estimated_tokens: int = 0
-    ) -> Tuple[bool, Optional[str]]:
+        estimated_tokens: int = 0,
+    ) -> tuple[bool, str | None]:
         """
         Check if request is within rate limits.
 
@@ -70,8 +71,7 @@ class RateLimiter:
 
         # Clean old requests (older than 1 minute)
         self._requests[key_id] = [
-            (ts, tokens) for ts, tokens in self._requests[key_id]
-            if now - ts < 60
+            (ts, tokens) for ts, tokens in self._requests[key_id] if now - ts < 60
         ]
 
         # Check RPM
@@ -120,14 +120,16 @@ class APIKeyAuthenticator:
         self.default_tpd = int(os.getenv("AUTH_DEFAULT_TPD", "100000"))
 
         # In-memory key store (for demo/development)
-        self._keys: Dict[str, APIKeyInfo] = {}
+        self._keys: dict[str, APIKeyInfo] = {}
         self._rate_limiter = RateLimiter()
 
         # Load keys from environment or file
         self._load_keys()
 
         if self.enabled:
-            logging.info(f"[AUTH] Authentication enabled with {len(self._keys)} keys loaded")
+            logging.info(
+                f"[AUTH] Authentication enabled with {len(self._keys)} keys loaded"
+            )
         else:
             logging.info("[AUTH] Authentication disabled")
 
@@ -166,14 +168,18 @@ class APIKeyAuthenticator:
                 rate_limit_rpm=1000,
                 rate_limit_tpd=10000000,
             )
-            logging.warning(f"[AUTH] No keys configured, using development key: {dev_key[:20]}...")
+            logging.warning(
+                f"[AUTH] No keys configured, using development key: {dev_key[:20]}..."
+            )
 
-    def _parse_keys(self, keys_data: Dict[str, Any]):
+    def _parse_keys(self, keys_data: dict[str, Any]):
         """Parse keys from configuration data"""
         for key, info in keys_data.items():
             if isinstance(info, dict):
                 self._keys[key] = APIKeyInfo(
-                    key_id=info.get("key_id", hashlib.sha256(key.encode()).hexdigest()[:16]),
+                    key_id=info.get(
+                        "key_id", hashlib.sha256(key.encode()).hexdigest()[:16]
+                    ),
                     user_id=info.get("user_id", "unknown"),
                     organization_id=info.get("organization_id"),
                     tier=info.get("tier", "free"),
@@ -192,9 +198,7 @@ class APIKeyAuthenticator:
                 )
 
     def authenticate(
-        self,
-        api_key: Optional[str],
-        estimated_tokens: int = 0
+        self, api_key: str | None, estimated_tokens: int = 0
     ) -> AuthResult:
         """
         Authenticate an API key and check rate limits.
@@ -216,7 +220,7 @@ class APIKeyAuthenticator:
                     tier="unlimited",
                     rate_limit_rpm=999999,
                     rate_limit_tpd=999999999,
-                )
+                ),
             )
 
         # Check if key provided
@@ -224,7 +228,7 @@ class APIKeyAuthenticator:
             return AuthResult(
                 authenticated=False,
                 error_code="MISSING_API_KEY",
-                error_message="API key is required. Provide via 'Authorization: Bearer <key>' header."
+                error_message="API key is required. Provide via 'Authorization: Bearer <key>' header.",
             )
 
         # Strip Bearer prefix if present
@@ -237,7 +241,7 @@ class APIKeyAuthenticator:
             return AuthResult(
                 authenticated=False,
                 error_code="INVALID_API_KEY",
-                error_message="Invalid API key"
+                error_message="Invalid API key",
             )
 
         # Check if key is active
@@ -245,7 +249,7 @@ class APIKeyAuthenticator:
             return AuthResult(
                 authenticated=False,
                 error_code="API_KEY_DISABLED",
-                error_message="API key has been disabled"
+                error_message="API key has been disabled",
             )
 
         # Check rate limits
@@ -253,7 +257,7 @@ class APIKeyAuthenticator:
             key_info.key_id,
             key_info.rate_limit_rpm,
             key_info.rate_limit_tpd,
-            estimated_tokens
+            estimated_tokens,
         )
 
         if not allowed:
@@ -261,19 +265,16 @@ class APIKeyAuthenticator:
                 authenticated=False,
                 key_info=key_info,
                 error_code="RATE_LIMIT_EXCEEDED",
-                error_message=error_msg
+                error_message=error_msg,
             )
 
-        return AuthResult(
-            authenticated=True,
-            key_info=key_info
-        )
+        return AuthResult(authenticated=True, key_info=key_info)
 
     def record_usage(self, key_id: str, tokens: int):
         """Record token usage for rate limiting"""
         self._rate_limiter.record_request(key_id, tokens)
 
-    def get_usage_stats(self, key_id: str) -> Dict[str, Any]:
+    def get_usage_stats(self, key_id: str) -> dict[str, Any]:
         """Get usage statistics for a key"""
         return {
             "requests_last_minute": len(self._rate_limiter._requests.get(key_id, [])),
@@ -282,7 +283,7 @@ class APIKeyAuthenticator:
 
 
 # Global authenticator instance
-_authenticator: Optional[APIKeyAuthenticator] = None
+_authenticator: APIKeyAuthenticator | None = None
 
 
 def get_authenticator() -> APIKeyAuthenticator:

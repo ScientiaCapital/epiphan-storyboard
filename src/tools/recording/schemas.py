@@ -9,7 +9,6 @@ Defines data models for:
 """
 
 from enum import Enum
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -119,7 +118,9 @@ class TimingEvent(BaseModel):
     step: int = Field(..., ge=0, description="Step number in sequence")
     action: ActionType = Field(..., description="Type of action performed")
     target: str | None = Field(default=None, description="CSS selector or URL")
-    timestamp_ms: int = Field(..., ge=0, description="Milliseconds since recording start")
+    timestamp_ms: int = Field(
+        ..., ge=0, description="Milliseconds since recording start"
+    )
     screenshot_path: str | None = Field(
         default=None,
         description="Path to screenshot taken at this step",
@@ -146,7 +147,9 @@ class RecordingResult(BaseModel):
         default_factory=list,
         description="Paths to captured screenshots",
     )
-    duration_ms: int = Field(..., ge=0, description="Total recording duration in milliseconds")
+    duration_ms: int = Field(
+        ..., ge=0, description="Total recording duration in milliseconds"
+    )
     resolution: dict[str, int] = Field(
         ...,
         description="Video resolution (width, height)",

@@ -5,7 +5,6 @@ Base classes for Epiphan Knowledge Brain.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 from uuid import UUID
 
 
@@ -44,21 +43,21 @@ class KnowledgeSource:
     """
 
     source_type: SourceType
-    external_id: Optional[str] = None
-    external_url: Optional[str] = None
-    file_path: Optional[str] = None
-    source_title: Optional[str] = None
-    source_date: Optional[datetime] = None
-    duration_seconds: Optional[int] = None
+    external_id: str | None = None
+    external_url: str | None = None
+    file_path: str | None = None
+    source_title: str | None = None
+    source_date: datetime | None = None
+    duration_seconds: int | None = None
     participant_names: list[str] = field(default_factory=list)
-    raw_content: Optional[str] = None
-    content_hash: Optional[str] = None
+    raw_content: str | None = None
+    content_hash: str | None = None
 
     # Multi-tenant isolation
-    org_id: Optional[str] = None
+    org_id: str | None = None
 
     # Set after database insert
-    id: Optional[UUID] = None
+    id: UUID | None = None
 
 
 @dataclass
@@ -69,7 +68,7 @@ class KnowledgeEntry:
 
     knowledge_type: KnowledgeType
     content: str
-    context: Optional[str] = None
+    context: str | None = None
     verbatim: bool = False
 
     # Relevance metadata
@@ -82,18 +81,18 @@ class KnowledgeEntry:
     usage_count: int = 0
 
     # Source attribution
-    speaker_name: Optional[str] = None
-    speaker_role: Optional[str] = None
-    company_name: Optional[str] = None
+    speaker_name: str | None = None
+    speaker_role: str | None = None
+    company_name: str | None = None
 
     # Link to source (set after ingestion)
-    source_id: Optional[UUID] = None
+    source_id: UUID | None = None
 
     # Multi-tenant isolation
-    org_id: Optional[str] = None
+    org_id: str | None = None
 
     # Set after database insert
-    id: Optional[UUID] = None
+    id: UUID | None = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary for database insertion."""
@@ -127,5 +126,5 @@ class ExtractionResult:
     items_updated: int = 0
     items_skipped: int = 0
     entries: list[KnowledgeEntry] = field(default_factory=list)
-    error: Optional[str] = None
+    error: str | None = None
     execution_time_ms: int = 0

@@ -5,20 +5,21 @@ Enables tiered pricing with per-user/organization quotas.
 Prevents abuse and enables monetization controls.
 """
 
-import os
-import time
 import asyncio
 import logging
-from typing import Optional, Dict, Any, List
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+import os
+import time
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
 
 logging.basicConfig(level=logging.INFO)
 
 
 class QuotaPeriod(Enum):
     """Time periods for quota tracking"""
+
     HOURLY = "hourly"
     DAILY = "daily"
     MONTHLY = "monthly"
@@ -26,16 +27,18 @@ class QuotaPeriod(Enum):
 
 class QuotaAction(Enum):
     """Actions to take when quota exceeded"""
-    BLOCK = "block"      # Block the request
-    WARN = "warn"        # Allow but warn
+
+    BLOCK = "block"  # Block the request
+    WARN = "warn"  # Allow but warn
     THROTTLE = "throttle"  # Slow down requests
 
 
 @dataclass
 class QuotaLimit:
     """A single quota limit"""
-    tokens: int                    # Token limit
-    period: QuotaPeriod           # Time period
+
+    tokens: int  # Token limit
+    period: QuotaPeriod  # Time period
     action: QuotaAction = QuotaAction.BLOCK  # Action when exceeded
     warning_threshold: float = 0.8  # Warn at this percentage
 
@@ -43,10 +46,11 @@ class QuotaLimit:
 @dataclass
 class QuotaUsage:
     """Current usage for a quota"""
+
     used: int = 0
     limit: int = 0
     period: str = "daily"
-    reset_at: Optional[str] = None
+    reset_at: str | None = None
     percentage: float = 0.0
     exceeded: bool = False
     warning: bool = False
@@ -55,8 +59,9 @@ class QuotaUsage:
 @dataclass
 class UserQuota:
     """Quota configuration for a user/organization"""
+
     user_id: str
-    organization_id: Optional[str] = None
+    organization_id: str | None = None
     tier: str = "free"
 
     # Token limits
@@ -80,7 +85,7 @@ class UserQuota:
     daily_reset: float = 0
     monthly_reset: float = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "user_id": self.user_id,
             "organization_id": self.organization_id,
@@ -105,22 +110,24 @@ class UserQuota:
 @dataclass
 class QuotaCheckResult:
     """Result of a quota check"""
+
     allowed: bool
-    reason: Optional[str] = None
-    warning: Optional[str] = None
-    usage: Optional[Dict[str, QuotaUsage]] = None
-    retry_after: Optional[int] = None  # Seconds until quota resets
+    reason: str | None = None
+    warning: str | None = None
+    usage: dict[str, QuotaUsage] | None = None
+    retry_after: int | None = None  # Seconds until quota resets
 
 
 @dataclass
 class QuotaStats:
     """Quota manager statistics"""
+
     total_checks: int = 0
     total_blocked: int = 0
     total_warnings: int = 0
     active_users: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "total_checks": self.total_checks,
             "total_blocked": self.total_blocked,
@@ -181,24 +188,21 @@ class QuotaManager:
         }
 
         # User quotas storage
-        self._quotas: Dict[str, UserQuota] = {}
+        self._quotas: dict[str, UserQuota] = {}
         self._lock = asyncio.Lock()
 
         # Statistics
         self._stats = QuotaStats()
 
         if self.enabled:
-            logging.info(f"[QUOTA] Quota management enabled")
+            logging.info("[QUOTA] Quota management enabled")
 
-    def _get_tier_limits(self, tier: str) -> Dict[str, int]:
+    def _get_tier_limits(self, tier: str) -> dict[str, int]:
         """Get limits for a tier"""
         return self.tier_limits.get(tier.lower(), self.tier_limits["free"])
 
     async def get_or_create_quota(
-        self,
-        user_id: str,
-        organization_id: Optional[str] = None,
-        tier: str = "free"
+        self, user_id: str, organization_id: str | None = None, tier: str = "free"
     ) -> UserQuota:
         """Get or create a user's quota"""
         async with self._lock:
@@ -221,9 +225,9 @@ class QuotaManager:
     async def check_quota(
         self,
         user_id: str,
-        organization_id: Optional[str] = None,
+        organization_id: str | None = None,
         tier: str = "free",
-        tokens_requested: int = 0
+        tokens_requested: int = 0,
     ) -> QuotaCheckResult:
         """
         Check if a request is within quota limits.
@@ -256,7 +260,7 @@ class QuotaManager:
                 quota.hourly_used + tokens_requested,
                 quota.hourly_tokens,
                 "hourly",
-                quota.hourly_reset
+                quota.hourly_reset,
             )
             usage["hourly"] = hourly_usage
 
@@ -266,7 +270,9 @@ class QuotaManager:
                     allowed=False,
                     reason=f"Hourly token quota exceeded ({quota.hourly_used}/{quota.hourly_tokens})",
                     usage=usage,
-                    retry_after=int(quota.hourly_reset - time.time()) if quota.hourly_reset > time.time() else 3600
+                    retry_after=int(quota.hourly_reset - time.time())
+                    if quota.hourly_reset > time.time()
+                    else 3600,
                 )
             if hourly_usage.warning:
                 warnings.append(f"Hourly quota at {hourly_usage.percentage:.0f}%")
@@ -277,7 +283,7 @@ class QuotaManager:
                 quota.daily_used + tokens_requested,
                 quota.daily_tokens,
                 "daily",
-                quota.daily_reset
+                quota.daily_reset,
             )
             usage["daily"] = daily_usage
 
@@ -287,7 +293,9 @@ class QuotaManager:
                     allowed=False,
                     reason=f"Daily token quota exceeded ({quota.daily_used}/{quota.daily_tokens})",
                     usage=usage,
-                    retry_after=int(quota.daily_reset - time.time()) if quota.daily_reset > time.time() else 86400
+                    retry_after=int(quota.daily_reset - time.time())
+                    if quota.daily_reset > time.time()
+                    else 86400,
                 )
             if daily_usage.warning:
                 warnings.append(f"Daily quota at {daily_usage.percentage:.0f}%")
@@ -298,7 +306,7 @@ class QuotaManager:
                 quota.monthly_used + tokens_requested,
                 quota.monthly_tokens,
                 "monthly",
-                quota.monthly_reset
+                quota.monthly_reset,
             )
             usage["monthly"] = monthly_usage
 
@@ -308,7 +316,9 @@ class QuotaManager:
                     allowed=False,
                     reason=f"Monthly token quota exceeded ({quota.monthly_used}/{quota.monthly_tokens})",
                     usage=usage,
-                    retry_after=int(quota.monthly_reset - time.time()) if quota.monthly_reset > time.time() else 2592000
+                    retry_after=int(quota.monthly_reset - time.time())
+                    if quota.monthly_reset > time.time()
+                    else 2592000,
                 )
             if monthly_usage.warning:
                 warnings.append(f"Monthly quota at {monthly_usage.percentage:.0f}%")
@@ -318,18 +328,10 @@ class QuotaManager:
             self._stats.total_warnings += 1
             warning_msg = "; ".join(warnings)
 
-        return QuotaCheckResult(
-            allowed=True,
-            warning=warning_msg,
-            usage=usage
-        )
+        return QuotaCheckResult(allowed=True, warning=warning_msg, usage=usage)
 
     def _check_period(
-        self,
-        used: int,
-        limit: int,
-        period: str,
-        reset_at: float
+        self, used: int, limit: int, period: str, reset_at: float
     ) -> QuotaUsage:
         """Check usage for a single period"""
         percentage = (used / limit * 100) if limit > 0 else 0
@@ -338,10 +340,12 @@ class QuotaManager:
             used=used,
             limit=limit,
             period=period,
-            reset_at=datetime.fromtimestamp(reset_at, tz=timezone.utc).isoformat() if reset_at else None,
+            reset_at=datetime.fromtimestamp(reset_at, tz=UTC).isoformat()
+            if reset_at
+            else None,
             percentage=percentage,
             exceeded=used > limit,
-            warning=percentage >= 80 and not used > limit
+            warning=percentage >= 80 and not used > limit,
         )
 
     async def _reset_if_expired(self, quota: UserQuota):
@@ -368,9 +372,9 @@ class QuotaManager:
     async def record_usage(
         self,
         user_id: str,
-        organization_id: Optional[str] = None,
+        organization_id: str | None = None,
         tokens: int = 0,
-        cost_cents: int = 0
+        cost_cents: int = 0,
     ):
         """
         Record token usage for a user.
@@ -394,10 +398,8 @@ class QuotaManager:
             quota.monthly_spend += cost_cents
 
     async def get_usage(
-        self,
-        user_id: str,
-        organization_id: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, user_id: str, organization_id: str | None = None
+    ) -> dict[str, Any] | None:
         """Get usage information for a user"""
         key = f"{user_id}:{organization_id or 'default'}"
 
@@ -411,12 +413,12 @@ class QuotaManager:
     async def set_limits(
         self,
         user_id: str,
-        organization_id: Optional[str] = None,
-        hourly: Optional[int] = None,
-        daily: Optional[int] = None,
-        monthly: Optional[int] = None,
-        daily_spend: Optional[int] = None,
-        monthly_spend: Optional[int] = None
+        organization_id: str | None = None,
+        hourly: int | None = None,
+        daily: int | None = None,
+        monthly: int | None = None,
+        daily_spend: int | None = None,
+        monthly_spend: int | None = None,
     ):
         """Set custom limits for a user"""
         quota = await self.get_or_create_quota(user_id, organization_id)
@@ -440,7 +442,7 @@ class QuotaManager:
 
 
 # Global quota manager
-_quota_manager: Optional[QuotaManager] = None
+_quota_manager: QuotaManager | None = None
 
 
 def get_quota_manager() -> QuotaManager:
@@ -451,7 +453,7 @@ def get_quota_manager() -> QuotaManager:
     return _quota_manager
 
 
-def handle_quota_stats_request() -> Dict[str, Any]:
+def handle_quota_stats_request() -> dict[str, Any]:
     """Handle /quota/stats request"""
     manager = get_quota_manager()
     stats = manager.get_stats()
@@ -463,9 +465,8 @@ def handle_quota_stats_request() -> Dict[str, Any]:
 
 
 async def handle_quota_usage_request(
-    user_id: str,
-    organization_id: Optional[str] = None
-) -> Dict[str, Any]:
+    user_id: str, organization_id: str | None = None
+) -> dict[str, Any]:
     """Handle /quota/usage request"""
     manager = get_quota_manager()
     usage = await manager.get_usage(user_id, organization_id)

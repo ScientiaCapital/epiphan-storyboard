@@ -16,8 +16,6 @@ import json
 import os
 from typing import Any
 
-import httpx
-
 from src.agents.schemas import (
     AgentRunRequest,
     AgentSession,
@@ -29,7 +27,6 @@ from src.agents.state import StateManager
 from src.tools.base import ToolResult
 from src.tools.registry import ToolRegistry
 
-
 # ============================================================================
 # Custom Exceptions
 # ============================================================================
@@ -37,11 +34,13 @@ from src.tools.registry import ToolRegistry
 
 class ParseError(Exception):
     """Raised when LLM response cannot be parsed."""
+
     pass
 
 
 class ToolNotFoundError(Exception):
     """Raised when a requested tool is not found in the registry."""
+
     pass
 
 
@@ -149,11 +148,11 @@ class AgentRunner:
         tool_descriptions = []
         for tool in tools:
             func = tool["function"]
-            tool_descriptions.append(
-                f"- {func['name']}: {func['description']}"
-            )
+            tool_descriptions.append(f"- {func['name']}: {func['description']}")
 
-        tools_text = "\n".join(tool_descriptions) if tool_descriptions else "No tools available."
+        tools_text = (
+            "\n".join(tool_descriptions) if tool_descriptions else "No tools available."
+        )
 
         # ReAct format instructions
         react_format = """
@@ -255,7 +254,9 @@ IMPORTANT:
 
         return await tool.run(tool_call.arguments)
 
-    def _calculate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
+    def _calculate_cost(
+        self, model: str, input_tokens: int, output_tokens: int
+    ) -> float:
         """Calculate cost for token usage.
 
         Args:
@@ -394,8 +395,13 @@ IMPORTANT:
         try:
             for step_num in range(request.max_steps):
                 # Check if session was cancelled
-                current_session = await self._state_manager.get_session(session.session_id)
-                if current_session and current_session.status == SessionStatus.CANCELLED:
+                current_session = await self._state_manager.get_session(
+                    session.session_id
+                )
+                if (
+                    current_session
+                    and current_session.status == SessionStatus.CANCELLED
+                ):
                     session.status = SessionStatus.CANCELLED
                     await self._state_manager.update_session(session)
                     await self._state_manager.persist_to_supabase(session)
@@ -420,17 +426,23 @@ IMPORTANT:
                 # Execute tool if action present
                 if step.action:
                     result = await self.execute_tool(step.action)
-                    step.observation = result.result if result.success else f"Error: {result.error}"
+                    step.observation = (
+                        result.result if result.success else f"Error: {result.error}"
+                    )
 
                     # Add assistant message and tool result to conversation
-                    conversation.append({
-                        "role": "assistant",
-                        "content": response_text,
-                    })
-                    conversation.append({
-                        "role": "user",
-                        "content": f"Tool result: {step.observation}",
-                    })
+                    conversation.append(
+                        {
+                            "role": "assistant",
+                            "content": response_text,
+                        }
+                    )
+                    conversation.append(
+                        {
+                            "role": "user",
+                            "content": f"Tool result: {step.observation}",
+                        }
+                    )
 
                 # Record step
                 session.steps.append(step)
@@ -445,7 +457,7 @@ IMPORTANT:
             await self._state_manager.update_session(session)
             await self._state_manager.persist_to_supabase(session)
 
-        except Exception as e:
+        except Exception:
             # Mark failed
             session.status = SessionStatus.FAILED
             await self._state_manager.update_session(session)

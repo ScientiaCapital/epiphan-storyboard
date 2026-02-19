@@ -1,13 +1,11 @@
 """Linear connector implementation."""
 
 import logging
-from datetime import datetime, timezone
 
 from src.connectors.base import (
     AuthType,
     BaseConnector,
     ConnectorInstance,
-    ConnectorStatus,
     ConnectorType,
     OAuthConfig,
     SyncResult,
@@ -91,7 +89,9 @@ class LinearConnector(BaseConnector):
             client = LinearGraphQLClient(instance.oauth_tokens.access_token)
             viewer = await client.get_viewer()
 
-            logger.info(f"[LINEAR] Connected as {viewer.get('name')} ({viewer.get('email')})")
+            logger.info(
+                f"[LINEAR] Connected as {viewer.get('name')} ({viewer.get('email')})"
+            )
             return True
 
         except Exception as e:
@@ -178,7 +178,9 @@ class LinearConnector(BaseConnector):
                         items_skipped += result.items_skipped
 
                     except Exception as e:
-                        logger.error(f"[LINEAR] Failed to process issue {issue.identifier}: {e}")
+                        logger.error(
+                            f"[LINEAR] Failed to process issue {issue.identifier}: {e}"
+                        )
                         errors.append({"issue_id": issue.id, "error": str(e)})
 
                 issue_cursor = next_issue_cursor
@@ -214,7 +216,9 @@ class LinearConnector(BaseConnector):
                         items_skipped += result.items_skipped
 
                     except Exception as e:
-                        logger.error(f"[LINEAR] Failed to process project {project.name}: {e}")
+                        logger.error(
+                            f"[LINEAR] Failed to process project {project.name}: {e}"
+                        )
                         errors.append({"project_id": project.id, "error": str(e)})
 
                 project_cursor = next_project_cursor

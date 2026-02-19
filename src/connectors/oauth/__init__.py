@@ -2,9 +2,9 @@
 
 from .base import OAuthProvider, OAuthTokenResponse
 from .gong import GongOAuthProvider
+from .google import GoogleOAuthProvider
 from .linear import LinearOAuthProvider
 from .notion import NotionOAuthProvider
-from .google import GoogleOAuthProvider
 
 __all__ = [
     "OAuthProvider",

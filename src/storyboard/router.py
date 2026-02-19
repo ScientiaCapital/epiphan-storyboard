@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import lru_cache
 from time import perf_counter
 
@@ -39,7 +39,7 @@ router = APIRouter(prefix="/storyboard", tags=["storyboard"])
 # ============================================================================
 
 
-@lru_cache()
+@lru_cache
 def get_job_manager() -> StoryboardJobManager:
     """Dependency to get singleton StoryboardJobManager instance."""
     return StoryboardJobManager(
@@ -91,13 +91,13 @@ async def run_code_storyboard_task(
                 ),
                 timeout=300.0,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise Exception("Job timed out after 5 minutes")
 
         # Update job with result or error
         execution_time_ms = int((perf_counter() - start_time) * 1000)
         job.execution_time_ms = execution_time_ms
-        job.completed_at = datetime.now(timezone.utc)
+        job.completed_at = datetime.now(UTC)
 
         if result.success:
             job.status = JobStatus.COMPLETED
@@ -115,9 +115,7 @@ async def run_code_storyboard_task(
         else:
             job.status = JobStatus.FAILED
             job.error_message = result.error
-            logger.error(
-                f"[CODE_STORYBOARD_TASK] Job {job_id} failed: {result.error}"
-            )
+            logger.error(f"[CODE_STORYBOARD_TASK] Job {job_id} failed: {result.error}")
 
         # Persist to Supabase
         await job_manager.persist_to_supabase(job)
@@ -131,7 +129,7 @@ async def run_code_storyboard_task(
                 job.status = JobStatus.FAILED
                 job.error_message = str(e)
                 job.execution_time_ms = int((perf_counter() - start_time) * 1000)
-                job.completed_at = datetime.now(timezone.utc)
+                job.completed_at = datetime.now(UTC)
                 await job_manager.persist_to_supabase(job)
         except Exception as persist_error:
             logger.error(
@@ -175,13 +173,13 @@ async def run_roadmap_storyboard_task(
                 ),
                 timeout=300.0,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise Exception("Job timed out after 5 minutes")
 
         # Update job with result or error
         execution_time_ms = int((perf_counter() - start_time) * 1000)
         job.execution_time_ms = execution_time_ms
-        job.completed_at = datetime.now(timezone.utc)
+        job.completed_at = datetime.now(UTC)
 
         if result.success:
             job.status = JobStatus.COMPLETED
@@ -208,7 +206,9 @@ async def run_roadmap_storyboard_task(
         await job_manager.persist_to_supabase(job)
 
     except Exception as e:
-        logger.error(f"[ROADMAP_STORYBOARD_TASK] Unexpected error for job {job_id}: {e}")
+        logger.error(
+            f"[ROADMAP_STORYBOARD_TASK] Unexpected error for job {job_id}: {e}"
+        )
         # Try to update job status to failed
         try:
             job = await job_manager.get_job(job_id)
@@ -216,7 +216,7 @@ async def run_roadmap_storyboard_task(
                 job.status = JobStatus.FAILED
                 job.error_message = str(e)
                 job.execution_time_ms = int((perf_counter() - start_time) * 1000)
-                job.completed_at = datetime.now(timezone.utc)
+                job.completed_at = datetime.now(UTC)
                 await job_manager.persist_to_supabase(job)
         except Exception as persist_error:
             logger.error(

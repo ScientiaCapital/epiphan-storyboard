@@ -112,7 +112,9 @@ class BrowserbaseClient:
             ValueError: If session doesn't exist
         """
         if session_id not in self._active_sessions:
-            raise ValueError(f"Session {session_id} not found. Call create_session() first.")
+            raise ValueError(
+                f"Session {session_id} not found. Call create_session() first."
+            )
 
         session = self._active_sessions[session_id]
         connect_url = session.get("connectUrl")
@@ -150,7 +152,9 @@ class BrowserbaseClient:
             session_id: Session ID to close
         """
         if session_id not in self._active_sessions:
-            logger.debug(f"[BROWSERBASE] Session {session_id} not in active sessions, skipping close")
+            logger.debug(
+                f"[BROWSERBASE] Session {session_id} not in active sessions, skipping close"
+            )
             return
 
         try:
@@ -268,7 +272,9 @@ class BrowserbaseClient:
                 domain = f".{parsed.netloc}"
             else:
                 domain = ".localhost"
-                logger.warning("[BROWSERBASE] No cookie domain specified, using '.localhost'")
+                logger.warning(
+                    "[BROWSERBASE] No cookie domain specified, using '.localhost'"
+                )
 
             # Add cookies to browser context
             context = page.context
@@ -277,7 +283,9 @@ class BrowserbaseClient:
                 for k, v in auth_config.cookies.items()
             ]
             await context.add_cookies(cookies)
-            logger.debug(f"[BROWSERBASE] Injected {len(cookies)} cookies for domain {domain}")
+            logger.debug(
+                f"[BROWSERBASE] Injected {len(cookies)} cookies for domain {domain}"
+            )
 
         elif auth_config.type == AuthType.HEADERS and auth_config.headers:
             # Set extra HTTP headers
@@ -290,9 +298,9 @@ class BrowserbaseClient:
                 credentials = base64.b64encode(
                     f"{auth_config.username}:{auth_config.password}".encode()
                 ).decode()
-                await page.set_extra_http_headers({
-                    "Authorization": f"Basic {credentials}"
-                })
+                await page.set_extra_http_headers(
+                    {"Authorization": f"Basic {credentials}"}
+                )
                 logger.debug("[BROWSERBASE] Set basic auth header")
 
         elif auth_config.type == AuthType.OAUTH:

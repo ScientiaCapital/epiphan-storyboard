@@ -4,8 +4,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
@@ -29,7 +28,7 @@ class OAuthTokenResponse:
         if self.expires_at is None:
             return False
         # Add 60 second buffer for clock skew
-        return datetime.now(timezone.utc) + timedelta(seconds=60) >= self.expires_at
+        return datetime.now(UTC) + timedelta(seconds=60) >= self.expires_at
 
 
 class OAuthProvider(ABC):
@@ -157,9 +156,7 @@ class OAuthProvider(ABC):
         """Parse token response into structured object."""
         expires_at = None
         if expires_in := data.get("expires_in"):
-            expires_at = datetime.now(timezone.utc) + timedelta(
-                seconds=int(expires_in)
-            )
+            expires_at = datetime.now(UTC) + timedelta(seconds=int(expires_in))
 
         return OAuthTokenResponse(
             access_token=data["access_token"],

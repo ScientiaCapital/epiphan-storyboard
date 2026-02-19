@@ -250,7 +250,9 @@ class FirefliesGraphQLClient:
                 last_error = e
                 if e.response.status_code == 429:
                     # Rate limited - exponential backoff
-                    wait_time = self.RETRY_DELAYS[min(attempt, len(self.RETRY_DELAYS) - 1)]
+                    wait_time = self.RETRY_DELAYS[
+                        min(attempt, len(self.RETRY_DELAYS) - 1)
+                    ]
 
                     # Check for Retry-After header
                     retry_after = e.response.headers.get("Retry-After")
@@ -264,7 +266,9 @@ class FirefliesGraphQLClient:
                     continue
                 else:
                     # Other HTTP error - don't retry
-                    logger.error(f"[FIREFLIES] API error {e.response.status_code}: {e.response.text}")
+                    logger.error(
+                        f"[FIREFLIES] API error {e.response.status_code}: {e.response.text}"
+                    )
                     raise
 
             except Exception as e:

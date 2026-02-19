@@ -1,7 +1,7 @@
 """Close CRM API Client."""
 
 import logging
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import httpx
 

@@ -2,7 +2,7 @@
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from src.connectors.base import (
     AuthType,
@@ -94,7 +94,9 @@ class GoogleDocsConnector(BaseConnector):
             # Test connection by listing documents (limit 1)
             files, _ = await client.list_documents(page_size=1)
 
-            logger.info(f"[GOOGLE_DOCS] Connected successfully (found {len(files)} documents)")
+            logger.info(
+                f"[GOOGLE_DOCS] Connected successfully (found {len(files)} documents)"
+            )
             return True
 
         except Exception as e:
@@ -150,7 +152,7 @@ class GoogleDocsConnector(BaseConnector):
             if not modified_after:
                 from datetime import timedelta
 
-                cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+                cutoff = datetime.now(UTC) - timedelta(days=7)
                 modified_after = cutoff.isoformat()
 
             logger.info(
@@ -174,7 +176,9 @@ class GoogleDocsConnector(BaseConnector):
                     document = await client.get_document(drive_file.id)
 
                     # Extract plain text
-                    plain_text = client.extract_text_from_body(document.body.model_dump())
+                    plain_text = client.extract_text_from_body(
+                        document.body.model_dump()
+                    )
 
                     if not plain_text.strip():
                         logger.warning(
@@ -204,7 +208,9 @@ class GoogleDocsConnector(BaseConnector):
                     items_skipped += result.items_skipped
 
                 except Exception as e:
-                    logger.error(f"[GOOGLE_DOCS] Failed to process document {drive_file.id}: {e}")
+                    logger.error(
+                        f"[GOOGLE_DOCS] Failed to process document {drive_file.id}: {e}"
+                    )
                     errors.append({"document_id": drive_file.id, "error": str(e)})
 
             # Build new cursor
@@ -218,7 +224,7 @@ class GoogleDocsConnector(BaseConnector):
 
             # If we finished this page, update modified_after to now for next sync
             if not next_page_token and modified_after:
-                now = datetime.now(timezone.utc).isoformat()
+                now = datetime.now(UTC).isoformat()
                 new_cursor = f"modified_after:{now}"
 
             logger.info(
@@ -297,7 +303,9 @@ class GoogleDocsConnector(BaseConnector):
                         document = await client.get_document(drive_file.id)
 
                         # Extract plain text
-                        plain_text = client.extract_text_from_body(document.body.model_dump())
+                        plain_text = client.extract_text_from_body(
+                            document.body.model_dump()
+                        )
 
                         if not plain_text.strip():
                             logger.warning(
@@ -338,7 +346,7 @@ class GoogleDocsConnector(BaseConnector):
                 page_token = next_page_token
 
             # Set cursor to current time for future incremental syncs
-            now = datetime.now(timezone.utc).isoformat()
+            now = datetime.now(UTC).isoformat()
             new_cursor = f"modified_after:{now}"
 
             logger.info(

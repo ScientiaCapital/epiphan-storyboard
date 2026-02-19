@@ -28,12 +28,12 @@ Usage:
 
 from __future__ import annotations
 
-import asyncio
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, TypeVar
-from uuid import uuid4
 import functools
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Any, TypeVar
+from uuid import uuid4
 
 T = TypeVar("T")
 
@@ -93,7 +93,7 @@ class ApprovalRecord:
             return False
         if self.expires_at is None:
             return True
-        return datetime.now(timezone.utc) < self.expires_at
+        return datetime.now(UTC) < self.expires_at
 
 
 class ApprovalGate:
@@ -159,7 +159,7 @@ class ApprovalGate:
                 operation=operation,
                 approved=True,
                 approved_by="system:auto_approve",
-                approved_at=datetime.now(timezone.utc),
+                approved_at=datetime.now(UTC),
             )
             self._approvals[request_id] = record
             return record
@@ -203,10 +203,11 @@ class ApprovalGate:
         record = self._pending.pop(request_id)
         record.approved = True
         record.approved_by = approved_by
-        record.approved_at = datetime.now(timezone.utc)
+        record.approved_at = datetime.now(UTC)
 
         if expires_in_seconds:
             from datetime import timedelta
+
             record.expires_at = record.approved_at + timedelta(
                 seconds=expires_in_seconds
             )
@@ -252,11 +253,12 @@ class ApprovalGate:
             ApprovalRecord for the pre-approval
         """
         request_id = str(uuid4())
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         expires_at = None
         if expires_in_seconds:
             from datetime import timedelta
+
             expires_at = now + timedelta(seconds=expires_in_seconds)
 
         record = ApprovalRecord(
@@ -313,9 +315,7 @@ def requires_approval(
     """
     approval_gate = gate or _default_gate
 
-    def decorator(
-        func: Callable[..., Awaitable[T]]
-    ) -> Callable[..., Awaitable[T]]:
+    def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> T:
             await approval_gate.request_approval(operation)

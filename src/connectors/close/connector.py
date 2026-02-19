@@ -1,7 +1,7 @@
 """Close CRM connector implementation."""
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from src.connectors.base import (
     AuthType,
@@ -77,7 +77,9 @@ class CloseConnector(BaseConnector):
             async with CloseCRMClient(api_key) as client:
                 result = await client.test_connection()
 
-            logger.info(f"[CLOSE] Connection test {'successful' if result else 'failed'}")
+            logger.info(
+                f"[CLOSE] Connection test {'successful' if result else 'failed'}"
+            )
             return result
 
         except Exception as e:
@@ -108,7 +110,7 @@ class CloseConnector(BaseConnector):
         if instance.sync_cursor:
             since_date = instance.sync_cursor
         else:
-            since_date = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+            since_date = (datetime.now(UTC) - timedelta(days=7)).strftime("%Y-%m-%d")
 
         logger.info(f"[CLOSE] Starting incremental sync from {since_date}")
 
@@ -139,7 +141,7 @@ class CloseConnector(BaseConnector):
             )
 
         # Fetch last 30 days
-        since_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+        since_date = (datetime.now(UTC) - timedelta(days=30)).strftime("%Y-%m-%d")
 
         logger.info(f"[CLOSE] Starting full sync from {since_date}")
 
@@ -187,7 +189,7 @@ class CloseConnector(BaseConnector):
                 await self._process_notes(notes, transformer, result)
 
                 # Update cursor to current time
-                result.cursor_after = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                result.cursor_after = datetime.now(UTC).strftime("%Y-%m-%d")
 
         except Exception as e:
             logger.exception(f"[CLOSE] Sync failed: {e}")
@@ -237,11 +239,15 @@ class CloseConnector(BaseConnector):
                 result.items_extracted += 1
 
             except Exception as e:
-                logger.exception(f"[CLOSE] Failed to process call {call.get('id')}: {e}")
-                result.errors.append({
-                    "call_id": call.get("id"),
-                    "error": str(e),
-                })
+                logger.exception(
+                    f"[CLOSE] Failed to process call {call.get('id')}: {e}"
+                )
+                result.errors.append(
+                    {
+                        "call_id": call.get("id"),
+                        "error": str(e),
+                    }
+                )
 
     async def _process_notes(
         self,
@@ -278,11 +284,15 @@ class CloseConnector(BaseConnector):
                 result.items_extracted += 1
 
             except Exception as e:
-                logger.exception(f"[CLOSE] Failed to process note {note.get('id')}: {e}")
-                result.errors.append({
-                    "note_id": note.get("id"),
-                    "error": str(e),
-                })
+                logger.exception(
+                    f"[CLOSE] Failed to process note {note.get('id')}: {e}"
+                )
+                result.errors.append(
+                    {
+                        "note_id": note.get("id"),
+                        "error": str(e),
+                    }
+                )
 
     async def _is_duplicate(self, knowledge_service, content_hash: str) -> bool:
         """Check if content has already been ingested."""
@@ -290,11 +300,13 @@ class CloseConnector(BaseConnector):
             return False
 
         try:
-            response = knowledge_service.supabase.table("knowledge_sources") \
-                .select("id") \
-                .eq("content_hash", content_hash) \
-                .limit(1) \
+            response = (
+                knowledge_service.supabase.table("knowledge_sources")
+                .select("id")
+                .eq("content_hash", content_hash)
+                .limit(1)
                 .execute()
+            )
             return len(response.data) > 0
         except Exception:
             return False

@@ -2,7 +2,6 @@
 
 import os
 import re
-from typing import Any
 
 import asyncpg
 

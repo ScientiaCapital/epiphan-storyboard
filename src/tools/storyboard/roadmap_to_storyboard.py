@@ -14,20 +14,17 @@ Target audience: MEP+energy contractors ($5M+ ICP)
 NO OpenAI - Gemini only.
 """
 
-import os
 import base64
 import logging
+import os
 from time import perf_counter
-from typing import Any
 
 from src.tools.base import BaseTool, ToolCategory, ToolDefinition, ToolResult
-from src.tools.storyboard.gemini_client import GeminiStoryboardClient, StoryboardUnderstanding
 from src.tools.storyboard.epiphan_presets import (
-    EPIPHAN_ICP,
     get_icp_preset,
-    get_audience_persona,
-    AudiencePersona,
-    StoryboardStage,
+)
+from src.tools.storyboard.gemini_client import (
+    GeminiStoryboardClient,
 )
 
 logger = logging.getLogger(__name__)
@@ -108,8 +105,14 @@ class RoadmapToStoryboardTool(BaseTool):
                     "audience": {
                         "type": "string",
                         "enum": [
-                            "av_director", "ld_director", "sim_center_director", "court_admin",
-                            "corp_comms", "ehs_manager", "law_firm_it", "technical_director",
+                            "av_director",
+                            "ld_director",
+                            "sim_center_director",
+                            "court_admin",
+                            "corp_comms",
+                            "ehs_manager",
+                            "law_firm_it",
+                            "technical_director",
                         ],
                         "description": "Target audience persona",
                         "default": "av_director",
@@ -187,7 +190,9 @@ class RoadmapToStoryboardTool(BaseTool):
                 )
 
             # Stage 1: Understand and sanitize the roadmap
-            logger.info("[ROADMAP_STORYBOARD] Stage 1: Understanding and sanitizing roadmap")
+            logger.info(
+                "[ROADMAP_STORYBOARD] Stage 1: Understanding and sanitizing roadmap"
+            )
             understanding = await self.gemini_client.understand_image(
                 image_data=image_data,
                 icp_preset=icp_preset,

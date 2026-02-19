@@ -61,6 +61,7 @@ class TestVideoModuleExports:
     def test_export_count(self):
         """Verify exactly 7 tools are exported."""
         from src.tools.video import __all__
+
         assert len(__all__) == 7
 
 
@@ -196,8 +197,7 @@ class TestToolNames:
     """Test tool names match expected values."""
 
     @pytest.mark.parametrize(
-        "tool_class,expected_name",
-        list(zip(VIDEO_TOOL_CLASSES, EXPECTED_TOOL_NAMES))
+        "tool_class,expected_name", list(zip(VIDEO_TOOL_CLASSES, EXPECTED_TOOL_NAMES))
     )
     def test_tool_name_matches_expected(self, tool_class, expected_name):
         """Verify tool name matches expected value."""

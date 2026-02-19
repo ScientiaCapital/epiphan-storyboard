@@ -169,11 +169,14 @@ Raw Extracted: {understanding.raw_extracted_text}
                 return result
 
             # Save source with org_id for multi-tenant isolation
-            source.id = await knowledge_service._save_source(source, org_id=instance.org_id)
+            source.id = await knowledge_service._save_source(
+                source, org_id=instance.org_id
+            )
             result.items_fetched = 1
 
             # Extract knowledge from vision output
             from src.knowledge.extraction import KnowledgeExtractor
+
             extractor = KnowledgeExtractor()
             extraction_result = await extractor.extract(
                 source=source,
@@ -183,17 +186,21 @@ Raw Extracted: {understanding.raw_extracted_text}
             if extraction_result.error:
                 result.success = False
                 result.error_message = extraction_result.error
-                result.errors.append({
-                    "board_url": board_url,
-                    "error": extraction_result.error,
-                })
+                result.errors.append(
+                    {
+                        "board_url": board_url,
+                        "error": extraction_result.error,
+                    }
+                )
                 return result
 
             # Save entries with org_id for multi-tenant isolation
             if extraction_result.entries:
                 for entry in extraction_result.entries:
                     entry.org_id = instance.org_id
-                saved_count = await knowledge_service._save_entries(extraction_result.entries)
+                saved_count = await knowledge_service._save_entries(
+                    extraction_result.entries
+                )
                 result.items_created = saved_count
 
             result.items_extracted = 1
@@ -216,11 +223,13 @@ Raw Extracted: {understanding.raw_extracted_text}
             return False
 
         try:
-            response = knowledge_service.supabase.table("knowledge_sources") \
-                .select("id") \
-                .eq("content_hash", content_hash) \
-                .limit(1) \
+            response = (
+                knowledge_service.supabase.table("knowledge_sources")
+                .select("id")
+                .eq("content_hash", content_hash)
+                .limit(1)
                 .execute()
+            )
             return len(response.data) > 0
         except Exception:
             return False

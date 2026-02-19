@@ -2,12 +2,11 @@
 
 import asyncio
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 
 import httpx
 
 from src.connectors.gong.schemas import (
-    GongCall,
     GongCallsResponse,
     GongTranscript,
     GongTranscriptTopic,
@@ -85,7 +84,7 @@ class GongAPIClient:
             httpx.HTTPStatusError: On API error
         """
         if to_date is None:
-            to_date = datetime.now(timezone.utc)
+            to_date = datetime.now(UTC)
 
         # Gong expects ISO 8601 format
         filter_payload = {
@@ -127,13 +126,9 @@ class GongAPIClient:
         # Batch into groups of 100
         transcripts = []
         for i in range(0, len(call_ids), 100):
-            batch = call_ids[i:i + 100]
+            batch = call_ids[i : i + 100]
 
-            payload = {
-                "filter": {
-                    "callIds": batch
-                }
-            }
+            payload = {"filter": {"callIds": batch}}
 
             response = await self._call_with_retry(
                 method="POST",
@@ -165,10 +160,12 @@ class GongAPIClient:
                             for s in sentences_data
                         ]
 
-                        topics.append(GongTranscriptTopic(
-                            topicName=topic_name,
-                            sentences=sentences,
-                        ))
+                        topics.append(
+                            GongTranscriptTopic(
+                                topicName=topic_name,
+                                sentences=sentences,
+                            )
+                        )
 
                     transcript = GongTranscript(callId=call_id, topics=topics)
                     transcripts.append(transcript)
@@ -223,7 +220,9 @@ class GongAPIClient:
                 last_error = e
                 if e.response.status_code == 429:
                     # Rate limited - exponential backoff
-                    wait_time = self.RETRY_DELAYS[min(attempt, len(self.RETRY_DELAYS) - 1)]
+                    wait_time = self.RETRY_DELAYS[
+                        min(attempt, len(self.RETRY_DELAYS) - 1)
+                    ]
 
                     # Check for Retry-After header
                     retry_after = e.response.headers.get("Retry-After")
@@ -237,7 +236,9 @@ class GongAPIClient:
                     continue
                 else:
                     # Other HTTP error - don't retry
-                    logger.error(f"[GONG] API error {e.response.status_code}: {e.response.text}")
+                    logger.error(
+                        f"[GONG] API error {e.response.status_code}: {e.response.text}"
+                    )
                     raise
 
             except Exception as e:

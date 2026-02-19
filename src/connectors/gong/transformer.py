@@ -1,10 +1,9 @@
 """Transform Gong data to KnowledgeEntry objects."""
 
 import logging
-from datetime import datetime
 
 from src.connectors.gong.schemas import GongCall, GongTranscript
-from src.knowledge.base import KnowledgeSource, SourceType, KnowledgeEntry
+from src.knowledge.base import KnowledgeEntry, KnowledgeSource, SourceType
 from src.knowledge.extraction import KnowledgeExtractor
 
 logger = logging.getLogger(__name__)
@@ -65,6 +64,7 @@ class GongTransformer:
 
         # Create source
         import hashlib
+
         content_hash = hashlib.sha256(transcript_text[:1000].encode()).hexdigest()
 
         source = KnowledgeSource(

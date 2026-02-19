@@ -120,7 +120,9 @@ async def execute_route_job(
 
         chain = chain_registry.get(classification.task_type)
         if not chain:
-            raise ValueError(f"No chain found for task type: {classification.task_type}")
+            raise ValueError(
+                f"No chain found for task type: {classification.task_type}"
+            )
 
         # Step 3: Execute chain
         job.status = RouterJobStatus.EXECUTING

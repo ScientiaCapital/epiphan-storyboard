@@ -61,23 +61,33 @@ class GoogleDocsTransformer:
             for keyword in ["feature", "spec", "prd", "product requirements"]
         ):
             context_parts.append("Extract features, use cases, and approved terms")
-        elif any(keyword in title_lower for keyword in ["meeting", "notes", "call", "minutes"]):
+        elif any(
+            keyword in title_lower
+            for keyword in ["meeting", "notes", "call", "minutes"]
+        ):
             context_parts.append("Extract pain points, quotes, and metrics")
         elif any(
-            keyword in title_lower for keyword in ["glossary", "terminology", "definitions"]
+            keyword in title_lower
+            for keyword in ["glossary", "terminology", "definitions"]
         ):
             context_parts.append("Extract approved terms and definitions")
         elif any(
             keyword in title_lower
             for keyword in ["docs", "documentation", "guide", "how to", "tutorial"]
         ):
-            context_parts.append("Extract features, use cases, and documentation content")
+            context_parts.append(
+                "Extract features, use cases, and documentation content"
+            )
         elif any(
-            keyword in title_lower for keyword in ["customer", "user", "feedback", "interview"]
+            keyword in title_lower
+            for keyword in ["customer", "user", "feedback", "interview"]
         ):
-            context_parts.append("Extract pain points, quotes, use cases, and success stories")
+            context_parts.append(
+                "Extract pain points, quotes, use cases, and success stories"
+            )
         elif any(
-            keyword in title_lower for keyword in ["competitor", "competitive", "market"]
+            keyword in title_lower
+            for keyword in ["competitor", "competitive", "market"]
         ):
             context_parts.append("Extract competitor information and market insights")
 

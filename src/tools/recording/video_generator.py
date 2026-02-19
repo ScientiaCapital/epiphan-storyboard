@@ -9,12 +9,10 @@ NO OpenAI - Runway API only.
 """
 
 import logging
-import os
 import tempfile
 from datetime import datetime
 from pathlib import Path
 from time import perf_counter
-from typing import Any
 
 from src.tools.base import BaseTool, ToolCategory, ToolDefinition, ToolResult
 from src.tools.recording.config import RunwayConfig
@@ -180,7 +178,7 @@ class RunwayVideoGeneratorTool(BaseTool):
             # Start generation
             if image:
                 # Image-to-video
-                logger.info(f"[RUNWAY_TOOL] Starting image-to-video generation")
+                logger.info("[RUNWAY_TOOL] Starting image-to-video generation")
                 task = await client.generate_from_image(
                     image_data=image,
                     prompt=prompt,
@@ -189,7 +187,7 @@ class RunwayVideoGeneratorTool(BaseTool):
                 )
             else:
                 # Text-to-video
-                logger.info(f"[RUNWAY_TOOL] Starting text-to-video generation")
+                logger.info("[RUNWAY_TOOL] Starting text-to-video generation")
                 task = await client.generate_from_text(
                     prompt=prompt,
                     duration=duration,

@@ -7,7 +7,7 @@ Provides configuration for:
 """
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass

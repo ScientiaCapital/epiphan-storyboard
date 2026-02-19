@@ -15,11 +15,12 @@ from typing import Any
 
 from src.tools.storyboard import prompts
 
-
 # ── Knowledge-enriched builders ──────────────────────────────────────────────
 
 
-def build_language_guidelines(icp_preset: dict[str, Any], audience: str = "av_director") -> str:
+def build_language_guidelines(
+    icp_preset: dict[str, Any], audience: str = "av_director"
+) -> str:
     """Build language guidelines string for prompts, enriched with knowledge."""
     # Get static defaults from preset
     avoid = icp_preset.get("language_style", {}).get("avoid", [])
@@ -29,6 +30,7 @@ def build_language_guidelines(icp_preset: dict[str, Any], audience: str = "av_di
     # Merge with dynamic knowledge from cache
     try:
         from src.knowledge.cache import KnowledgeCache
+
         cache = KnowledgeCache.get()
         if cache.is_loaded():
             knowledge = cache.get_language_guidelines(audience)
@@ -40,8 +42,8 @@ def build_language_guidelines(icp_preset: dict[str, Any], audience: str = "av_di
 
     return f"""LANGUAGE GUIDELINES:
 - Tone: {tone}
-- AVOID these words/phrases: {', '.join(avoid[:15])}
-- USE these words/phrases: {', '.join(use[:15])}
+- AVOID these words/phrases: {", ".join(avoid[:15])}
+- USE these words/phrases: {", ".join(use[:15])}
 - Write for someone with no technical background
 - Focus on benefits, not features"""
 
@@ -50,6 +52,7 @@ def build_knowledge_context(audience: str) -> str:
     """Build knowledge context section for prompts."""
     try:
         from src.knowledge.cache import KnowledgeCache
+
         cache = KnowledgeCache.get()
         if not cache.is_loaded():
             return ""
@@ -61,9 +64,13 @@ def build_knowledge_context(audience: str) -> str:
 
         sections = []
         if ctx["pain_points"]:
-            sections.append(f"CUSTOMER PAIN POINTS (from real calls): {'; '.join(ctx['pain_points'])}")
+            sections.append(
+                f"CUSTOMER PAIN POINTS (from real calls): {'; '.join(ctx['pain_points'])}"
+            )
         if ctx["features"]:
-            sections.append(f"PRODUCT FEATURES TO REFERENCE: {', '.join(ctx['features'])}")
+            sections.append(
+                f"PRODUCT FEATURES TO REFERENCE: {', '.join(ctx['features'])}"
+            )
         if ctx["metrics"]:
             sections.append(f"PROOF POINTS TO USE: {'; '.join(ctx['metrics'])}")
         if ctx.get("quotes"):
@@ -83,6 +90,7 @@ def build_language_guidelines_minimal(audience: str) -> str:
     """
     try:
         from src.knowledge.cache import KnowledgeCache
+
         cache = KnowledgeCache.get()
         if not cache.is_loaded():
             return ""

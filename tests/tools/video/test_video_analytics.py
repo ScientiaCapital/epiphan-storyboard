@@ -158,9 +158,11 @@ class TestLoomViewTrackerRun:
         tool = LoomViewTrackerTool()
 
         with patch.dict("os.environ", {}, clear=True):
-            result = await tool.run({
-                "video_id": "abc123",
-            })
+            result = await tool.run(
+                {
+                    "video_id": "abc123",
+                }
+            )
 
         assert result.success is False
 
@@ -179,7 +181,9 @@ class TestViewerEnrichmentRun:
     async def test_invalid_email_format(self):
         """Test error for invalid email format."""
         tool = ViewerEnrichmentTool()
-        result = await tool.run({
-            "viewer_email": "not-an-email",
-        })
+        result = await tool.run(
+            {
+                "viewer_email": "not-an-email",
+            }
+        )
         assert result.success is False

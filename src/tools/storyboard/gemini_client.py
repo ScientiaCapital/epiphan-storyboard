@@ -14,23 +14,22 @@ Vision model options:
 NO OpenAI - Gemini + Chinese VLMs only.
 """
 
-import os
-import re
-import json
-import uuid
-import base64
-import random
 import asyncio
+import base64
+import json
 import logging
-import httpx
-from typing import Any, Literal
+import os
+import random
+import re
+import uuid
+from dataclasses import dataclass
 from datetime import datetime
-from dataclasses import dataclass, field
+from typing import Any, Literal
 
+import httpx
 from pydantic import BaseModel, Field
 
-from src.tools.storyboard import prompts
-from src.tools.storyboard import prompt_builders
+from src.tools.storyboard import prompt_builders, prompts
 
 logger = logging.getLogger(__name__)
 
@@ -68,13 +67,13 @@ def _repair_json(json_str: str) -> str:
         json_str = json_str + '"'
 
     # Add missing closing braces
-    open_braces = json_str.count('{') - json_str.count('}')
+    open_braces = json_str.count("{") - json_str.count("}")
     if open_braces > 0:
-        json_str = json_str + '}' * open_braces
+        json_str = json_str + "}" * open_braces
 
     # Remove trailing commas before closing braces
-    json_str = re.sub(r',\s*}', '}', json_str)
-    json_str = re.sub(r',\s*]', ']', json_str)
+    json_str = re.sub(r",\s*}", "}", json_str)
+    json_str = re.sub(r",\s*]", "]", json_str)
 
     return json_str
 
@@ -94,7 +93,9 @@ def _safe_parse_understanding(
         return StoryboardUnderstanding(**data)
     except json.JSONDecodeError as e:
         logger.error(f"[UNDERSTAND] Failed to parse {source} response: {e}")
-        logger.error(f"[UNDERSTAND] Raw response was: {response_text[:500] if response_text else 'None'}")
+        logger.error(
+            f"[UNDERSTAND] Raw response was: {response_text[:500] if response_text else 'None'}"
+        )
         return StoryboardUnderstanding(
             headline="EXTRACTION FAILED - Check Input",
             tagline="Could not extract content",
@@ -133,25 +134,32 @@ TextModel = Literal["gemini", "deepseek"]
 class StoryboardUnderstanding(BaseModel):
     """Extracted understanding from code/roadmap analysis."""
 
-    headline: str = Field(..., description="Catchy, benefit-focused headline (8 words max)")
+    headline: str = Field(
+        ..., description="Catchy, benefit-focused headline (8 words max)"
+    )
     tagline: str = Field(
         default="One platform for contractors who do it all",
-        description="Dynamic tagline specific to content and persona (10 words max)"
+        description="Dynamic tagline specific to content and persona (10 words max)",
     )
-    what_it_does: str = Field(..., description="Plain English description (2 sentences max)")
-    business_value: str = Field(..., description="Quantified benefit (hours saved, % improvement)")
+    what_it_does: str = Field(
+        ..., description="Plain English description (2 sentences max)"
+    )
+    business_value: str = Field(
+        ..., description="Quantified benefit (hours saved, % improvement)"
+    )
     who_benefits: str = Field(..., description="Target persona description")
     differentiator: str = Field(..., description="What makes this special (1 sentence)")
     pain_point_addressed: str = Field(..., description="The problem this solves")
-    suggested_icon: str = Field(default="clipboard-check", description="Icon suggestion for visual")
+    suggested_icon: str = Field(
+        default="clipboard-check", description="Icon suggestion for visual"
+    )
     # DEBUG/VERIFICATION fields - for CEO/CTO to verify extraction is correct
     raw_extracted_text: str = Field(
         default="",
-        description="Verbatim text/features extracted from input (for debugging/verification)"
+        description="Verbatim text/features extracted from input (for debugging/verification)",
     )
     extraction_confidence: float = Field(
-        default=1.0,
-        description="Confidence score 0-1. Below 0.7 = flag for review"
+        default=1.0, description="Confidence score 0-1. Below 0.7 = flag for review"
     )
 
 
@@ -166,20 +174,32 @@ class GeminiConfig:
     # INTELLIGENT MODEL ROUTING
     # ==========================================================================
     # Stage 1 (EXTRACT): Primary models for initial extraction
-    vision_provider: VisionModel = "qwen"  # For images (default: qwen for better doc understanding)
-    text_provider: TextModel = "deepseek"  # For text/transcripts (default: deepseek for best reasoning)
+    vision_provider: VisionModel = (
+        "qwen"  # For images (default: qwen for better doc understanding)
+    )
+    text_provider: TextModel = (
+        "deepseek"  # For text/transcripts (default: deepseek for best reasoning)
+    )
 
     # Stage 2 (REFINE): Enable multi-model refinement for low-confidence extractions
-    enable_refinement: bool = True  # If True, low-confidence extractions get refined by alternate model
+    enable_refinement: bool = (
+        True  # If True, low-confidence extractions get refined by alternate model
+    )
     refinement_threshold: float = 0.75  # Confidence below this triggers refinement pass
 
     # Model identifiers
-    gemini_vision_model: str = "models/gemini-2.0-flash"  # Gemini vision model (fallback)
-    qwen_model: str = "qwen/qwen2.5-vl-72b-instruct"  # Qwen 2.5 VL 72B - vision + doc understanding
+    gemini_vision_model: str = (
+        "models/gemini-2.0-flash"  # Gemini vision model (fallback)
+    )
+    qwen_model: str = (
+        "qwen/qwen2.5-vl-72b-instruct"  # Qwen 2.5 VL 72B - vision + doc understanding
+    )
     deepseek_model: str = "deepseek/deepseek-chat"  # DeepSeek V3 - fast, excellent for structured extraction
 
     # Stage 3 (GENERATE): Image generation (Gemini only - no alternatives)
-    image_model: str = "models/gemini-3-pro-image-preview"  # Nano Banana - FREE during preview
+    image_model: str = (
+        "models/gemini-3-pro-image-preview"  # Nano Banana - FREE during preview
+    )
 
     timeout: int = 90
     max_retries: int = 3
@@ -291,7 +311,9 @@ class GeminiStoryboardClient:
                     if response.status_code == 429:
                         # Rate limited - wait and retry
                         wait_time = (attempt + 1) * 5  # 5s, 10s, 15s
-                        logger.warning(f"[OPENROUTER] Rate limited, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})")
+                        logger.warning(
+                            f"[OPENROUTER] Rate limited, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})"
+                        )
                         await asyncio.sleep(wait_time)
                         continue
 
@@ -333,35 +355,27 @@ class GeminiStoryboardClient:
         if images_data:
             for img_bytes in images_data[:3]:  # Max 3 images
                 img_b64 = base64.b64encode(img_bytes).decode("utf-8")
-                content.append({
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/png;base64,{img_b64}"
+                content.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{img_b64}"},
                     }
-                })
+                )
         elif image_data:
             img_b64 = base64.b64encode(image_data).decode("utf-8")
-            content.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/png;base64,{img_b64}"
+            content.append(
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{img_b64}"},
                 }
-            })
+            )
 
         # Add text prompt
-        content.append({
-            "type": "text",
-            "text": prompt
-        })
+        content.append({"type": "text", "text": prompt})
 
         payload = {
             "model": self.config.qwen_model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": content
-                }
-            ],
+            "messages": [{"role": "user", "content": content}],
             "max_tokens": 4096,
             "temperature": 0.5,  # Higher for creative extraction
         }
@@ -386,12 +400,7 @@ class GeminiStoryboardClient:
         """
         payload = {
             "model": self.config.deepseek_model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
+            "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 4096,
             "temperature": 0.5,  # Higher for creative extraction
         }
@@ -428,10 +437,14 @@ class GeminiStoryboardClient:
         if not self.config.enable_refinement:
             return initial
         if initial.extraction_confidence >= self.config.refinement_threshold:
-            logger.info(f"[REFINE] Skipping - confidence {initial.extraction_confidence:.2f} >= threshold {self.config.refinement_threshold}")
+            logger.info(
+                f"[REFINE] Skipping - confidence {initial.extraction_confidence:.2f} >= threshold {self.config.refinement_threshold}"
+            )
             return initial
 
-        logger.info(f"[REFINE] Low confidence {initial.extraction_confidence:.2f} - triggering refinement pass")
+        logger.info(
+            f"[REFINE] Low confidence {initial.extraction_confidence:.2f} - triggering refinement pass"
+        )
 
         # Build refinement prompt with initial extraction context
         refinement_prompt = f"""You are refining an initial extraction that had low confidence ({initial.extraction_confidence:.2f}).
@@ -442,7 +455,7 @@ INITIAL EXTRACTION (may be incomplete or inaccurate):
 - What it does: "{initial.what_it_does}"
 - Business value: "{initial.business_value}"
 - Pain point: "{initial.pain_point_addressed}"
-- Raw extracted: "{initial.raw_extracted_text[:500] if initial.raw_extracted_text else 'None'}"
+- Raw extracted: "{initial.raw_extracted_text[:500] if initial.raw_extracted_text else "None"}"
 
 ORIGINAL CONTENT TO RE-ANALYZE:
 {original_content[:6000]}
@@ -475,7 +488,7 @@ Return ONLY valid JSON matching this exact structure:
                 # Text was initially processed by DeepSeek, refine with... DeepSeek again (no vision alt for text)
                 # Actually for text, we can try Gemini as alternate
                 self._ensure_client()
-                logger.info(f"[REFINE] Using Gemini as alternate for text refinement")
+                logger.info("[REFINE] Using Gemini as alternate for text refinement")
                 response = self._client.models.generate_content(
                     model=self.config.gemini_vision_model,
                     contents=refinement_prompt,
@@ -483,7 +496,9 @@ Return ONLY valid JSON matching this exact structure:
                 response_text = response.text
             else:
                 # Image was initially processed by Qwen, refine with DeepSeek for reasoning
-                logger.info(f"[REFINE] Using DeepSeek as alternate for image refinement (reasoning pass)")
+                logger.info(
+                    "[REFINE] Using DeepSeek as alternate for image refinement (reasoning pass)"
+                )
                 response_text = await self._call_deepseek(refinement_prompt)
 
             # Parse refined result
@@ -491,14 +506,20 @@ Return ONLY valid JSON matching this exact structure:
 
             # Only use refinement if it actually improved confidence
             if refined.extraction_confidence > initial.extraction_confidence:
-                logger.info(f"[REFINE] Improved: {initial.extraction_confidence:.2f} → {refined.extraction_confidence:.2f}")
+                logger.info(
+                    f"[REFINE] Improved: {initial.extraction_confidence:.2f} → {refined.extraction_confidence:.2f}"
+                )
                 return refined
             else:
-                logger.info(f"[REFINE] No improvement ({refined.extraction_confidence:.2f}), keeping initial")
+                logger.info(
+                    f"[REFINE] No improvement ({refined.extraction_confidence:.2f}), keeping initial"
+                )
                 return initial
 
         except Exception as e:
-            logger.warning(f"[REFINE] Refinement failed ({e}), keeping initial extraction")
+            logger.warning(
+                f"[REFINE] Refinement failed ({e}), keeping initial extraction"
+            )
             return initial
 
     async def _understand(
@@ -552,7 +573,9 @@ Return ONLY valid JSON matching this exact structure:
             if is_vision:
                 # Vision path: Qwen VL or Gemini vision
                 if self.config.vision_provider == "qwen":
-                    logger.info(f"[UNDERSTAND] Using Qwen VL ({self.config.qwen_model}) for {source_label} understanding")
+                    logger.info(
+                        f"[UNDERSTAND] Using Qwen VL ({self.config.qwen_model}) for {source_label} understanding"
+                    )
                     response_text = await self._call_qwen_vision(
                         prompt,
                         image_data=image_data,
@@ -560,7 +583,9 @@ Return ONLY valid JSON matching this exact structure:
                     )
                 else:
                     self._ensure_client()
-                    logger.info(f"[UNDERSTAND] Using Gemini ({self.config.gemini_vision_model}) for {source_label} understanding")
+                    logger.info(
+                        f"[UNDERSTAND] Using Gemini ({self.config.gemini_vision_model}) for {source_label} understanding"
+                    )
                     from google.genai import types
 
                     if images_data:
@@ -571,7 +596,9 @@ Return ONLY valid JSON matching this exact structure:
                         content_parts.append(prompt)
                     else:
                         content_parts = [
-                            types.Part.from_bytes(data=image_data, mime_type="image/png"),
+                            types.Part.from_bytes(
+                                data=image_data, mime_type="image/png"
+                            ),
                             prompt,
                         ]
 
@@ -583,11 +610,15 @@ Return ONLY valid JSON matching this exact structure:
             else:
                 # Text path: DeepSeek or Gemini text
                 if self.config.text_provider == "deepseek":
-                    logger.info(f"[UNDERSTAND] Using DeepSeek ({self.config.deepseek_model}) for {source_label} understanding")
+                    logger.info(
+                        f"[UNDERSTAND] Using DeepSeek ({self.config.deepseek_model}) for {source_label} understanding"
+                    )
                     response_text = await self._call_deepseek(prompt)
                 else:
                     self._ensure_client()
-                    logger.info(f"[UNDERSTAND] Using Gemini ({self.config.gemini_vision_model}) for {source_label} understanding")
+                    logger.info(
+                        f"[UNDERSTAND] Using Gemini ({self.config.gemini_vision_model}) for {source_label} understanding"
+                    )
                     response = self._client.models.generate_content(
                         model=self.config.gemini_vision_model,
                         contents=prompt,
@@ -595,9 +626,13 @@ Return ONLY valid JSON matching this exact structure:
                     response_text = response.text
 
             # Parse with safe fallback (consistent for all content types)
-            initial_result = _safe_parse_understanding(response_text, source=source_label)
+            initial_result = _safe_parse_understanding(
+                response_text, source=source_label
+            )
             if initial_result.extraction_confidence > 0:
-                logger.info(f"[UNDERSTAND] Successfully extracted insights from {source_label}")
+                logger.info(
+                    f"[UNDERSTAND] Successfully extracted insights from {source_label}"
+                )
 
             # Stage 2 (REFINE): If low confidence, run through alternate model
             if is_vision:
@@ -619,7 +654,9 @@ Return ONLY valid JSON matching this exact structure:
             logger.error(f"[UNDERSTAND] {source_label} understanding failed: {e}")
             if not is_vision:
                 raise
-            return _safe_parse_understanding("", source=f"{source_label}-error: {str(e)[:100]}")
+            return _safe_parse_understanding(
+                "", source=f"{source_label}-error: {str(e)[:100]}"
+            )
 
     # ── Public thin wrappers (preserve original signatures) ──────────────
 
@@ -812,8 +849,8 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
 
         from src.tools.storyboard.epiphan_presets import (
             EPIPHAN_ICP,
-            get_stage_template,
             get_audience_persona,
+            get_stage_template,
         )
 
         if icp_preset is None:
@@ -828,12 +865,16 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
 
         # Build audience-specific content section
         content_section = self._build_generation_content_section(
-            understanding, audience, persona,
+            understanding,
+            audience,
+            persona,
         )
 
         # Use extracted tagline - NEVER fall back to canned brand tagline
         # If no tagline extracted, use the headline instead (which is always unique to input)
-        dynamic_tagline = understanding.tagline if understanding.tagline else understanding.headline
+        dynamic_tagline = (
+            understanding.tagline if understanding.tagline else understanding.headline
+        )
 
         # Build the image generation prompt
         prompt = f"""Create a UNIQUE professional one-page executive storyboard infographic.
@@ -853,12 +894,12 @@ THEME: "{dynamic_tagline}"
 {content_section}
 
 VISUAL REQUIREMENTS:
-- Style: {stage_template.get('visual_style', 'Modern professional')}
+- Style: {stage_template.get("visual_style", "Modern professional")}
 - Color scheme: Professional teal/green palette (MUST USE THESE EXACT COLORS):
-  - Primary (CTAs/headers): {visual_style_config.get('primary_color', '#23433E')} (dark teal/forest green)
-  - Accent (highlights/emphasis): {visual_style_config.get('accent_color', '#2D9688')} (teal)
-  - Text: {visual_style_config.get('text_color', '#333333')} (dark gray)
-  - Background: {visual_style_config.get('hero_bg', '#DDEDEB')} (light mint/sage green)
+  - Primary (CTAs/headers): {visual_style_config.get("primary_color", "#23433E")} (dark teal/forest green)
+  - Accent (highlights/emphasis): {visual_style_config.get("accent_color", "#2D9688")} (teal)
+  - Text: {visual_style_config.get("text_color", "#333333")} (dark gray)
+  - Background: {visual_style_config.get("hero_bg", "#DDEDEB")} (light mint/sage green)
 - NO badges, ribbons, or "demo/preview/coming soon" labels - keep it clean and professional
 - Include simple icons representing the content (construction/business metaphors)
 - Large, readable text (executive-friendly)
@@ -878,7 +919,7 @@ TEXT ACCURACY REQUIREMENTS (CRITICAL - DO NOT IGNORE):
 {prompts.get_artist_style_instructions(artist_style) if artist_style else ""}
 
 DESIGN PRINCIPLES:
-- {visual_style_config.get('aesthetic', 'Modern, professional, teal/green palette. Corporate but approachable.')}
+- {visual_style_config.get("aesthetic", "Modern, professional, teal/green palette. Corporate but approachable.")}
 - Light mint/sage backgrounds with clean white sections
 - Icons should be simple and metaphorical (tools, buildings, charts)
 - Ready to share in presentations, emails, LinkedIn, or Slack
@@ -891,7 +932,9 @@ DESIGN PRINCIPLES:
             from google.genai import types
 
             # Log key content being sent for debugging
-            logger.info(f"[GEMINI-IMG] Generating image for audience={audience}, seed={unique_seed}")
+            logger.info(
+                f"[GEMINI-IMG] Generating image for audience={audience}, seed={unique_seed}"
+            )
             logger.info(f"[GEMINI-IMG] Headline: {understanding.headline}")
 
             # Use temperature to avoid cached responses

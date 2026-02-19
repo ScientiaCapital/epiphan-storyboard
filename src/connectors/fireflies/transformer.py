@@ -84,7 +84,9 @@ class FirefliesTransformer:
         if source.duration_seconds:
             minutes = source.duration_seconds // 60
             context_parts.append(f"Duration: {minutes} minutes")
-        context_parts.append("Context: Meeting transcript from Fireflies.ai with action items and keywords")
+        context_parts.append(
+            "Context: Meeting transcript from Fireflies.ai with action items and keywords"
+        )
 
         additional_context = " | ".join(context_parts)
 

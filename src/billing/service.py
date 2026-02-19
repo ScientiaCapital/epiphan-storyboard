@@ -101,7 +101,9 @@ class SubscriptionService:
         customer_id = data.get("customer")
         subscription_id = data.get("subscription")
         metadata_raw = data.get("metadata", {})
-        metadata: dict[str, Any] = dict(metadata_raw) if isinstance(metadata_raw, dict) else {}
+        metadata: dict[str, Any] = (
+            dict(metadata_raw) if isinstance(metadata_raw, dict) else {}
+        )
 
         org_id = metadata.get("org_id")
         tier_str = str(metadata.get("tier", "basic"))
@@ -252,9 +254,7 @@ class SubscriptionService:
         # Look up org by subscription ID
         org_billing = await self._get_org_by_subscription(subscription_id)
         if not org_billing:
-            logger.warning(
-                f"[BILLING] No org found for subscription {subscription_id}"
-            )
+            logger.warning(f"[BILLING] No org found for subscription {subscription_id}")
             return
 
         update_data: dict[str, Any] = {"subscription_status": status}
@@ -275,9 +275,7 @@ class SubscriptionService:
         # Look up org by subscription ID
         org_billing = await self._get_org_by_subscription(subscription_id)
         if not org_billing:
-            logger.warning(
-                f"[BILLING] No org found for subscription {subscription_id}"
-            )
+            logger.warning(f"[BILLING] No org found for subscription {subscription_id}")
             return
 
         await self._update_organization(

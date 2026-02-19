@@ -12,9 +12,8 @@ Golden Rule: If a competitor could use the info to copy us, strip it.
              If a 5th grader couldn't understand it, simplify it.
 """
 
-from typing import Any
 from enum import Enum
-
+from typing import Any
 
 # =============================================
 # Epiphan Brand Identity
@@ -24,17 +23,16 @@ EPIPHAN_BRAND = {
     "company": "Epiphan Video",
     "tagline": "Professional video solutions for capture, streaming, and collaboration",
     "website": "https://www.epiphan.com",
-
     "colors": {
-        "primary": "#1D2B51",        # Dark navy (headers, CTAs)
-        "accent": "#8CBE3F",         # Lime green (Epiphan signature green)
-        "secondary": "#3E67D2",      # Blue (interactive elements, links)
-        "text": "#202329",           # Near-black (body text)
-        "background": "#FFFFFF",     # White (main background)
-        "hero_bg": "#f6f7f9",        # Light gray (section backgrounds)
-        "light_gray": "#dfe3e9",     # Medium gray (borders, dividers)
-        "green_dark": "#2F5117",     # Dark green (hover states)
-        "green_light": "#A8D72E",    # Light green (highlights)
+        "primary": "#1D2B51",  # Dark navy (headers, CTAs)
+        "accent": "#8CBE3F",  # Lime green (Epiphan signature green)
+        "secondary": "#3E67D2",  # Blue (interactive elements, links)
+        "text": "#202329",  # Near-black (body text)
+        "background": "#FFFFFF",  # White (main background)
+        "hero_bg": "#f6f7f9",  # Light gray (section backgrounds)
+        "light_gray": "#dfe3e9",  # Medium gray (borders, dividers)
+        "green_dark": "#2F5117",  # Dark green (hover states)
+        "green_light": "#A8D72E",  # Light green (highlights)
     },
     "typography": {
         "primary": "System sans-serif stack",
@@ -55,8 +53,18 @@ EPIPHAN_PRODUCTS = {
         "price": "$3,750",
         "tagline": "All-in-one video encoder, recorder, and streamer",
         "form_factor": "Half-rack, rack-mountable",
-        "key_specs": ["6 video sources", "4K recording", "dual streaming", "hardware encoding"],
-        "best_for": ["Lecture capture", "Boardrooms", "Hybrid meetings", "Multi-camera production"],
+        "key_specs": [
+            "6 video sources",
+            "4K recording",
+            "dual streaming",
+            "hardware encoding",
+        ],
+        "best_for": [
+            "Lecture capture",
+            "Boardrooms",
+            "Hybrid meetings",
+            "Multi-camera production",
+        ],
         "verticals": ["higher_ed", "corporate", "healthcare", "government"],
     },
     "pearl_nano": {
@@ -65,7 +73,12 @@ EPIPHAN_PRODUCTS = {
         "tagline": "Ultra-compact live production system",
         "form_factor": "Ultra-compact, portable",
         "key_specs": ["2 video sources", "1080p60", "SRT/RTMP", "NDI input"],
-        "best_for": ["Small classrooms", "Portable events", "Houses of worship", "Simple setups"],
+        "best_for": [
+            "Small classrooms",
+            "Portable events",
+            "Houses of worship",
+            "Simple setups",
+        ],
         "verticals": ["k12", "houses_of_worship", "corporate", "live_events"],
     },
     "pearl_nexus": {
@@ -73,8 +86,18 @@ EPIPHAN_PRODUCTS = {
         "price": "$3,299",
         "tagline": "Cloud-managed video gateway for distributed teams",
         "form_factor": "Compact, network-first",
-        "key_specs": ["Cloud management", "Multi-site", "SRT gateway", "Zero-touch provisioning"],
-        "best_for": ["Distributed campuses", "Multi-site enterprise", "Remote production", "IT-managed deployments"],
+        "key_specs": [
+            "Cloud management",
+            "Multi-site",
+            "SRT gateway",
+            "Zero-touch provisioning",
+        ],
+        "best_for": [
+            "Distributed campuses",
+            "Multi-site enterprise",
+            "Remote production",
+            "IT-managed deployments",
+        ],
         "verticals": ["higher_ed", "corporate", "government", "healthcare"],
     },
     "pearl_2": {
@@ -82,8 +105,18 @@ EPIPHAN_PRODUCTS = {
         "price": "$7,999",
         "tagline": "Flagship all-in-one video production system",
         "form_factor": "Full-rack, rack-mountable",
-        "key_specs": ["12+ video sources", "4K recording", "6 encoding channels", "custom layouts"],
-        "best_for": ["Large lecture halls", "Simulation centers", "Multi-camera production", "Live events"],
+        "key_specs": [
+            "12+ video sources",
+            "4K recording",
+            "6 encoding channels",
+            "custom layouts",
+        ],
+        "best_for": [
+            "Large lecture halls",
+            "Simulation centers",
+            "Multi-camera production",
+            "Live events",
+        ],
         "verticals": ["higher_ed", "healthcare", "live_events", "corporate"],
     },
     "ec20_ptz": {
@@ -101,7 +134,12 @@ EPIPHAN_PRODUCTS = {
         "tagline": "4K HDMI to USB capture card",
         "form_factor": "Grab-and-go dongle",
         "key_specs": ["4K capture", "HDMI input", "USB 3.0", "UVC compliant"],
-        "best_for": ["Software-based capture", "Portability", "Telemedicine", "UX research"],
+        "best_for": [
+            "Software-based capture",
+            "Portability",
+            "Telemedicine",
+            "UX research",
+        ],
         "verticals": ["healthcare", "corporate", "ux_research"],
     },
     "avio_hd_plus": {
@@ -134,7 +172,12 @@ EPIPHAN_VERTICALS = {
         "name": "Higher Education",
         "atl_buyers": ["av_director", "ld_director"],
         "btl_users": ["technical_director"],
-        "use_cases": ["Lecture capture", "Hybrid classrooms", "Campus-wide streaming", "Event recording"],
+        "use_cases": [
+            "Lecture capture",
+            "Hybrid classrooms",
+            "Campus-wide streaming",
+            "Event recording",
+        ],
         "reference_stories": [
             "NC State — 300+ Pearl units across campus",
             "UNLV — 215 rooms with automated lecture capture",
@@ -152,7 +195,12 @@ EPIPHAN_VERTICALS = {
         "name": "Corporate / Enterprise",
         "atl_buyers": ["av_director", "corp_comms"],
         "btl_users": ["technical_director"],
-        "use_cases": ["Boardroom meetings", "Town halls", "Training recordings", "Hybrid events"],
+        "use_cases": [
+            "Boardroom meetings",
+            "Town halls",
+            "Training recordings",
+            "Hybrid events",
+        ],
         "reference_stories": [
             "OpenAI — Pearl systems for internal production",
             "Fortune 500 boardrooms — standardized on Pearl Mini",
@@ -169,7 +217,12 @@ EPIPHAN_VERTICALS = {
         "name": "Live Events / Production",
         "atl_buyers": ["av_director", "technical_director"],
         "btl_users": ["technical_director"],
-        "use_cases": ["Multi-camera production", "Live streaming", "IMAG", "Event recording"],
+        "use_cases": [
+            "Multi-camera production",
+            "Live streaming",
+            "IMAG",
+            "Event recording",
+        ],
         "reference_stories": [],
         "pain_points": [
             "Software encoders crash mid-show — hardware reliability is non-negotiable",
@@ -183,7 +236,12 @@ EPIPHAN_VERTICALS = {
         "name": "Government / Municipal",
         "atl_buyers": ["court_admin", "av_director"],
         "btl_users": ["technical_director"],
-        "use_cases": ["Council meetings", "Courtroom recording", "Public access streaming", "Training"],
+        "use_cases": [
+            "Council meetings",
+            "Courtroom recording",
+            "Public access streaming",
+            "Training",
+        ],
         "reference_stories": [],
         "pain_points": [
             "Public transparency mandates require reliable recording/streaming",
@@ -197,7 +255,12 @@ EPIPHAN_VERTICALS = {
         "name": "Houses of Worship",
         "atl_buyers": ["av_director"],
         "btl_users": ["technical_director"],
-        "use_cases": ["Service streaming", "Multi-campus distribution", "Sermon recording", "Event production"],
+        "use_cases": [
+            "Service streaming",
+            "Multi-campus distribution",
+            "Sermon recording",
+            "Event production",
+        ],
         "reference_stories": [],
         "pain_points": [
             "Volunteer operators — can't require AV expertise",
@@ -211,7 +274,12 @@ EPIPHAN_VERTICALS = {
         "name": "Healthcare / Medical Simulation",
         "atl_buyers": ["sim_center_director", "ld_director"],
         "btl_users": ["technical_director"],
-        "use_cases": ["Simulation recording", "Surgical capture", "Telemedicine", "Grand rounds"],
+        "use_cases": [
+            "Simulation recording",
+            "Surgical capture",
+            "Telemedicine",
+            "Grand rounds",
+        ],
         "reference_stories": [],
         "pain_points": [
             "HIPAA compliance — video data must stay secure and controlled",
@@ -225,7 +293,12 @@ EPIPHAN_VERTICALS = {
         "name": "Industrial / Manufacturing",
         "atl_buyers": ["ehs_manager", "ld_director"],
         "btl_users": ["technical_director"],
-        "use_cases": ["Safety training capture", "Process documentation", "Remote inspections", "Compliance recording"],
+        "use_cases": [
+            "Safety training capture",
+            "Process documentation",
+            "Remote inspections",
+            "Compliance recording",
+        ],
         "reference_stories": [],
         "pain_points": [
             "Training content is tribal knowledge in senior workers' heads",
@@ -239,7 +312,12 @@ EPIPHAN_VERTICALS = {
         "name": "Legal",
         "atl_buyers": ["court_admin", "law_firm_it"],
         "btl_users": ["technical_director"],
-        "use_cases": ["Deposition recording", "Courtroom proceedings", "Remote testimony", "Training"],
+        "use_cases": [
+            "Deposition recording",
+            "Courtroom proceedings",
+            "Remote testimony",
+            "Training",
+        ],
         "reference_stories": [],
         "pain_points": [
             "Chain of custody for video evidence — must be tamper-proof",
@@ -253,7 +331,12 @@ EPIPHAN_VERTICALS = {
         "name": "UX Research",
         "atl_buyers": ["ld_director", "corp_comms"],
         "btl_users": ["technical_director"],
-        "use_cases": ["Usability testing", "Focus groups", "Eye tracking capture", "Screen + face recording"],
+        "use_cases": [
+            "Usability testing",
+            "Focus groups",
+            "Eye tracking capture",
+            "Screen + face recording",
+        ],
         "reference_stories": [],
         "pain_points": [
             "Need synchronized multi-source capture (screen + face + room)",
@@ -267,7 +350,12 @@ EPIPHAN_VERTICALS = {
         "name": "K-12 Education",
         "atl_buyers": ["av_director", "ld_director"],
         "btl_users": ["technical_director"],
-        "use_cases": ["Classroom recording", "Board meetings", "Event streaming", "Distance learning"],
+        "use_cases": [
+            "Classroom recording",
+            "Board meetings",
+            "Event streaming",
+            "Distance learning",
+        ],
         "reference_stories": [],
         "pain_points": [
             "Teachers won't use it if it's not one-button simple",
@@ -283,6 +371,7 @@ EPIPHAN_VERTICALS = {
 # =============================================
 # ATL / BTL Persona Definitions
 # =============================================
+
 
 class AudiencePersona(str, Enum):
     """Target audience personas for storyboard content.
@@ -411,12 +500,16 @@ EPIPHAN_ICP = {
     },
     "audience_personas": {
         # ── ATL: Decision Makers ──────────────────────────────────
-
         AudiencePersona.AV_DIRECTOR: {
             "title": "AV Director",
             "persona_type": "ATL",
             "verticals": ["higher_ed", "corporate", "live_events", "houses_of_worship"],
-            "cares_about": ["system reliability", "fleet standardization", "ease of management", "vendor support quality"],
+            "cares_about": [
+                "system reliability",
+                "fleet standardization",
+                "ease of management",
+                "vendor support quality",
+            ],
             "tone": "Peer-level AV professional. Speak to the pressure of managing hundreds of rooms.",
             "value_angle": "COI",
             "value_framing": "Every room with unreliable AV is a support ticket and a frustrated user. Standardize and forget about it.",
@@ -427,22 +520,40 @@ EPIPHAN_ICP = {
             ],
             "voice_tone": "AV peer. You've both done the 6AM setup and the midnight troubleshooting call.",
             "vocabulary": [
-                "fleet management", "standardize", "rack-mount", "signal chain",
-                "commissioning", "punchlist", "as-built", "AV-over-IP",
-                "NDI", "SRT", "RTMP", "Dante", "PoE",
+                "fleet management",
+                "standardize",
+                "rack-mount",
+                "signal chain",
+                "commissioning",
+                "punchlist",
+                "as-built",
+                "AV-over-IP",
+                "NDI",
+                "SRT",
+                "RTMP",
+                "Dante",
+                "PoE",
             ],
             "forbidden_phrases": [
-                "digital transformation", "synergize", "paradigm shift",
-                "enterprise journey", "holistic solution", "leverage",
+                "digital transformation",
+                "synergize",
+                "paradigm shift",
+                "enterprise journey",
+                "holistic solution",
+                "leverage",
             ],
             "default_visual_style": "clean",
         },
-
         AudiencePersona.LD_DIRECTOR: {
             "title": "L&D Director",
             "persona_type": "ATL",
             "verticals": ["corporate", "healthcare", "industrial"],
-            "cares_about": ["training content quality", "scalable delivery", "compliance documentation", "measurement"],
+            "cares_about": [
+                "training content quality",
+                "scalable delivery",
+                "compliance documentation",
+                "measurement",
+            ],
             "tone": "Training professional. Show you understand the learning outcomes, not just the tech.",
             "value_angle": "ROI",
             "value_framing": "Your best trainer's knowledge walks out the door when they retire. Capture it once, deliver it forever.",
@@ -453,22 +564,37 @@ EPIPHAN_ICP = {
             ],
             "voice_tone": "Learning professional empathy. You care about outcomes, not AV specs.",
             "vocabulary": [
-                "learning outcomes", "content library", "compliance training",
-                "onboarding", "knowledge capture", "LMS integration",
-                "Panopto", "Kaltura", "SCORM", "blended learning",
+                "learning outcomes",
+                "content library",
+                "compliance training",
+                "onboarding",
+                "knowledge capture",
+                "LMS integration",
+                "Panopto",
+                "Kaltura",
+                "SCORM",
+                "blended learning",
             ],
             "forbidden_phrases": [
-                "cutting-edge", "revolutionary", "game-changing",
-                "best-in-class", "enterprise-grade", "robust platform",
+                "cutting-edge",
+                "revolutionary",
+                "game-changing",
+                "best-in-class",
+                "enterprise-grade",
+                "robust platform",
             ],
             "default_visual_style": "polished",
         },
-
         AudiencePersona.SIM_CENTER_DIRECTOR: {
             "title": "Simulation Center Director",
             "persona_type": "ATL",
             "verticals": ["healthcare"],
-            "cares_about": ["multi-angle recording", "debrief quality", "HIPAA compliance", "SimCapture/CAE integration"],
+            "cares_about": [
+                "multi-angle recording",
+                "debrief quality",
+                "HIPAA compliance",
+                "SimCapture/CAE integration",
+            ],
             "tone": "Clinical educator. Show you understand simulation pedagogy and debriefing.",
             "value_angle": "COI",
             "value_framing": "Every simulation without proper recording is a missed learning opportunity. Students deserve better debriefs.",
@@ -479,22 +605,39 @@ EPIPHAN_ICP = {
             ],
             "voice_tone": "Clinical simulation peer. You speak manikin brands, INACSL standards, and debrief methodology.",
             "vocabulary": [
-                "debrief", "simulation", "standardized patient", "manikin",
-                "INACSL", "SimCapture", "CAE", "high-fidelity sim",
-                "multi-angle", "synchronized playback", "HIPAA",
+                "debrief",
+                "simulation",
+                "standardized patient",
+                "manikin",
+                "INACSL",
+                "SimCapture",
+                "CAE",
+                "high-fidelity sim",
+                "multi-angle",
+                "synchronized playback",
+                "HIPAA",
             ],
             "forbidden_phrases": [
-                "game-changing", "synergy", "leverage", "paradigm",
-                "revolutionary", "disruptive", "best-in-class",
+                "game-changing",
+                "synergy",
+                "leverage",
+                "paradigm",
+                "revolutionary",
+                "disruptive",
+                "best-in-class",
             ],
             "default_visual_style": "data_viz",
         },
-
         AudiencePersona.COURT_ADMIN: {
             "title": "Court Administrator",
             "persona_type": "ATL",
             "verticals": ["legal", "government"],
-            "cares_about": ["record integrity", "chain of custody", "reliability", "public access compliance"],
+            "cares_about": [
+                "record integrity",
+                "chain of custody",
+                "reliability",
+                "public access compliance",
+            ],
             "tone": "Judicial professional. Reliability and record integrity are non-negotiable.",
             "value_angle": "COI",
             "value_framing": "A failed recording of court proceedings isn't an inconvenience — it's a legal crisis. Don't risk it.",
@@ -505,22 +648,36 @@ EPIPHAN_ICP = {
             ],
             "voice_tone": "Judicial gravity. Every word matters. Reliability is the only feature that counts.",
             "vocabulary": [
-                "record of proceedings", "chain of custody", "public access",
-                "remote testimony", "court reporter", "transcript",
-                "tamper-proof", "archival", "retention policy",
+                "record of proceedings",
+                "chain of custody",
+                "public access",
+                "remote testimony",
+                "court reporter",
+                "transcript",
+                "tamper-proof",
+                "archival",
+                "retention policy",
             ],
             "forbidden_phrases": [
-                "game-changing", "revolutionary", "cutting-edge",
-                "disruptive", "exciting", "innovative",
+                "game-changing",
+                "revolutionary",
+                "cutting-edge",
+                "disruptive",
+                "exciting",
+                "innovative",
             ],
             "default_visual_style": "clean",
         },
-
         AudiencePersona.CORP_COMMS: {
             "title": "Corporate Communications Director",
             "persona_type": "ATL",
             "verticals": ["corporate"],
-            "cares_about": ["broadcast quality", "executive presence", "brand consistency", "multi-platform distribution"],
+            "cares_about": [
+                "broadcast quality",
+                "executive presence",
+                "brand consistency",
+                "multi-platform distribution",
+            ],
             "tone": "Communications professional. Production quality reflects company brand.",
             "value_angle": "ROI",
             "value_framing": "Your CEO's town hall shouldn't look like a bad Zoom call. Broadcast quality from every room, every time.",
@@ -531,22 +688,36 @@ EPIPHAN_ICP = {
             ],
             "voice_tone": "Brand-conscious communicator. Quality is non-negotiable when leadership is on camera.",
             "vocabulary": [
-                "town hall", "all-hands", "executive communication",
-                "brand standards", "simulcast", "multi-platform",
-                "production value", "B-roll", "lower thirds",
+                "town hall",
+                "all-hands",
+                "executive communication",
+                "brand standards",
+                "simulcast",
+                "multi-platform",
+                "production value",
+                "B-roll",
+                "lower thirds",
             ],
             "forbidden_phrases": [
-                "synergize", "leverage", "paradigm shift",
-                "holistic", "enterprise journey", "robust",
+                "synergize",
+                "leverage",
+                "paradigm shift",
+                "holistic",
+                "enterprise journey",
+                "robust",
             ],
             "default_visual_style": "polished",
         },
-
         AudiencePersona.EHS_MANAGER: {
             "title": "EHS Manager",
             "persona_type": "ATL",
             "verticals": ["industrial"],
-            "cares_about": ["OSHA compliance", "safety training documentation", "incident recording", "audit readiness"],
+            "cares_about": [
+                "OSHA compliance",
+                "safety training documentation",
+                "incident recording",
+                "audit readiness",
+            ],
             "tone": "Safety professional. Compliance isn't optional — it's life or death.",
             "value_angle": "COI",
             "value_framing": "OSHA doesn't accept 'the recording failed' as an excuse. One incident without documentation can cost millions.",
@@ -557,22 +728,37 @@ EPIPHAN_ICP = {
             ],
             "voice_tone": "Safety-first pragmatist. Compliance, documentation, zero tolerance for 'it didn't record.'",
             "vocabulary": [
-                "OSHA", "compliance", "incident report", "safety training",
-                "lockout/tagout", "JSA", "SOP documentation",
-                "audit trail", "recordkeeping", "toolbox talk",
+                "OSHA",
+                "compliance",
+                "incident report",
+                "safety training",
+                "lockout/tagout",
+                "JSA",
+                "SOP documentation",
+                "audit trail",
+                "recordkeeping",
+                "toolbox talk",
             ],
             "forbidden_phrases": [
-                "game-changing", "revolutionary", "cutting-edge",
-                "best-in-class", "synergy", "paradigm",
+                "game-changing",
+                "revolutionary",
+                "cutting-edge",
+                "best-in-class",
+                "synergy",
+                "paradigm",
             ],
             "default_visual_style": "bold",
         },
-
         AudiencePersona.LAW_FIRM_IT: {
             "title": "Law Firm IT Director",
             "persona_type": "ATL",
             "verticals": ["legal"],
-            "cares_about": ["data security", "on-premises control", "remote deposition quality", "partner satisfaction"],
+            "cares_about": [
+                "data security",
+                "on-premises control",
+                "remote deposition quality",
+                "partner satisfaction",
+            ],
             "tone": "IT professional in a high-stakes environment. Security and reliability above all.",
             "value_angle": "COI",
             "value_framing": "When a deposition recording fails, the billable hour count doesn't stop. Neither does the partner's frustration.",
@@ -583,24 +769,44 @@ EPIPHAN_ICP = {
             ],
             "voice_tone": "IT professional serving demanding attorneys. Security, reliability, and zero complaints.",
             "vocabulary": [
-                "on-premises", "data sovereignty", "encryption at rest",
-                "deposition", "remote testimony", "e-discovery",
-                "network segmentation", "compliance", "partner satisfaction",
+                "on-premises",
+                "data sovereignty",
+                "encryption at rest",
+                "deposition",
+                "remote testimony",
+                "e-discovery",
+                "network segmentation",
+                "compliance",
+                "partner satisfaction",
             ],
             "forbidden_phrases": [
-                "cloud-first", "SaaS", "disruptive", "game-changing",
-                "revolutionary", "best-in-class", "cutting-edge",
+                "cloud-first",
+                "SaaS",
+                "disruptive",
+                "game-changing",
+                "revolutionary",
+                "best-in-class",
+                "cutting-edge",
             ],
             "default_visual_style": "clean",
         },
-
         # ── BTL: Operators ────────────────────────────────────────
-
         AudiencePersona.TECHNICAL_DIRECTOR: {
             "title": "Technical Director / AV Operator",
             "persona_type": "BTL",
-            "verticals": ["higher_ed", "corporate", "live_events", "houses_of_worship", "healthcare"],
-            "cares_about": ["ease of use", "reliability under pressure", "quick setup", "real-time monitoring"],
+            "verticals": [
+                "higher_ed",
+                "corporate",
+                "live_events",
+                "houses_of_worship",
+                "healthcare",
+            ],
+            "cares_about": [
+                "ease of use",
+                "reliability under pressure",
+                "quick setup",
+                "real-time monitoring",
+            ],
             "tone": "Fellow operator. You've both been in the back of the room making live TV happen.",
             "value_angle": "EASE",
             "value_framing": "When the president walks on stage, the switcher better work. No excuses, no reboots, no 'give me a minute.'",
@@ -611,45 +817,89 @@ EPIPHAN_ICP = {
             ],
             "voice_tone": "Operator empathy. You understand the stress of live production and the joy of a clean show.",
             "vocabulary": [
-                "cue", "cut", "fade", "PGM/PVW", "tally",
-                "multiview", "ISO record", "confidence monitor",
-                "return feed", "comms", "rundown", "show flow",
+                "cue",
+                "cut",
+                "fade",
+                "PGM/PVW",
+                "tally",
+                "multiview",
+                "ISO record",
+                "confidence monitor",
+                "return feed",
+                "comms",
+                "rundown",
+                "show flow",
             ],
             "forbidden_phrases": [
-                "leverage", "synergize", "enterprise", "stakeholder",
-                "paradigm", "holistic", "best-in-class",
+                "leverage",
+                "synergize",
+                "enterprise",
+                "stakeholder",
+                "paradigm",
+                "holistic",
+                "best-in-class",
             ],
             "default_visual_style": "sketch",
         },
-
     },
     "language_style": {
         "avoid": [
             # Technical jargon (confuses non-AV buyers)
-            "bitrate optimization", "codec pipeline", "FPGA",
-            "firmware stack", "hardware abstraction", "kernel driver",
-            "latency buffer", "multiplexing", "transcoding pipeline",
+            "bitrate optimization",
+            "codec pipeline",
+            "FPGA",
+            "firmware stack",
+            "hardware abstraction",
+            "kernel driver",
+            "latency buffer",
+            "multiplexing",
+            "transcoding pipeline",
             "encoding matrix",
             # Proprietary terms (actual IP exposure)
-            "proprietary algorithm", "patent-pending", "trade secret", "secret sauce",
+            "proprietary algorithm",
+            "patent-pending",
+            "trade secret",
+            "secret sauce",
             # Marketing fluff (sounds salesy/fake)
-            "revolutionary", "disruptive", "game-changing", "best-in-class",
-            "cutting-edge", "synergy", "paradigm", "holistic",
+            "revolutionary",
+            "disruptive",
+            "game-changing",
+            "best-in-class",
+            "cutting-edge",
+            "synergy",
+            "paradigm",
+            "holistic",
             # Internal marketing/sales language
-            "marketing campaign", "marketing strategy", "brand awareness",
-            "promotional", "advertising", "drive engagement",
-            "target audience", "buyer persona", "customer journey",
-            "content marketing", "lead generation campaign", "go-to-market",
+            "marketing campaign",
+            "marketing strategy",
+            "brand awareness",
+            "promotional",
+            "advertising",
+            "drive engagement",
+            "target audience",
+            "buyer persona",
+            "customer journey",
+            "content marketing",
+            "lead generation campaign",
+            "go-to-market",
         ],
         "use": [
-            "just works", "set it and forget it",
-            "works with any video source", "manage from anywhere",
-            "no IT headaches", "reliable every time",
-            "trusted by universities", "built for the real world",
-            "hardware that lasts", "support when you need it",
-            "stream to any platform", "one device, every use case",
-            "zero-touch deployment", "works with your existing setup",
-            "300+ rooms at NC State", "428 rooms at MTSU",
+            "just works",
+            "set it and forget it",
+            "works with any video source",
+            "manage from anywhere",
+            "no IT headaches",
+            "reliable every time",
+            "trusted by universities",
+            "built for the real world",
+            "hardware that lasts",
+            "support when you need it",
+            "stream to any platform",
+            "one device, every use case",
+            "zero-touch deployment",
+            "works with your existing setup",
+            "300+ rooms at NC State",
+            "428 rooms at MTSU",
         ],
     },
     "tone": "Trusted technical expert, not pushy vendor. Like an AV engineer who's done thousands of installs.",
@@ -715,25 +965,48 @@ EPIPHAN_ICP = {
 SANITIZE_RULES = {
     "remove": [
         # Code internals (IP PROTECTION)
-        "class names", "function names", "variable names",
-        "method signatures", "import statements", "package names",
+        "class names",
+        "function names",
+        "variable names",
+        "method signatures",
+        "import statements",
+        "package names",
         # System architecture (IP PROTECTION)
-        "API endpoints", "database tables", "database columns",
-        "internal URLs", "service names", "queue names", "cache keys",
+        "API endpoints",
+        "database tables",
+        "database columns",
+        "internal URLs",
+        "service names",
+        "queue names",
+        "cache keys",
         # Business secrets (IP PROTECTION)
-        "employee names", "customer names", "pricing details",
-        "margin information", "vendor names", "partnership details",
+        "employee names",
+        "customer names",
+        "pricing details",
+        "margin information",
+        "vendor names",
+        "partnership details",
         # Security (CRITICAL)
-        "API keys", "tokens", "passwords", "secrets",
-        "credentials", "authentication details",
+        "API keys",
+        "tokens",
+        "passwords",
+        "secrets",
+        "credentials",
+        "authentication details",
     ],
     "keep": [
         # Business value (SAFE TO SHARE)
-        "business outcome", "user benefit", "time saved",
-        "problem solved", "workflow improvement", "pain point addressed",
+        "business outcome",
+        "user benefit",
+        "time saved",
+        "problem solved",
+        "workflow improvement",
+        "pain point addressed",
         # General concepts (SAFE TO SHARE)
-        "general workflow description", "high-level process",
-        "user experience improvement", "efficiency gain",
+        "general workflow description",
+        "high-level process",
+        "user experience improvement",
+        "efficiency gain",
     ],
     "transform": {
         "technical_process": "simple analogy or metaphor",
@@ -833,7 +1106,9 @@ def get_audience_persona(
             # Fallback to av_director for unknown personas
             persona = AudiencePersona.AV_DIRECTOR
 
-    return icp_preset["audience_personas"].get(persona, icp_preset["audience_personas"][AudiencePersona.AV_DIRECTOR])
+    return icp_preset["audience_personas"].get(
+        persona, icp_preset["audience_personas"][AudiencePersona.AV_DIRECTOR]
+    )
 
 
 def get_stage_template(stage: StoryboardStage | str) -> dict[str, Any]:
@@ -908,7 +1183,9 @@ def get_reference_stories(vertical: str | None = None) -> list[dict[str, Any]]:
     return stories
 
 
-def get_competitive_positioning(competitor: str | None = None) -> dict[str, Any] | list[dict[str, Any]]:
+def get_competitive_positioning(
+    competitor: str | None = None,
+) -> dict[str, Any] | list[dict[str, Any]]:
     """
     Get competitive positioning data.
 
@@ -922,7 +1199,9 @@ def get_competitive_positioning(competitor: str | None = None) -> dict[str, Any]
         comp = COMPETITIVE_INTEL.get(competitor.lower())
         if not comp:
             available = ", ".join(COMPETITIVE_INTEL.keys())
-            raise ValueError(f"Unknown competitor: {competitor}. Available: {available}")
+            raise ValueError(
+                f"Unknown competitor: {competitor}. Available: {available}"
+            )
         return comp
     return list(COMPETITIVE_INTEL.values())
 
@@ -950,18 +1229,38 @@ def sanitize_content(content: str, rules: dict[str, Any] | None = None) -> str:
     sanitized = re.sub(r"^from\s+.*import.*$", "", sanitized, flags=re.MULTILINE)
 
     # Remove class/function definitions (keep generic description)
-    sanitized = re.sub(r"^class\s+\w+.*:$", "[Feature Component]", sanitized, flags=re.MULTILINE)
-    sanitized = re.sub(r"^def\s+\w+\(.*\):$", "[Process Step]", sanitized, flags=re.MULTILINE)
-    sanitized = re.sub(r"^async\s+def\s+\w+\(.*\):$", "[Automated Process]", sanitized, flags=re.MULTILINE)
+    sanitized = re.sub(
+        r"^class\s+\w+.*:$", "[Feature Component]", sanitized, flags=re.MULTILINE
+    )
+    sanitized = re.sub(
+        r"^def\s+\w+\(.*\):$", "[Process Step]", sanitized, flags=re.MULTILINE
+    )
+    sanitized = re.sub(
+        r"^async\s+def\s+\w+\(.*\):$",
+        "[Automated Process]",
+        sanitized,
+        flags=re.MULTILINE,
+    )
 
     # Remove API keys and secrets
-    sanitized = re.sub(r'["\']?[A-Za-z_]*(?:KEY|SECRET|TOKEN|PASSWORD)["\']?\s*[=:]\s*["\'][^"\']+["\']', "[REDACTED]", sanitized, flags=re.IGNORECASE)
+    sanitized = re.sub(
+        r'["\']?[A-Za-z_]*(?:KEY|SECRET|TOKEN|PASSWORD)["\']?\s*[=:]\s*["\'][^"\']+["\']',
+        "[REDACTED]",
+        sanitized,
+        flags=re.IGNORECASE,
+    )
 
     # Remove URLs with internal paths
-    sanitized = re.sub(r"https?://[^\s]+(?:internal|staging|dev|api\.)[^\s]*", "[Internal URL]", sanitized)
+    sanitized = re.sub(
+        r"https?://[^\s]+(?:internal|staging|dev|api\.)[^\s]*",
+        "[Internal URL]",
+        sanitized,
+    )
 
     # Remove email addresses
-    sanitized = re.sub(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "[email]", sanitized)
+    sanitized = re.sub(
+        r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "[email]", sanitized
+    )
 
     return sanitized
 
@@ -985,8 +1284,8 @@ def build_language_guidelines(icp_preset: dict[str, Any] | None = None) -> str:
 
     return f"""LANGUAGE GUIDELINES:
 - Tone: {tone}
-- AVOID these words/phrases: {', '.join(avoid[:10])}...
-- USE these words/phrases: {', '.join(use[:10])}...
+- AVOID these words/phrases: {", ".join(avoid[:10])}...
+- USE these words/phrases: {", ".join(use[:10])}...
 - Write for a 5th grader - if they can't understand it, simplify it
 - NO technical jargon - translate everything to business benefits
 - NO proprietary details - if a competitor could copy it, remove it"""

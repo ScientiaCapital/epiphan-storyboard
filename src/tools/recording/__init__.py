@@ -8,6 +8,12 @@ Video generation with Runway Gen-3 Alpha.
 NO OpenAI - Browserbase + Playwright + Runway only.
 """
 
+from src.tools.recording.browserbase import BrowserbaseClient
+from src.tools.recording.config import (
+    BrowserbaseConfig,
+    RunwayConfig,
+)
+from src.tools.recording.runway_client import RunwayClient
 from src.tools.recording.schemas import (
     ActionType,
     AuthConfig,
@@ -17,12 +23,6 @@ from src.tools.recording.schemas import (
     RecordingResult,
     TimingEvent,
 )
-from src.tools.recording.config import (
-    BrowserbaseConfig,
-    RunwayConfig,
-)
-from src.tools.recording.browserbase import BrowserbaseClient
-from src.tools.recording.runway_client import RunwayClient
 from src.tools.recording.screen_capture import ScreenRecorderTool
 from src.tools.recording.video_generator import RunwayVideoGeneratorTool
 

@@ -153,9 +153,13 @@ class LinearGraphQLClient:
                 logger.warning(f"Failed to parse issue {node.get('id')}: {e}")
                 continue
 
-        next_cursor = response.page_info.end_cursor if response.page_info.has_next_page else None
+        next_cursor = (
+            response.page_info.end_cursor if response.page_info.has_next_page else None
+        )
 
-        logger.info(f"[LINEAR] Fetched {len(issues)} issues (cursor: {cursor} -> {next_cursor})")
+        logger.info(
+            f"[LINEAR] Fetched {len(issues)} issues (cursor: {cursor} -> {next_cursor})"
+        )
         return issues, next_cursor
 
     async def get_projects(
@@ -213,9 +217,13 @@ class LinearGraphQLClient:
                 logger.warning(f"Failed to parse project {node.get('id')}: {e}")
                 continue
 
-        next_cursor = response.page_info.end_cursor if response.page_info.has_next_page else None
+        next_cursor = (
+            response.page_info.end_cursor if response.page_info.has_next_page else None
+        )
 
-        logger.info(f"[LINEAR] Fetched {len(projects)} projects (cursor: {cursor} -> {next_cursor})")
+        logger.info(
+            f"[LINEAR] Fetched {len(projects)} projects (cursor: {cursor} -> {next_cursor})"
+        )
         return projects, next_cursor
 
     async def get_viewer(self) -> dict[str, Any]:
@@ -275,7 +283,9 @@ class LinearGraphQLClient:
 
             # Check for GraphQL errors
             if "errors" in data:
-                error_msg = "; ".join(err.get("message", str(err)) for err in data["errors"])
+                error_msg = "; ".join(
+                    err.get("message", str(err)) for err in data["errors"]
+                )
                 raise ValueError(f"GraphQL errors: {error_msg}")
 
             return data

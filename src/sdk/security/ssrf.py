@@ -45,14 +45,14 @@ class SSRFValidator:
 
     # Private IP ranges (RFC 1918 + localhost + link-local)
     PRIVATE_RANGES = [
-        ipaddress.ip_network("127.0.0.0/8"),      # Loopback
-        ipaddress.ip_network("10.0.0.0/8"),       # Private Class A
-        ipaddress.ip_network("172.16.0.0/12"),    # Private Class B
-        ipaddress.ip_network("192.168.0.0/16"),   # Private Class C
-        ipaddress.ip_network("169.254.0.0/16"),   # Link-local
-        ipaddress.ip_network("::1/128"),          # IPv6 loopback
-        ipaddress.ip_network("fc00::/7"),         # IPv6 private
-        ipaddress.ip_network("fe80::/10"),        # IPv6 link-local
+        ipaddress.ip_network("127.0.0.0/8"),  # Loopback
+        ipaddress.ip_network("10.0.0.0/8"),  # Private Class A
+        ipaddress.ip_network("172.16.0.0/12"),  # Private Class B
+        ipaddress.ip_network("192.168.0.0/16"),  # Private Class C
+        ipaddress.ip_network("169.254.0.0/16"),  # Link-local
+        ipaddress.ip_network("::1/128"),  # IPv6 loopback
+        ipaddress.ip_network("fc00::/7"),  # IPv6 private
+        ipaddress.ip_network("fe80::/10"),  # IPv6 link-local
     ]
 
     LOCALHOST_VARIANTS = {
@@ -128,9 +128,7 @@ class SSRFValidator:
             port = 443 if parsed.scheme == "https" else 80
 
         if port not in self.allowed_ports:
-            raise SSRFError(
-                f"Port {port} not allowed. Allowed: {self.allowed_ports}"
-            )
+            raise SSRFError(f"Port {port} not allowed. Allowed: {self.allowed_ports}")
 
         # Resolve hostname and check IP
         if not self.allow_private_ips:
@@ -163,8 +161,7 @@ class SSRFValidator:
             for private_range in self.PRIVATE_RANGES:
                 if ip in private_range:
                     raise SSRFError(
-                        f"URL resolves to private IP {ip_str} "
-                        f"(in {private_range})"
+                        f"URL resolves to private IP {ip_str} (in {private_range})"
                     )
 
     def is_safe(self, url: str) -> bool:

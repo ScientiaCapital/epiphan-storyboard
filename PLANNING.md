@@ -2,9 +2,9 @@
 
 **Project**: epiphan-storyboard
 **Type**: Multi-provider LLM agent orchestration with ReAct pattern
-**Status**: Phase 9.0 Complete (Screen Recording Module)
-**Version**: 0.9.0
-**Last Updated**: 2025-12-21
+**Status**: Phase 11.5 Complete (Test Suite Repair)
+**Version**: 0.11.5
+**Last Updated**: 2026-02-19
 
 ---
 
@@ -401,7 +401,7 @@ plugins/
 - **DeepSeek/Qwen/Kimi**: Via OpenRouter
 
 ### Testing & Quality
-- **pytest**: Testing framework (263 tests)
+- **pytest**: Testing framework (1341 tests passing)
 - **pytest-asyncio**: Async test support
 - **ruff**: Linting and formatting (replaces black + isort + flake8)
 - **mypy**: Type checking
@@ -571,6 +571,9 @@ APP_ENV=development
 
 | Phase | Description | Tests |
 |-------|-------------|-------|
+| 11.5 | Test Suite Repair (6 root causes, 0 source changes) | 1341 |
+| 11.0 | Monetization Infrastructure (Stripe billing) | 114 |
+| 10.0 | Agent Router (classifier + chains) | 41 |
 | 9.0 | Screen Recording Module (Browserbase + Runway) | 100 |
 | 8.0 | Mixed Input Parity (Text+Image) | 79 |
 | 7.x | Knowledge Brain + Storyboard Integration | 260 |
@@ -581,7 +584,7 @@ APP_ENV=development
 | 2.0 | Plugin Integration | 28 |
 | 1.0 | SDK Foundation | 59 |
 
-**Total Tests**: 827+
+**Total Tests**: 1341 passing (22 skipped)
 
 ---
 
@@ -596,5 +599,5 @@ APP_ENV=development
 
 ---
 
-**Last Updated**: 2025-11-30
-**Version**: 0.1.0 (Phase 2 Complete)
+**Last Updated**: 2026-02-19
+**Version**: 0.11.5 (Phase 11.5 Complete)

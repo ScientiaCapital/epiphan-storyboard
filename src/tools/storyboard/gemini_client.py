@@ -309,10 +309,10 @@ class GeminiStoryboardClient:
                     )
 
                     if response.status_code == 429:
-                        # Rate limited - wait and retry
-                        wait_time = (attempt + 1) * 5  # 5s, 10s, 15s
+                        # Rate limited - exponential backoff with jitter
+                        wait_time = min(2**attempt, 32) + random.uniform(0, 0.5)
                         logger.warning(
-                            f"[OPENROUTER] Rate limited, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})"
+                            f"[OPENROUTER] Rate limited, waiting {wait_time:.1f}s (attempt {attempt + 1}/{max_retries})"
                         )
                         await asyncio.sleep(wait_time)
                         continue
@@ -323,8 +323,8 @@ class GeminiStoryboardClient:
 
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 429 and attempt < max_retries - 1:
-                    wait_time = (attempt + 1) * 5
-                    logger.warning(f"[OPENROUTER] Rate limited, waiting {wait_time}s")
+                    wait_time = min(2**attempt, 32) + random.uniform(0, 0.5)
+                    logger.warning(f"[OPENROUTER] Rate limited, waiting {wait_time:.1f}s")
                     await asyncio.sleep(wait_time)
                     continue
                 raise

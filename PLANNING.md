@@ -2,8 +2,8 @@
 
 **Project**: epiphan-storyboard
 **Type**: Multi-provider LLM agent orchestration with ReAct pattern
-**Status**: Phase 11.5 Complete (Test Suite Repair)
-**Version**: 0.11.5
+**Status**: Phase 12.5 Complete (Storyboard Hardening)
+**Version**: 0.12.5
 **Last Updated**: 2026-02-19
 
 ---
@@ -389,7 +389,7 @@ plugins/
 ## Technology Stack
 
 ### Core Framework
-- **Python**: 3.11+ (type hints, match statements, async/await)
+- **Python**: 3.13+ (type hints, match statements, async/await)
 - **FastAPI**: Async HTTP framework
 - **Pydantic**: v2 for data validation
 - **Redis**: Session state storage (1hr TTL)
@@ -401,7 +401,7 @@ plugins/
 - **DeepSeek/Qwen/Kimi**: Via OpenRouter
 
 ### Testing & Quality
-- **pytest**: Testing framework (1341 tests passing)
+- **pytest**: Testing framework (1496 collected, 1478 passing)
 - **pytest-asyncio**: Async test support
 - **ruff**: Linting and formatting (replaces black + isort + flake8)
 - **mypy**: Type checking
@@ -571,6 +571,8 @@ APP_ENV=development
 
 | Phase | Description | Tests |
 |-------|-------------|-------|
+| 12.5 | Storyboard Hardening (brand colors, crash fixes, 45 safety tests) | 1496 |
+| 12.0 | Auto Demo Video Pipeline (storyboard → scenes → video assets) | 1478 |
 | 11.5 | Test Suite Repair (6 root causes, 0 source changes) | 1341 |
 | 11.0 | Monetization Infrastructure (Stripe billing) | 114 |
 | 10.0 | Agent Router (classifier + chains) | 41 |
@@ -584,7 +586,7 @@ APP_ENV=development
 | 2.0 | Plugin Integration | 28 |
 | 1.0 | SDK Foundation | 59 |
 
-**Total Tests**: 1341 passing (22 skipped)
+**Total Tests**: 1496 collected (1478 passing, 22 skipped)
 
 ---
 
@@ -600,4 +602,4 @@ APP_ENV=development
 ---
 
 **Last Updated**: 2026-02-19
-**Version**: 0.11.5 (Phase 11.5 Complete)
+**Version**: 0.12.5 (Phase 12.5 Complete)

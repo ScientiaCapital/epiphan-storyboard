@@ -3,25 +3,37 @@
 **Branch**: main | **Updated**: 2026-02-19
 
 ## Status
-Phase 11.5 complete. Test suite fully repaired after fork + God-class decomposition:
-- 1341 tests passing, 22 skipped, 0 failures, 0 errors (was 1264 pass / 95 broken)
-- 6 root causes diagnosed and fixed across 7 test files (zero source code changes)
-- Security sweep: 0 secrets, 0 hardcoded credentials, 0 env issues
-- Ready for Phase 12 feature work
+Phase 13 sprint in progress. Doc hygiene done, CVE patched, visual audit script written,
+exponential backoff implemented. Ready to run visual audit.
+- 1482 tests passing, 22 skipped, 0 failures, 0 errors
+- Security sweep: 1 gitleaks finding (false positive — test fixture fake key)
+- 1 CVE remaining (diskcache serialization — no fix upstream)
+- langchain-core CVE-2026-26013 FIXED (upgraded to 1.2.11)
 
-## Today's Accomplishments
-### Phase 11.5: Test Suite Repair
-1. **RC-1/RC-2** - Patched supabase `create_client` in 4 StateManager fixtures (79 tests)
-2. **RC-3** - Rewrote 3 language guidelines tests for extracted `build_language_guidelines()`
-3. **RC-4** - Isolated `GOOGLE_API_KEY` env in `test_raises_without_api_key`
-4. **RC-5** - Skipped 10 plugin integration tests referencing missing sibling projects
-5. **RC-6** - Replaced hardcoded year 2025 with `datetime.now().year`
-6. **Env pollution** - Fixed OpenRouter skip condition to check `sk-or-` prefix
+## Done (This Session)
+### Phase 13: Sprint — Doc Hygiene, CVE, Visual Audit, Backoff
+- [x] P4: Updated PLANNING.md (Phase 11.5 → 12.5, added Phase 12/12.5 to completed phases, updated test counts)
+- [x] P2: Upgraded langchain-core 1.2.10 → 1.2.11 (CVE-2026-26013 SSRF fix)
+- [x] P1: Created scripts/visual_audit.py (generates 6 storyboards: 3 stages x 2 personas)
+- [x] P3a: Replaced linear backoff with exponential + jitter in OpenRouter retry (M-5 resolved)
+- [x] Added 4 new tests for exponential backoff (TestOpenRouterRetryBackoff)
+- [x] Added audit_output/ to .gitignore
 
-### Phase 11: Monetization Infrastructure (Previous Session)
-- Full Stripe SDK integration (checkout, portal, subscriptions, webhooks)
-- 4-tier pricing system (Free/Basic/Pro/Enterprise) with quota enforcement
-- Billing middleware for protecting storyboard and router endpoints
+### Previous: Phase 12.5 — Storyboard Module Hardening
+- Removed MEP contractor content, replaced teal/green with navy/lime brand colors
+- Fixed 3 crash bugs (health_check, audience param, dir() bug)
+- Added 45 safety tests across 3 test files
+
+## Deferred (Tier 3)
+| Issue | Status |
+|-------|--------|
+| H-4: Sync Gemini call blocks event loop | Deferred — requires google-genai async investigation |
+| H-5/M-9: lru_cache on Redis connection | Deferred — infrastructure change |
+| H-2: sanitize_content wrong arg type | Deferred — low impact |
+| M-5: Linear retry to exponential | DONE — exponential + jitter implemented |
+| M-7: No retry on Gemini image gen | Deferred — 2-3x API cost |
+| M-8: Unstable model name | Deferred — Google controls this |
+| M-11: Sync Supabase in async function | Deferred — requires async client |
 
 ## API Keys Status
 | Key | Status |
@@ -36,60 +48,29 @@ Phase 11.5 complete. Test suite fully repaired after fork + God-class decomposit
 | RUNWAY_API_KEY | Missing |
 | CLOSE_API_KEY | Missing |
 
-## OpenRouter Model IDs (2025)
-```
-google/gemini-2.5-flash              # Main workhorse
-google/gemini-2.5-flash-image-preview # NANO BANANA (storyboards)
-google/gemini-2.0-flash-exp:free     # FREE tier
-deepseek/deepseek-chat-v3            # Best value flagship
-deepseek/deepseek-r1                 # Deep reasoning
-qwen/qwen-2.5-coder-32b-instruct     # Best coder
-```
-
 ## Quick Commands
 ```bash
-python3 -m pytest tests/billing/ -v  # Billing tests (73 passing)
-python3 -m pytest tests/router/ -v   # Router tests (41 passing)
-python3 -m pytest tests/ -v          # All tests
-python3 -m mypy src/billing/ --ignore-missing-imports
+python3 -m pytest tests/ -v                    # All tests (1482 passing)
+python3 -m pytest tests/tools/storyboard/ -v   # Storyboard tests (255 passing)
+python scripts/visual_audit.py                 # Generate 6 audit storyboards
+ruff check src/tools/storyboard/               # Lint storyboard module
 uvicorn src.api:app --reload --port 8000
 ```
 
-## API Endpoints
-### Billing
-- `POST /billing/checkout` - Create Stripe Checkout session
-- `GET /billing/subscription` - Get subscription status
-- `POST /billing/portal` - Create Customer Portal session
-- `POST /billing/webhooks/stripe` - Handle Stripe events
-- `GET /billing/health` - Billing health check
-
-### Router
-- `POST /agents/route` - Auto-classify and route task (402/429 protected)
-- `GET /agents/route/{job_id}` - Poll job status
-- `GET /agents/route/chains` - List available chains
-
-## Pricing Tiers
-| Tier | Price | Hourly | Daily | Monthly |
-|------|-------|--------|-------|---------|
-| Free | $0 | 1K tokens | 10K | 100K |
-| Basic | $49/mo | 5K | 50K | 500K |
-| Pro | $199/mo | 50K | 500K | 5M |
-| Enterprise | Custom | Unlimited | Unlimited | Unlimited |
+## Known Tech Debt
+- mypy: 209 pre-existing errors across 48 files
+- diskcache CVE-2025-69872 (HIGH, no fix version yet — unsafe deserialization)
+- ruff: 2 pre-existing warnings in storyboard/ (B904, F841 in storage.py)
 
 ## Tech Stack
-Python 3.13 | FastAPI | Stripe | Supabase | Redis | DeepSeek V3 | Qwen 2.5 | Gemini 2.0
+Python 3.13 | FastAPI | Stripe | Supabase | Redis | DeepSeek V3 | Qwen 2.5 VL | Gemini 3 Pro
 
 ## Blockers
 **User Action Required**: Create Stripe products in Dashboard
-- Basic product ($49/mo) -> Add `STRIPE_PRICE_ID_BASIC` to .env
-- Pro product ($199/mo) -> Add `STRIPE_PRICE_ID_PRO` to .env
+- Basic product ($49/mo) -> Add STRIPE_PRICE_ID_BASIC to .env
+- Pro product ($199/mo) -> Add STRIPE_PRICE_ID_PRO to .env
 
-## Known Tech Debt
-- mypy: 209 pre-existing errors across 48 files
-- ruff: 400 pre-existing lint issues (342 auto-fixable)
-- ruff format: 72 files need formatting
-- diskcache CVE-2025-69872 (HIGH, pending fix version)
-- cryptography 46.0.3 → 46.0.5 needed (MEDIUM CVE)
-
-## Tomorrow Start
-Phase 12: Auto Demo Video Pipeline - Scene extraction and individual assets
+## Next Steps
+1. Run `python scripts/visual_audit.py` to generate 6 storyboards — manually inspect PNGs
+2. Evaluate H-4 (async Gemini calls) if time permits
+3. Consider Phase 13 feature work after visual audit passes

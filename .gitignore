@@ -28,6 +28,9 @@ env/
 htmlcov/
 .mypy_cache/
 
+# Audit output (generated storyboard PNGs)
+audit_output/
+
 # OS
 .DS_Store
 Thumbs.db

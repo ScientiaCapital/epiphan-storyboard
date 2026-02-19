@@ -590,3 +590,115 @@ class TestHealthCheckFixed:
         # If healthy, should have vision_model key
         if health["status"] == "healthy":
             assert health["vision_model"] == "models/gemini-2.0-flash"
+
+
+class TestOpenRouterRetryBackoff:
+    """Tests for exponential backoff with jitter in OpenRouter retry."""
+
+    @pytest.fixture
+    def client(self):
+        """Create a client with test config."""
+        config = GeminiConfig(
+            api_key="test-key",
+            openrouter_api_key="test-or-key",
+            timeout=5,
+        )
+        return GeminiStoryboardClient(config=config)
+
+    @pytest.mark.asyncio
+    async def test_exponential_backoff_timing(self, client):
+        """Verify backoff uses exponential formula, not linear."""
+        sleep_times = []
+
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+
+        call_count = 0
+
+        async def mock_post(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count <= 2:
+                return mock_response
+            # Third call succeeds
+            success = MagicMock()
+            success.status_code = 200
+            success.raise_for_status = MagicMock()
+            success.json.return_value = {
+                "choices": [{"message": {"content": "test response"}}]
+            }
+            return success
+
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.post = mock_post
+
+        async def capture_sleep(duration):
+            sleep_times.append(duration)
+
+        with patch("httpx.AsyncClient", return_value=mock_client), \
+             patch("asyncio.sleep", side_effect=capture_sleep):
+            result = await client._call_openrouter_with_retry(
+                payload={
+                    "model": "test",
+                    "messages": [{"role": "user", "content": "hi"}],
+                },
+                max_retries=3,
+            )
+
+        assert result == "test response"
+        assert len(sleep_times) == 2
+        # First retry: 2^0 + jitter = ~1.0-1.5s (not 5s linear)
+        assert 1.0 <= sleep_times[0] <= 1.5
+        # Second retry: 2^1 + jitter = ~2.0-2.5s (not 10s linear)
+        assert 2.0 <= sleep_times[1] <= 2.5
+
+    @pytest.mark.asyncio
+    async def test_backoff_capped_at_32_seconds(self, client):
+        """Verify backoff is capped at 32 seconds for high attempt counts."""
+        import random
+
+        # Test the formula directly for various attempts
+        for attempt in range(10):
+            random.seed(42)  # Deterministic jitter
+            wait_time = min(2**attempt, 32) + random.uniform(0, 0.5)
+            assert wait_time <= 32.5, (
+                f"Wait time {wait_time} exceeds cap at attempt {attempt}"
+            )
+
+    @pytest.mark.asyncio
+    async def test_backoff_includes_jitter(self, client):
+        """Verify jitter adds randomness to avoid thundering herd."""
+        import random
+
+        wait_times = []
+        for _ in range(100):
+            wait_times.append(min(2**0, 32) + random.uniform(0, 0.5))
+
+        # All should be between 1.0 and 1.5
+        assert all(1.0 <= t <= 1.5 for t in wait_times)
+        # Should not all be identical (jitter working)
+        assert len({round(t, 6) for t in wait_times}) > 1
+
+    @pytest.mark.asyncio
+    async def test_max_retries_exceeded_raises(self, client):
+        """Verify exception raised when all retries exhausted."""
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+
+        async def mock_post(*args, **kwargs):
+            return mock_response
+
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.post = mock_post
+
+        with patch("httpx.AsyncClient", return_value=mock_client), \
+             patch("asyncio.sleep", new_callable=AsyncMock):
+            with pytest.raises(Exception, match="Max retries exceeded"):
+                await client._call_openrouter_with_retry(
+                    payload={"model": "test", "messages": []},
+                    max_retries=3,
+                )

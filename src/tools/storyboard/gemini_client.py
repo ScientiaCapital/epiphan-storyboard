@@ -205,7 +205,7 @@ class GeminiStoryboardClient:
         understanding = await client.understand_code(
             code_content="def calculate_roi(): ...",
             icp_preset=EPIPHAN_ICP,
-            audience="cto",
+            audience="av_director",
         )
 
         # Stage 3: Generate
@@ -400,7 +400,7 @@ class GeminiStoryboardClient:
         initial: StoryboardUnderstanding,
         original_content: str,
         content_type: str = "text",
-        audience: str = "cto",
+        audience: str = "av_director",
     ) -> StoryboardUnderstanding:
         """
         Stage 2 (REFINE): Use alternate model to validate/improve low-confidence extraction.
@@ -499,7 +499,7 @@ Return ONLY valid JSON matching this exact structure:
         self,
         code_content: str,
         icp_preset: dict[str, Any] | None = None,
-        audience: str = "cto",
+        audience: str = "av_director",
         file_name: str | None = None,
     ) -> StoryboardUnderstanding:
         """
@@ -631,7 +631,7 @@ Return JSON:
         self,
         transcript: str,
         icp_preset: dict[str, Any] | None = None,
-        audience: str = "cto",
+        audience: str = "av_director",
         context: str | None = None,
     ) -> StoryboardUnderstanding:
         """
@@ -735,45 +735,65 @@ Return JSON:
             return _safe_parse_understanding("", source=f"transcript-error: {str(e)[:100]}")
 
     def _get_persona_extraction_focus(self, audience: str, audience_info: dict) -> str:
-        """Get persona-specific extraction instructions."""
+        """Get persona-specific extraction instructions for 8 BDR Playbook personas."""
         extractions = {
-            "av_integrator": """FOCUS FOR AV INTEGRATOR:
-- What INSTALLATION or DEPLOYMENT efficiency was discussed?
-- What COMPATIBILITY with existing AV infrastructure?
-- What RELIABILITY and UPTIME improvements?
-- How does this simplify SYSTEM DESIGN and reduce truck rolls?""",
+            # ── ATL: Decision Makers ──────────────────────────────────
+            "av_director": """FOCUS FOR AV DIRECTOR:
+- What FLEET MANAGEMENT or STANDARDIZATION was discussed?
+- What UPTIME and RELIABILITY across multiple rooms/venues?
+- How does this REDUCE TRUCK ROLLS and vendor dependency?
+- What VENDOR CONSOLIDATION or simplified support?""",
 
-            "it_director": """FOCUS FOR IT DIRECTOR:
-- What NETWORK and SECURITY requirements are addressed?
-- What MANAGEMENT and MONITORING capabilities?
-- What SCALABILITY across campus or enterprise?
-- How does this reduce SUPPORT TICKETS and maintenance burden?""",
+            "ld_director": """FOCUS FOR L&D DIRECTOR:
+- What KNOWLEDGE CAPTURE or TRAINING SCALABILITY was discussed?
+- What LMS INTEGRATION or content library capabilities?
+- How does this help COMPLIANCE DOCUMENTATION (OSHA, accreditation)?
+- What measurable LEARNING OUTCOMES or training ROI?""",
 
-            "cto": """FOCUS FOR CTO:
-- What ROI or METRICS were mentioned?
-- What SCALABILITY or GROWTH enablement was discussed?
-- What INTEGRATION with existing tech stack?
-- What COMPETITIVE advantages and future-proofing?""",
+            "sim_center_director": """FOCUS FOR SIMULATION CENTER DIRECTOR:
+- What MULTI-ANGLE RECORDING or DEBRIEF quality improvements?
+- What HIPAA COMPLIANCE or data security for patient recordings?
+- How does this integrate with SIMCAPTURE or CAE systems?
+- What LOCAL RECORDING capabilities (no cloud dependency)?""",
 
-            "reseller": """FOCUS FOR RESELLER:
-- What MARGIN and REVENUE opportunity?
-- What DIFFERENTIATION vs competing product lines?
-- What EASE OF SALE (demo-ability, proof of value)?
-- What RECURRING REVENUE or upsell potential?""",
+            "court_admin": """FOCUS FOR COURT ADMINISTRATOR:
+- What RECORD INTEGRITY or CHAIN OF CUSTODY features?
+- What UNATTENDED RECORDING reliability for proceedings?
+- How does this address COURT REPORTER SHORTAGE?
+- What PUBLIC ACCESS STREAMING compliance?""",
 
-            "bdr": """FOCUS FOR BDR:
-- What PAIN POINTS resonate in cold outreach?
-- What QUICK WINS can be demonstrated?
-- What OBJECTION HANDLING points were raised?
-- What makes this URGENT (not just nice-to-have)?""",
+            "corp_comms": """FOCUS FOR CORPORATE COMMUNICATIONS DIRECTOR:
+- What BROADCAST QUALITY from any room?
+- How does this prevent PRODUCTION FAILURES in town halls?
+- What MULTI-PLATFORM DISTRIBUTION (Teams + YouTube + intranet)?
+- What EXECUTIVE PRESENCE and brand consistency?""",
+
+            "ehs_manager": """FOCUS FOR EHS MANAGER:
+- What OSHA COMPLIANCE documentation capabilities?
+- What SAFETY TRAINING CAPTURE for SOPs and procedures?
+- How does this capture TRIBAL KNOWLEDGE from retiring workers?
+- What AUDIT READINESS for safety procedures?""",
+
+            "law_firm_it": """FOCUS FOR LAW FIRM IT DIRECTOR:
+- What ON-PREMISES RECORDING (no cloud risk)?
+- What DEPOSITION QUALITY and reliability?
+- How does this address E-DISCOVERY and privilege concerns?
+- What PARTNER SATISFACTION through zero-complaint AV?""",
+
+            # ── BTL: Operators ────────────────────────────────────────
+            "technical_director": """FOCUS FOR TECHNICAL DIRECTOR / AV OPERATOR:
+- What EASE OF USE or ONE-BUTTON operation?
+- What RELIABILITY UNDER PRESSURE during live events?
+- How does this simplify QUICK SETUP and teardown?
+- What REAL-TIME MONITORING and confidence monitoring?""",
         }
-        return extractions.get(audience, extractions["cto"])
+        return extractions.get(audience, extractions["av_director"])
 
     async def understand_image(
         self,
         image_data: bytes | str,
         icp_preset: dict[str, Any] | None = None,
-        audience: str = "cto",
+        audience: str = "av_director",
         sanitize_ip: bool = True,
         supplementary_context: str | None = None,
     ) -> StoryboardUnderstanding:
@@ -916,7 +936,7 @@ Return JSON:
         self,
         images_data: list[bytes],
         icp_preset: dict[str, Any] | None = None,
-        audience: str = "cto",
+        audience: str = "av_director",
         sanitize_ip: bool = True,
         supplementary_context: str | None = None,
     ) -> StoryboardUnderstanding:
@@ -1061,7 +1081,7 @@ Return JSON:
         self,
         understanding: StoryboardUnderstanding,
         stage: str = "preview",
-        audience: str = "cto",
+        audience: str = "av_director",
         output_format: str = "infographic",
         visual_style: str = "polished",
         artist_style: str | None = None,
@@ -1280,7 +1300,7 @@ DESIGN PRINCIPLES:
             logger.error(f"[GEMINI] Image generation failed: {e}")
             raise
 
-    def _build_language_guidelines(self, icp_preset: dict[str, Any], audience: str = "cto") -> str:
+    def _build_language_guidelines(self, icp_preset: dict[str, Any], audience: str = "av_director") -> str:
         """Build language guidelines string for prompts, enriched with knowledge."""
         # Get static defaults from preset
         avoid = icp_preset.get("language_style", {}).get("avoid", [])
@@ -1341,99 +1361,158 @@ DESIGN PRINCIPLES:
         - COI (Cost of Inaction): What they LOSE by not acting
         - ROI (Return on Investment): What they GAIN by acting
         - EASE: How much simpler their life becomes
+        - URGENCY: Why they need to act NOW
         """
         value_angles = {
-            "av_integrator": """VALUE FRAMING: EASE (Simplicity + Reliability) - AMPLIFIED
+            # ── ATL: Decision Makers ──────────────────────────────────
+            "av_director": """VALUE FRAMING: COI (Cost of Inaction) - AMPLIFIED
 
-SPEAK TO THE INTEGRATOR'S REALITY:
-- Less time on-site configuring. More jobs per week.
-- Works with existing AV infrastructure — no rip and replace.
-- Reliable enough to stake your reputation on.
-- "The install just works. No callbacks."
+SPEAK TO THE AV DIRECTOR'S FLEET BURDEN:
+- Every room with different AV is a support ticket and a frustrated user.
+- Standardize once. Manage from anywhere. Forget about it.
+- NC State runs 300+ Pearls with one AV team.
+- "Stop babysitting AV. Start managing it."
 
 VOCABULARY THAT RESONATES:
-- "rack and stack", "plug and play", "zero callbacks"
-- "works with my existing racks", "field-proven", "one-touch setup"
-- "NDI|HX", "HDMI passthrough", "network discovery"
+- "fleet management", "standardize", "rack-mount", "signal chain"
+- "commissioning", "as-built", "NDI", "SRT", "PoE"
+- "zero headaches", "one team, hundreds of rooms"
 
 FORBIDDEN (sounds like marketing):
-- "revolutionary", "game-changing", "paradigm shift", "synergize"
+- "digital transformation", "synergize", "paradigm shift", "holistic"
 
-EMOTIONAL CORE: Professional pride. Fewer truck rolls. Reliable installs that build reputation.
+EMOTIONAL CORE: Professional pride. Managing hundreds of rooms without losing sleep.
 """,
-            "it_director": """VALUE FRAMING: COI (Cost of Inaction) - AMPLIFIED
+            "ld_director": """VALUE FRAMING: ROI (Knowledge Capture) - AMPLIFIED
 
-SPEAK TO THE IT LEADER'S BURDEN:
-- Every manual AV request is a ticket your team shouldn't handle.
-- Centralized management across all campus locations.
-- Network-friendly, security-compliant, IT-manageable.
-- "Your AV shouldn't require a dedicated admin."
+SPEAK TO THE L&D LEADER'S MISSION:
+- Your best trainer retires next year. Their knowledge walks out the door.
+- Capture once, deliver forever, to every location.
+- LMS integration means content goes where learners are.
+- "OSHA says document it. Epiphan makes it effortless."
 
 VOCABULARY THAT RESONATES:
-- "centralized management", "SNMP monitoring", "firmware updates"
-- "LDAP/AD integration", "802.1X", "VLAN support"
-- "reduce support tickets", "self-service", "campus-wide"
+- "knowledge capture", "learning outcomes", "compliance training"
+- "onboarding at scale", "LMS integration", "content library"
+- "blended learning", "one recording, every new hire"
+
+FORBIDDEN (sounds like tech marketing):
+- "cutting-edge", "revolutionary", "game-changing", "enterprise-grade"
+
+EMOTIONAL CORE: Protecting institutional knowledge. Measurable training ROI.
+""",
+            "sim_center_director": """VALUE FRAMING: COI (Missed Learning) - AMPLIFIED
+
+SPEAK TO THE SIM CENTER EDUCATOR:
+- Every simulation without proper recording is a missed learning opportunity.
+- Students deserve better debriefs — multi-angle, synchronized, reviewable.
+- HIPAA-compliant recording that stays on YOUR network.
+- "Your manikin is $100K — the recording shouldn't be an afterthought."
+
+VOCABULARY THAT RESONATES:
+- "debrief", "simulation", "standardized patient", "manikin"
+- "INACSL", "SimCapture", "multi-angle", "synchronized playback"
+- "high-fidelity sim", "HIPAA", "local recording"
 
 FORBIDDEN (sounds like AV marketing):
-- "stunning visuals", "immersive experience", "cutting-edge"
+- "game-changing", "synergy", "leverage", "paradigm", "disruptive"
 
-EMOTIONAL CORE: Control and visibility. Fewer escalations. IT-grade manageability.
+EMOTIONAL CORE: Clinical education excellence. Every sim recorded, every debrief better.
 """,
-            "cto": """VALUE FRAMING: ROI (Return on Investment) - AMPLIFIED
+            "court_admin": """VALUE FRAMING: COI (Legal Risk) - AMPLIFIED
 
-SPEAK BOARDROOM LANGUAGE:
-- Every word must earn its place. Numbers speak louder than adjectives.
-- X invested → Y returned. Payback in Z months.
-- Show the math they can take to the board.
+SPEAK WITH JUDICIAL GRAVITY:
+- A failed recording of court proceedings isn't an inconvenience — it's a legal crisis.
+- Tamper-proof records. Chain of custody. Public access compliance.
+- Court reporters are scarce. Reliable video recording fills the gap.
+- "The record must be complete. Every time. No exceptions."
 
 VOCABULARY THAT RESONATES:
-- "total cost of ownership", "operational leverage", "scalable infrastructure"
-- "payback period", "API-first", "future-proof"
-- "data-driven", "visibility", "reduce overhead"
+- "record of proceedings", "chain of custody", "public access"
+- "remote testimony", "tamper-proof", "archival", "retention policy"
+- "unattended recording", "court reporter shortage"
 
-FORBIDDEN (sounds like marketing fluff):
-- "game-changing", "revolutionary", "best-in-class", "paradigm shift"
+FORBIDDEN (sounds flippant):
+- "game-changing", "revolutionary", "exciting", "innovative"
 
-EMOTIONAL CORE: Validation through data. Strategic advantage. Looking smart to the board.
+EMOTIONAL CORE: Judicial integrity. The record is everything. Zero tolerance for failure.
 """,
-            "reseller": """VALUE FRAMING: ROI (Revenue Opportunity) - AMPLIFIED
+            "corp_comms": """VALUE FRAMING: ROI (Brand Quality) - AMPLIFIED
 
-PARTNER GROWTH LANGUAGE:
-- Margin-rich product line that sells itself in demos.
-- Recurring revenue from support contracts and add-ons.
-- Easy to demo, easy to spec, easy to close.
-- "Your competitors are already quoting this."
+SPEAK TO THE COMMUNICATIONS PROFESSIONAL:
+- Your CEO's town hall shouldn't look like a bad Zoom call.
+- Broadcast quality from every room, every time, without a production crew.
+- Stream to Teams, YouTube, and your intranet simultaneously.
+- "One device turns any room into a broadcast studio."
 
 VOCABULARY THAT RESONATES:
-- "dealer margin", "attach rate", "recurring revenue"
-- "demo-in-a-box", "easy to spec", "competitive displacement"
-- "deal registration", "partner portal", "MDF available"
+- "town hall", "all-hands", "executive communication"
+- "brand standards", "simulcast", "production value"
+- "multi-platform", "broadcast quality", "professional presence"
 
-FORBIDDEN (sounds like end-user marketing):
-- "user-friendly", "intuitive interface", "seamless experience"
+FORBIDDEN (sounds like internal jargon):
+- "synergize", "leverage", "paradigm shift", "holistic"
 
-EMOTIONAL CORE: Revenue growth. Competitive differentiation. Easy wins.
+EMOTIONAL CORE: Brand protection. When leadership is on camera, quality is non-negotiable.
 """,
-            "bdr": """VALUE FRAMING: URGENCY (Act Now) - AMPLIFIED
+            "ehs_manager": """VALUE FRAMING: COI (Compliance Risk) - AMPLIFIED
 
-COLD OUTREACH TOOLKIT:
-- Lead with the pain. Follow with the proof.
-- One stat, one visual, one CTA.
-- Make it impossible to ignore.
-- "3 of your competitors switched last quarter."
+SPEAK TO THE SAFETY PROFESSIONAL:
+- OSHA doesn't accept "the recording failed" as an excuse.
+- One incident without documentation can cost millions.
+- Your most experienced operator retires next year. Capture everything now.
+- "Record every safety procedure. Prove every training session."
 
 VOCABULARY THAT RESONATES:
-- "quick win", "proof of concept", "live demo"
-- "pain point", "before/after", "case study"
-- "limited pilot", "no commitment", "see it in action"
+- "OSHA", "compliance", "incident report", "safety training"
+- "lockout/tagout", "JSA", "SOP documentation"
+- "audit trail", "recordkeeping", "toolbox talk"
 
-FORBIDDEN (sounds like spam):
-- "touching base", "circling back", "just checking in"
+FORBIDDEN (sounds trivial):
+- "game-changing", "revolutionary", "cutting-edge", "best-in-class"
 
-EMOTIONAL CORE: Urgency and curiosity. Pattern interrupt. Prove value fast.
+EMOTIONAL CORE: Safety-first pragmatism. Documentation saves lives and lawsuits.
+""",
+            "law_firm_it": """VALUE FRAMING: COI (Partner Frustration + Risk) - AMPLIFIED
+
+SPEAK TO THE LAW FIRM IT PROFESSIONAL:
+- When a deposition recording fails, billable hours don't stop. Neither does the partner's frustration.
+- Data stays on YOUR network — not someone else's cloud.
+- Remote depositions in 4K, every time, with no IT involvement.
+- "Partners don't call IT to complain about working AV."
+
+VOCABULARY THAT RESONATES:
+- "on-premises", "data sovereignty", "encryption at rest"
+- "deposition", "remote testimony", "e-discovery"
+- "network segmentation", "compliance", "partner satisfaction"
+
+FORBIDDEN (sounds risky):
+- "cloud-first", "SaaS", "disruptive", "game-changing"
+
+EMOTIONAL CORE: Security, reliability, and zero complaints from demanding attorneys.
+""",
+
+            # ── BTL: Operators ────────────────────────────────────────
+            "technical_director": """VALUE FRAMING: EASE (Operator Reliability) - AMPLIFIED
+
+SPEAK TO THE OPERATOR'S REALITY:
+- When the president walks on stage, the switcher better work. No excuses.
+- One-button start. Every source. Every time.
+- Built for the operator who can't afford a crash during the show.
+- "The gear that works when the pressure is highest."
+
+VOCABULARY THAT RESONATES:
+- "cue", "cut", "fade", "PGM/PVW", "tally"
+- "multiview", "ISO record", "confidence monitor"
+- "one-touch", "reliable under pressure", "field-proven"
+
+FORBIDDEN (sounds corporate):
+- "leverage", "synergize", "enterprise", "stakeholder", "paradigm"
+
+EMOTIONAL CORE: Operator pride. Clean shows. Gear you can trust when it matters most.
 """,
         }
-        return value_angles.get(audience, value_angles["cto"])
+        return value_angles.get(audience, value_angles["av_director"])
 
     def _build_language_guidelines_minimal(self, audience: str) -> str:
         """
@@ -1483,57 +1562,72 @@ EMOTIONAL CORE: Urgency and curiosity. Pattern interrupt. Prove value fast.
         forbidden = persona.get("forbidden_phrases", [])
         default_style = persona.get("default_visual_style", "polished")
 
-        # AV Integrator: Reliability and ease of installation
-        if audience == "av_integrator":
-            return f"""FOR: {title}
+        # Persona-specific generation context (8 BDR Playbook personas)
+        persona_contexts = {
+            # ── ATL: Decision Makers ──────────────────────────────────
+            "av_director": f"""FOR: {title}
 VOICE: {voice_tone}
-VALUE ANGLE: EASE - show reliability, simple installs, fewer truck rolls
-VISUAL STYLE: {default_style} (clean technical, rack-mount aesthetic)
-DESIGN: Before/after install comparison, spec highlights, compatibility callouts
-AVOID WORDS: {', '.join(forbidden[:5])}"""
+VALUE ANGLE: COI - fleet standardization, fewer truck rolls, managed from anywhere
+VISUAL STYLE: {default_style} (fleet dashboard, multi-room management aesthetic)
+DESIGN: Before/after fleet comparison, reference stories (NC State 300+), campus map
+AVOID WORDS: {', '.join(forbidden[:5])}""",
 
-        # IT Director: Management and security focus
-        if audience == "it_director":
-            return f"""FOR: {title}
+            "ld_director": f"""FOR: {title}
 VOICE: {voice_tone}
-VALUE ANGLE: COI - the cost of unmanaged AV, support tickets, security gaps
-VISUAL STYLE: {default_style} (dashboard aesthetic, IT management feel)
-DESIGN: Network diagrams, management views, campus-wide deployment visuals
-AVOID WORDS: {', '.join(forbidden[:5])}"""
+VALUE ANGLE: ROI - knowledge capture, training scalability, compliance documentation
+VISUAL STYLE: {default_style} (learning platform aesthetic, content library view)
+DESIGN: Training workflow, knowledge capture funnel, LMS integration diagram
+AVOID WORDS: {', '.join(forbidden[:5])}""",
 
-        # CTO: Data and ROI focus
-        if audience == "cto":
-            return f"""FOR: {title}
+            "sim_center_director": f"""FOR: {title}
 VOICE: {voice_tone}
-VALUE ANGLE: ROI - show the math, metrics, and return on investment
-VISUAL STYLE: {default_style} (charts, graphs, numbers prominent)
-DESIGN: Clean data visualization, McKinsey/BCG aesthetic, executive summary format
-AVOID WORDS: {', '.join(forbidden[:5])}"""
+VALUE ANGLE: COI - every sim without recording is a missed learning opportunity
+VISUAL STYLE: {default_style} (clinical simulation, multi-angle debrief view)
+DESIGN: Multi-camera sim layout, debrief comparison, HIPAA compliance badge
+AVOID WORDS: {', '.join(forbidden[:5])}""",
 
-        # Reseller: Revenue opportunity
-        if audience == "reseller":
-            return f"""FOR: {title}
+            "court_admin": f"""FOR: {title}
 VOICE: {voice_tone}
-VALUE ANGLE: ROI - margin opportunity, competitive displacement, recurring revenue
-VISUAL STYLE: {default_style} (professional partner materials, co-brandable)
-DESIGN: Product comparison, margin highlights, partner program benefits
-AVOID WORDS: {', '.join(forbidden[:5])}"""
+VALUE ANGLE: COI - legal risk from failed recordings, chain of custody
+VISUAL STYLE: {default_style} (judicial gravity, clean institutional aesthetic)
+DESIGN: Courtroom recording layout, chain of custody flow, public access streaming
+AVOID WORDS: {', '.join(forbidden[:5])}""",
 
-        # BDR: Cold outreach urgency
-        if audience == "bdr":
-            return f"""FOR: {title}
+            "corp_comms": f"""FOR: {title}
 VOICE: {voice_tone}
-VALUE ANGLE: URGENCY - pattern interrupt, quick proof of value, one clear CTA
-VISUAL STYLE: {default_style} (bold, shareable, email-attachment ready)
-DESIGN: Pain→solution narrative, one compelling stat, clear next step
-AVOID WORDS: {', '.join(forbidden[:5])}, touching base, circling back"""
+VALUE ANGLE: ROI - broadcast quality from any room, zero production failures
+VISUAL STYLE: {default_style} (broadcast studio aesthetic, executive communications)
+DESIGN: Town hall setup, multi-platform distribution, before/after quality comparison
+AVOID WORDS: {', '.join(forbidden[:5])}""",
 
-        # Default fallback
-        return f"""FOR: {title}
+            "ehs_manager": f"""FOR: {title}
+VOICE: {voice_tone}
+VALUE ANGLE: COI - OSHA compliance risk, knowledge loss from retiring workers
+VISUAL STYLE: {default_style} (safety-first, industrial, compliance documentation)
+DESIGN: Training capture workflow, OSHA compliance checklist, audit trail view
+AVOID WORDS: {', '.join(forbidden[:5])}""",
+
+            "law_firm_it": f"""FOR: {title}
+VOICE: {voice_tone}
+VALUE ANGLE: COI - data security risk, partner frustration from failed depositions
+VISUAL STYLE: {default_style} (secure, on-premises, professional law firm aesthetic)
+DESIGN: Network security diagram, deposition setup, data sovereignty flow
+AVOID WORDS: {', '.join(forbidden[:5])}""",
+
+            # ── BTL: Operators ────────────────────────────────────────
+            "technical_director": f"""FOR: {title}
+VOICE: {voice_tone}
+VALUE ANGLE: EASE - one-button operation, reliability under pressure
+VISUAL STYLE: {default_style} (operator's view, control room aesthetic, multiview)
+DESIGN: Show flow layout, one-touch control panel, confidence monitoring view
+AVOID WORDS: {', '.join(forbidden[:5])}""",
+        }
+
+        return persona_contexts.get(audience, f"""FOR: {title}
 VOICE: {voice_tone}
 VALUE ANGLE: Show clear business value
 VISUAL STYLE: {default_style}
-DESIGN: Professional and polished"""
+DESIGN: Professional and polished""")
 
     def _get_format_layout_instructions(self, output_format: str) -> str:
         """Get layout instructions based on output format."""

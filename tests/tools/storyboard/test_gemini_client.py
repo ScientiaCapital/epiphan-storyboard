@@ -217,7 +217,7 @@ class TestUnderstandCodeMocked:
         result = await client.understand_code(
             code_content="def track_job(): pass",
             icp_preset=EPIPHAN_ICP,
-            audience="cto",
+            audience="av_director",
         )
 
         assert result.headline == "Track Your Jobs Effortlessly"

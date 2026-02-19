@@ -76,13 +76,21 @@ class TestUnifiedStoryboardParameters:
         assert params["stage"]["enum"] == ["preview", "demo", "shipped"]
 
     def test_accepts_audience_parameter(self):
-        """Tool should accept audience parameter."""
+        """Tool should accept audience parameter with all 8 BDR Playbook personas."""
         tool = UnifiedStoryboardTool()
         params = tool.definition.parameters["properties"]
         assert "audience" in params
-        assert "av_integrator" in params["audience"]["enum"]
-        assert "cto" in params["audience"]["enum"]
-        assert "bdr" in params["audience"]["enum"]
+        # ATL personas (7 from BDR Playbook)
+        assert "av_director" in params["audience"]["enum"]
+        assert "ld_director" in params["audience"]["enum"]
+        assert "sim_center_director" in params["audience"]["enum"]
+        assert "court_admin" in params["audience"]["enum"]
+        assert "corp_comms" in params["audience"]["enum"]
+        assert "ehs_manager" in params["audience"]["enum"]
+        assert "law_firm_it" in params["audience"]["enum"]
+        # BTL persona (1 from BDR Playbook)
+        assert "technical_director" in params["audience"]["enum"]
+        assert len(params["audience"]["enum"]) == 8
 
     def test_accepts_icp_preset_parameter(self):
         """Tool should accept icp_preset parameter."""

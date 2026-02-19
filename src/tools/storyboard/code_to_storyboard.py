@@ -46,7 +46,7 @@ class CodeToStoryboardTool(BaseTool):
     - Automatic IP sanitization (no technical details leaked)
     - ICP-optimized language (MEP+energy contractors)
     - Stage-aware visuals (preview/demo/shipped)
-    - Audience targeting (av_integrator/it_director/cto/reseller/bdr)
+    - Audience targeting (8 personas: 7 ATL + 1 BTL from BDR Playbook)
 
     Example:
         tool = CodeToStoryboardTool()
@@ -55,7 +55,7 @@ class CodeToStoryboardTool(BaseTool):
             "file_name": "calculator.py",
             "icp_preset": "epiphan_av",
             "stage": "preview",
-            "audience": "cto",
+            "audience": "av_director",
         })
         # result.result["storyboard_png"] = base64 PNG image
     """
@@ -121,9 +121,12 @@ class CodeToStoryboardTool(BaseTool):
                     },
                     "audience": {
                         "type": "string",
-                        "enum": ["av_integrator", "it_director", "cto", "reseller", "bdr"],
+                        "enum": [
+                            "av_director", "ld_director", "sim_center_director", "court_admin",
+                            "corp_comms", "ehs_manager", "law_firm_it", "technical_director",
+                        ],
                         "description": "Target audience persona",
-                        "default": "cto",
+                        "default": "av_director",
                     },
                     "custom_headline": {
                         "type": "string",
@@ -182,7 +185,7 @@ class CodeToStoryboardTool(BaseTool):
             # Get configuration
             icp_preset_name = arguments.get("icp_preset", "epiphan_av")
             stage = arguments.get("stage", "preview")
-            audience = arguments.get("audience", "cto")
+            audience = arguments.get("audience", "av_director")
             custom_headline = arguments.get("custom_headline")
 
             try:

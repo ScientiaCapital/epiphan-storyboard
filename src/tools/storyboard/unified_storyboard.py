@@ -65,7 +65,7 @@ class UnifiedStoryboardTool(BaseTool):
         # From code
         result = await tool.run({
             "input": "def calculate_roi(): return revenue - costs",
-            "audience": "cto",
+            "audience": "av_director",
         })
 
         # From screenshot
@@ -131,9 +131,12 @@ class UnifiedStoryboardTool(BaseTool):
                     },
                     "audience": {
                         "type": "string",
-                        "enum": ["av_integrator", "it_director", "cto", "reseller", "bdr"],
+                        "enum": [
+                            "av_director", "ld_director", "sim_center_director", "court_admin",
+                            "corp_comms", "ehs_manager", "law_firm_it", "technical_director",
+                        ],
                         "description": "Target audience persona",
-                        "default": "cto",
+                        "default": "av_director",
                     },
                     "open_browser": {
                         "type": "boolean",
@@ -306,7 +309,7 @@ class UnifiedStoryboardTool(BaseTool):
                 - input: Required. Any input type.
                 - icp_preset: Optional. ICP preset (default: epiphan_av)
                 - stage: Optional. Storyboard stage (default: preview)
-                - audience: Optional. Target audience (default: cto)
+                - audience: Optional. Target audience (default: av_director)
                 - output_format: Optional. "infographic" (horizontal) or "storyboard" (vertical)
                 - open_browser: Optional. Open in browser (default: true)
 
@@ -333,7 +336,7 @@ class UnifiedStoryboardTool(BaseTool):
 
         icp_preset = arguments.get("icp_preset", "epiphan_av")
         stage = arguments.get("stage", "preview")
-        audience = arguments.get("audience", "cto")
+        audience = arguments.get("audience", "av_director")
         output_format = arguments.get("output_format", "infographic")
         visual_style = arguments.get("visual_style", "polished")
         artist_style = arguments.get("artist_style")  # Optional: salvador_dali, monet, etc.

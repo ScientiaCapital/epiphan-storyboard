@@ -30,9 +30,12 @@
 - src/billing/ — Stripe billing integration
 
 ## Epiphan Context
-- Products: Pearl Mini, Pearl Nano, Pearl Nexus, EC20 PTZ
-- Verticals: Higher Ed, K-12, Houses of Worship, Corporate, Healthcare
-- Personas: AV Integrator, IT Director, CTO, Reseller, BDR
+- Products: Pearl Mini ($3,750), Pearl Nano ($1,999), Pearl Nexus ($3,299), Pearl-2 ($7,999), EC20 PTZ ($1,899), AV.io 4K ($579.95), AV.io HD+ ($449.95), AV.io SDI+ ($579.95)
+- Verticals (10): Higher Ed, Corporate, Live Events, Government, Houses of Worship, Healthcare, Industrial, Legal, UX Research, K-12
+- Personas (8 BDR Playbook):
+  - ATL Decision Makers (7): AV Director, L&D Director, Sim Center Director, Court Admin, Corp Comms, EHS Manager, Law Firm IT
+  - BTL Operators (1): Technical Director
+- Default persona: av_director (most common buyer across verticals)
 
 ## Rules
 - NO OpenAI — use Anthropic, Google Gemini, or OpenRouter only

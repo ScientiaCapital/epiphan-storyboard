@@ -23,7 +23,7 @@ class TestCodeStoryboardRequestValidation:
         assert request.file_name is None
         assert request.icp_preset == "epiphan_av"
         assert request.stage == "preview"
-        assert request.audience == "cto"
+        assert request.audience == "av_director"
         assert request.custom_headline is None
 
     def test_valid_request_with_all_fields(self):
@@ -35,12 +35,12 @@ class TestCodeStoryboardRequestValidation:
             file_name="hello.py",
             icp_preset="custom_icp",
             stage="demo",
-            audience="av_integrator",
+            audience="court_admin",
             custom_headline="Custom Headline",
         )
         assert request.file_name == "hello.py"
         assert request.stage == "demo"
-        assert request.audience == "av_integrator"
+        assert request.audience == "court_admin"
         assert request.custom_headline == "Custom Headline"
 
     def test_empty_file_content_fails(self):
@@ -97,7 +97,7 @@ class TestRoadmapStoryboardRequestValidation:
         )
         assert request.image_data == "base64encodeddata"
         assert request.icp_preset == "epiphan_av"
-        assert request.audience == "cto"
+        assert request.audience == "av_director"
         assert request.custom_headline is None
         assert request.sanitize_ip is True
 
@@ -108,11 +108,11 @@ class TestRoadmapStoryboardRequestValidation:
         request = RoadmapStoryboardRequest(
             image_data="base64data",
             icp_preset="custom_icp",
-            audience="bdr",
+            audience="technical_director",
             custom_headline="Coming Soon",
             sanitize_ip=False,
         )
-        assert request.audience == "bdr"
+        assert request.audience == "technical_director"
         assert request.sanitize_ip is False
 
     def test_empty_image_data_fails(self):

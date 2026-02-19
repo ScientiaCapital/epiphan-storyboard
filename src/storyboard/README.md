@@ -40,7 +40,7 @@ Generate storyboard from code file.
   "file_name": "calculator.py",
   "icp_preset": "epiphan_av",
   "stage": "preview",
-  "audience": "c_suite",
+  "audience": "av_director",
   "custom_headline": "Optional custom headline"
 }
 ```
@@ -63,7 +63,7 @@ Generate storyboard from roadmap screenshot.
 {
   "image_data": "base64-encoded-image",
   "icp_preset": "epiphan_av",
-  "audience": "c_suite",
+  "audience": "av_director",
   "custom_headline": "Coming Soon",
   "sanitize_ip": true
 }
@@ -142,12 +142,19 @@ Poll job status and get results.
 - `demo` - Video demo with screenshots
 - `shipped` - Production-ready announcement
 
-### Audiences
-- `av_integrator` - AV system integrators who spec and install
-- `it_director` - IT leaders managing campus/enterprise AV
-- `cto` - Tech executives evaluating AV infrastructure
-- `reseller` - AV resellers and distributors
-- `bdr` - Business development reps doing outbound
+### Audiences (8 BDR Playbook Personas)
+
+**ATL — Decision Makers (7):**
+- `av_director` - AV Directors managing fleet uptime and vendor consolidation (default)
+- `ld_director` - L&D Directors focused on knowledge capture and training at scale
+- `sim_center_director` - Simulation Center Directors needing HIPAA-compliant recording
+- `court_admin` - Court Administrators facing reporter shortages, need unattended recording
+- `corp_comms` - Corporate Communications Directors managing town halls and exec comms
+- `ehs_manager` - EHS Managers ensuring OSHA compliance and safety training
+- `law_firm_it` - Law Firm IT managing discovery risk and privilege-safe recording
+
+**BTL — Operators (1):**
+- `technical_director` - Technical Directors running live events and volunteer training
 
 ## Usage Examples
 
@@ -167,7 +174,7 @@ async def generate_storyboard():
                 "file_content": "def calculate_roi(): ...",
                 "file_name": "calculator.py",
                 "stage": "preview",
-                "audience": "c_suite",
+                "audience": "av_director",
             },
             headers={"X-Org-ID": "my-org"},
         )
@@ -207,7 +214,7 @@ JOB_ID=$(curl -X POST http://localhost:8000/storyboard/code \
     "file_content": "def calculate_roi(): pass",
     "file_name": "calculator.py",
     "stage": "preview",
-    "audience": "c_suite"
+    "audience": "av_director"
   }' | jq -r '.job_id')
 
 # Poll for completion

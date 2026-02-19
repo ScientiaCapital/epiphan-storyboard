@@ -28,7 +28,7 @@ class TestEpiphanICPStructure:
     def test_icp_has_target(self):
         """ICP should define target audience."""
         assert "target" in EPIPHAN_ICP
-        assert "AV integrators" in EPIPHAN_ICP["target"]
+        assert "ATL decision-makers" in EPIPHAN_ICP["target"]
 
     def test_icp_has_characteristics(self):
         """ICP should have characteristics section."""
@@ -39,12 +39,20 @@ class TestEpiphanICPStructure:
         assert "pain_points" in chars
 
     def test_icp_has_audience_personas(self):
-        """ICP should have audience personas."""
+        """ICP should have all 8 BDR Playbook personas."""
         assert "audience_personas" in EPIPHAN_ICP
         personas = EPIPHAN_ICP["audience_personas"]
-        assert AudiencePersona.AV_INTEGRATOR in personas
-        assert AudiencePersona.IT_DIRECTOR in personas
-        assert AudiencePersona.CTO in personas
+        # ATL personas (7 from BDR Playbook)
+        assert AudiencePersona.AV_DIRECTOR in personas
+        assert AudiencePersona.LD_DIRECTOR in personas
+        assert AudiencePersona.SIM_CENTER_DIRECTOR in personas
+        assert AudiencePersona.COURT_ADMIN in personas
+        assert AudiencePersona.CORP_COMMS in personas
+        assert AudiencePersona.EHS_MANAGER in personas
+        assert AudiencePersona.LAW_FIRM_IT in personas
+        # BTL persona (1 from BDR Playbook)
+        assert AudiencePersona.TECHNICAL_DIRECTOR in personas
+        assert len(personas) == 8
 
     def test_icp_has_language_style(self):
         """ICP should have language style guidelines."""
@@ -102,28 +110,47 @@ class TestLanguageStyleRules:
 class TestAudiencePersonas:
     """Tests for audience persona configurations."""
 
-    def test_av_integrator_persona(self):
-        """AV integrator persona should have required fields."""
-        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.AV_INTEGRATOR]
-        assert "title" in persona
-        assert "cares_about" in persona
-        assert "tone" in persona
+    def test_av_director_persona(self):
+        """AV director persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.AV_DIRECTOR]
+        assert persona["title"] == "AV Director"
+        assert persona["persona_type"] == "ATL"
+        assert "system reliability" in persona["cares_about"]
         assert "hooks" in persona
-        assert "reliable installs" in persona["cares_about"]
 
-    def test_it_director_persona(self):
-        """IT director persona should have required fields."""
-        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.IT_DIRECTOR]
-        assert "title" in persona
-        assert "cares_about" in persona
-        assert "security" in persona["cares_about"]
+    def test_ld_director_persona(self):
+        """L&D director persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.LD_DIRECTOR]
+        assert persona["title"] == "L&D Director"
+        assert persona["persona_type"] == "ATL"
+        assert "training content quality" in persona["cares_about"]
 
-    def test_cto_persona(self):
-        """CTO persona should have required fields."""
-        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.CTO]
-        assert "title" in persona
-        assert "cares_about" in persona
-        assert "vendor consolidation" in persona["cares_about"]
+    def test_sim_center_director_persona(self):
+        """Sim center director persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.SIM_CENTER_DIRECTOR]
+        assert persona["title"] == "Simulation Center Director"
+        assert "HIPAA compliance" in persona["cares_about"]
+
+    def test_court_admin_persona(self):
+        """Court admin persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.COURT_ADMIN]
+        assert persona["title"] == "Court Administrator"
+        assert persona["persona_type"] == "ATL"
+        assert "record integrity" in persona["cares_about"]
+
+    def test_ehs_manager_persona(self):
+        """EHS manager persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.EHS_MANAGER]
+        assert "EHS" in persona["title"]
+        assert "OSHA compliance" in persona["cares_about"]
+
+    def test_all_personas_have_required_fields(self):
+        """Every persona should have the required fields."""
+        required_fields = ["title", "persona_type", "cares_about", "tone", "hooks",
+                          "voice_tone", "vocabulary", "forbidden_phrases", "default_visual_style"]
+        for persona_key, persona in EPIPHAN_ICP["audience_personas"].items():
+            for field in required_fields:
+                assert field in persona, f"Persona {persona_key} missing '{field}'"
 
 
 class TestSanitizeRules:
@@ -219,20 +246,25 @@ class TestGetICPPreset:
 class TestGetAudiencePersona:
     """Tests for get_audience_persona function."""
 
-    def test_get_av_integrator_persona(self):
-        """Should return AV integrator persona."""
-        persona = get_audience_persona(AudiencePersona.AV_INTEGRATOR)
-        assert persona["title"] == "AV System Integrator"
+    def test_get_av_director_persona(self):
+        """Should return AV director persona (default)."""
+        persona = get_audience_persona(AudiencePersona.AV_DIRECTOR)
+        assert persona["title"] == "AV Director"
 
     def test_get_persona_by_string(self):
         """Should accept string value."""
-        persona = get_audience_persona("it_director")
-        assert "IT Director" in persona["title"]
+        persona = get_audience_persona("ld_director")
+        assert "L&D Director" in persona["title"]
 
-    def test_get_cto_persona(self):
-        """Should return CTO persona."""
-        persona = get_audience_persona(AudiencePersona.CTO)
-        assert "CTO" in persona["title"]
+    def test_get_court_admin_persona(self):
+        """Should return court admin persona."""
+        persona = get_audience_persona(AudiencePersona.COURT_ADMIN)
+        assert "Court Administrator" in persona["title"]
+
+    def test_unknown_persona_falls_back_to_av_director(self):
+        """Unknown persona string should fall back to AV Director."""
+        persona = get_audience_persona("nonexistent_persona")
+        assert persona["title"] == "AV Director"
 
 
 class TestGetStageTemplate:
@@ -338,17 +370,24 @@ class TestBuildLanguageGuidelines:
 class TestAudiencePersonaEnum:
     """Tests for AudiencePersona enum."""
 
-    def test_av_integrator_value(self):
-        """AV integrator enum value."""
-        assert AudiencePersona.AV_INTEGRATOR.value == "av_integrator"
+    def test_av_director_value(self):
+        """AV director enum value (primary ATL)."""
+        assert AudiencePersona.AV_DIRECTOR.value == "av_director"
 
-    def test_it_director_value(self):
-        """IT director enum value."""
-        assert AudiencePersona.IT_DIRECTOR.value == "it_director"
+    def test_all_8_personas_exist(self):
+        """All 8 BDR Playbook personas should be present in the enum."""
+        assert len(AudiencePersona) == 8
+        expected = [
+            "av_director", "ld_director", "sim_center_director", "court_admin",
+            "corp_comms", "ehs_manager", "law_firm_it", "technical_director",
+        ]
+        actual = [p.value for p in AudiencePersona]
+        for val in expected:
+            assert val in actual, f"Missing persona: {val}"
 
-    def test_cto_value(self):
-        """CTO enum value."""
-        assert AudiencePersona.CTO.value == "cto"
+    def test_technical_director_value(self):
+        """Technical director enum value (BTL)."""
+        assert AudiencePersona.TECHNICAL_DIRECTOR.value == "technical_director"
 
 
 class TestStoryboardStageEnum:

@@ -1,4 +1,4 @@
-"""API routers for Conductor-AI."""
+"""API routers for Epiphan Storyboard."""
 
 from .connectors import router as connectors_router
 

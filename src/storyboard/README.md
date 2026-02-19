@@ -327,7 +327,7 @@ uvicorn src.api:app --reload --port 8000
 
 ```bash
 # Build
-docker build -t conductor-ai:latest .
+docker build -t epiphan-storyboard:latest .
 
 # Run
 docker run -p 8000:8000 \
@@ -335,7 +335,7 @@ docker run -p 8000:8000 \
   -e SUPABASE_URL=https://xxx.supabase.co \
   -e SUPABASE_SERVICE_KEY=eyJ... \
   -e GOOGLE_API_KEY=... \
-  conductor-ai:latest
+  epiphan-storyboard:latest
 ```
 
 ## Error Handling

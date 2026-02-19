@@ -1,4 +1,4 @@
-"""Testing utilities for conductor-ai plugins.
+"""Testing utilities for epiphan-storyboard plugins.
 
 Provides:
 - MockRegistry: Isolated registry for testing tools

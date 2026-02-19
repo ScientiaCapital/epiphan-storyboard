@@ -328,8 +328,8 @@ IMPORTANT:
             },
             headers={
                 "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY', '')}",
-                "HTTP-Referer": "https://conductor-ai.com",
-                "X-Title": "Conductor-AI",
+                "HTTP-Referer": "https://www.epiphan.com",
+                "X-Title": "Epiphan Storyboard",
             },
         )
 

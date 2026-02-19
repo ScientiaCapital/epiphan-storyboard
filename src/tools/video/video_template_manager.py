@@ -639,8 +639,8 @@ class VideoTemplateManagerTool(BaseTool):
         headers = {
             "Authorization": f"Bearer {self._api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://conductor-ai.com",
-            "X-Title": "Conductor AI - Video Template Manager",
+            "HTTP-Referer": "https://www.epiphan.com",
+            "X-Title": "Epiphan Storyboard - Video Template Manager",
         }
 
         payload = {

@@ -794,6 +794,8 @@ def test_disconnect_not_found(client, mock_supabase, org_id, instance_id):
 
 def test_manual_upload_loom(client, mock_supabase, org_id, instance_id):
     """Test manual upload for Loom connector."""
+    from src.connectors.base import SyncResult
+
     # Mock Loom instance
     now = datetime.now(timezone.utc)
     mock_response = MagicMock()
@@ -809,15 +811,17 @@ def test_manual_upload_loom(client, mock_supabase, org_id, instance_id):
         mock_response
     )
 
-    response = client.post(
-        f"/connectors/instances/{instance_id}/upload",
-        headers={"X-Org-ID": org_id},
-        json={
-            "content": "This is a Loom transcript...",
-            "url": "https://loom.com/share/xyz",
-            "title": "Product Demo",
-        },
-    )
+    mock_result = SyncResult(success=True, items_fetched=1, items_extracted=1, items_created=1)
+    with patch("src.connectors.loom.connector.LoomConnector.upload_transcript", new=AsyncMock(return_value=mock_result)):
+        response = client.post(
+            f"/connectors/instances/{instance_id}/upload",
+            headers={"X-Org-ID": org_id},
+            json={
+                "content": "This is a Loom transcript...",
+                "url": "https://loom.com/share/xyz",
+                "title": "Product Demo",
+            },
+        )
 
     assert response.status_code == 200
     data = response.json()
@@ -828,6 +832,9 @@ def test_manual_upload_loom(client, mock_supabase, org_id, instance_id):
 
 def test_manual_upload_miro(client, mock_supabase, org_id, instance_id):
     """Test manual upload for Miro connector."""
+    import base64
+    from src.connectors.base import SyncResult
+
     now = datetime.now(timezone.utc)
     mock_response = MagicMock()
     mock_response.data = {
@@ -842,14 +849,16 @@ def test_manual_upload_miro(client, mock_supabase, org_id, instance_id):
         mock_response
     )
 
-    response = client.post(
-        f"/connectors/instances/{instance_id}/upload",
-        headers={"X-Org-ID": org_id},
-        json={
-            "content": "data:image/png;base64,iVBORw0KGgo...",
-            "url": "https://miro.com/board/xyz",
-        },
-    )
+    mock_result = SyncResult(success=True, items_fetched=1, items_extracted=1, items_created=1)
+    with patch("src.connectors.miro.connector.MiroConnector.upload_screenshot", new=AsyncMock(return_value=mock_result)):
+        response = client.post(
+            f"/connectors/instances/{instance_id}/upload",
+            headers={"X-Org-ID": org_id},
+            json={
+                "content": base64.b64encode(b"fake png data").decode(),
+                "url": "https://miro.com/board/xyz",
+            },
+        )
 
     assert response.status_code == 200
 

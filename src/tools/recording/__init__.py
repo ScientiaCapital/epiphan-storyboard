@@ -1,5 +1,5 @@
 """
-Screen Recording Module for Conductor-AI
+Screen Recording Module for Epiphan Storyboard
 =========================================
 
 Cloud browser recording with Browserbase + Playwright.

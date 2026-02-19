@@ -5,7 +5,7 @@ executing potentially dangerous operations (external API calls,
 data modifications, etc.).
 
 Usage:
-    from conductor_ai.sdk.security import requires_approval, ApprovalGate
+    from epiphan_storyboard.sdk.security import requires_approval, ApprovalGate
 
     class MyDangerousTool(BaseTool):
         @property

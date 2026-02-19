@@ -1,5 +1,5 @@
 """
-Billing module for Conductor-AI.
+Billing module for Epiphan Storyboard.
 
 Provides Stripe integration for subscriptions, checkout, and payment management.
 

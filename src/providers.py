@@ -520,8 +520,8 @@ class OpenRouterAdapter(ProviderAdapter):
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://conductor-ai.com",
-            "X-Title": "Conductor AI",
+            "HTTP-Referer": "https://www.epiphan.com",
+            "X-Title": "Epiphan Storyboard",
         }
 
         payload = {
@@ -579,8 +579,8 @@ class OpenRouterAdapter(ProviderAdapter):
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://conductor-ai.com",
-            "X-Title": "Conductor AI",
+            "HTTP-Referer": "https://www.epiphan.com",
+            "X-Title": "Epiphan Storyboard",
         }
 
         payload = {

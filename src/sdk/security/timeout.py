@@ -4,7 +4,7 @@ Provides decorators and context managers for enforcing timeouts
 on async operations to prevent runaway tool executions.
 
 Usage:
-    from conductor_ai.sdk.security import with_timeout, TimeoutError
+    from epiphan_storyboard.sdk.security import with_timeout, TimeoutError
 
     @with_timeout(seconds=30)
     async def slow_operation():

@@ -1,10 +1,10 @@
-"""Mock objects and test utilities for conductor-ai plugins.
+"""Mock objects and test utilities for epiphan-storyboard plugins.
 
 Provides isolated testing infrastructure so plugin tests don't
 affect the global registry or require real API connections.
 
 Usage:
-    from conductor_ai.sdk.testing import MockRegistry, ToolTestBase
+    from epiphan_storyboard.sdk.testing import MockRegistry, ToolTestBase
 
     class TestMyTool(ToolTestBase):
         def setup_method(self):
@@ -239,7 +239,7 @@ class ToolTestBase:
     """Base class for tool unit tests.
 
     Provides common setup, teardown, and assertion helpers
-    for testing conductor-ai tools.
+    for testing epiphan-storyboard tools.
 
     Usage:
         class TestMyTool(ToolTestBase):

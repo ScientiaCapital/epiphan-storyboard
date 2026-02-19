@@ -65,7 +65,7 @@ class UnifiedStoryboardTool(BaseTool):
         # From code
         result = await tool.run({
             "input": "def calculate_roi(): return revenue - costs",
-            "audience": "c_suite",
+            "audience": "cto",
         })
 
         # From screenshot
@@ -131,9 +131,9 @@ class UnifiedStoryboardTool(BaseTool):
                     },
                     "audience": {
                         "type": "string",
-                        "enum": ["business_owner", "c_suite", "btl_champion"],
+                        "enum": ["av_integrator", "it_director", "cto", "reseller", "bdr"],
                         "description": "Target audience persona",
-                        "default": "c_suite",
+                        "default": "cto",
                     },
                     "open_browser": {
                         "type": "boolean",
@@ -306,7 +306,7 @@ class UnifiedStoryboardTool(BaseTool):
                 - input: Required. Any input type.
                 - icp_preset: Optional. ICP preset (default: epiphan_av)
                 - stage: Optional. Storyboard stage (default: preview)
-                - audience: Optional. Target audience (default: c_suite)
+                - audience: Optional. Target audience (default: cto)
                 - output_format: Optional. "infographic" (horizontal) or "storyboard" (vertical)
                 - open_browser: Optional. Open in browser (default: true)
 
@@ -333,7 +333,7 @@ class UnifiedStoryboardTool(BaseTool):
 
         icp_preset = arguments.get("icp_preset", "epiphan_av")
         stage = arguments.get("stage", "preview")
-        audience = arguments.get("audience", "c_suite")
+        audience = arguments.get("audience", "cto")
         output_format = arguments.get("output_format", "infographic")
         visual_style = arguments.get("visual_style", "polished")
         artist_style = arguments.get("artist_style")  # Optional: salvador_dali, monet, etc.

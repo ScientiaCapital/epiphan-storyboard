@@ -1,4 +1,4 @@
-"""Security utilities for conductor-ai plugins.
+"""Security utilities for epiphan-storyboard plugins.
 
 Provides:
 - SSRF validation for URLs

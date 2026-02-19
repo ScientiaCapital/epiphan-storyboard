@@ -371,8 +371,8 @@ Output valid JSON with hook, value, proof, cta sections, timestamps, and notes."
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://conductor-ai.com",
-            "X-Title": "Conductor-AI Video Script Generator",
+            "HTTP-Referer": "https://www.epiphan.com",
+            "X-Title": "Epiphan Storyboard - Video Script Generator",
         }
 
         payload = {

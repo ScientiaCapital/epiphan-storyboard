@@ -1,12 +1,12 @@
-"""Conductor-AI SDK for building plugins and integrations.
+"""Epiphan Storyboard SDK for building plugins and integrations.
 
 This module provides the public API for external projects to:
-- Create custom tools that integrate with conductor-ai agents
+- Create custom tools that integrate with epiphan-storyboard agents
 - Register tools via PluginLoader for auto-discovery
-- Use ConductorClient to interact with the conductor-ai API
+- Use StoryboardClient to interact with the epiphan-storyboard API
 
 Basic usage:
-    from conductor_ai.sdk import BaseTool, ToolCategory, ToolResult, ConductorClient
+    from epiphan_storyboard.sdk import BaseTool, ToolCategory, ToolResult, StoryboardClient
 
     class MyTool(BaseTool):
         @property
@@ -23,7 +23,7 @@ Basic usage:
             pass
 
     # Use with API
-    client = ConductorClient("http://localhost:8000", org_id="my-org")
+    client = StoryboardClient("http://localhost:8000", org_id="my-org")
     session = await client.run_agent(
         messages=[{"role": "user", "content": "Do something"}],
         tools=["my_tool", "web_fetch"]
@@ -47,7 +47,7 @@ from src.tools.base import (
 from src.sdk.registry import PluginLoader, PluginRegistry
 
 # HTTP client for remote API
-from src.sdk.client import ConductorClient
+from src.sdk.client import StoryboardClient
 
 # Agent schemas (useful for type hints in plugins)
 from src.agents.schemas import (
@@ -69,7 +69,7 @@ __all__ = [
     "PluginLoader",
     "PluginRegistry",
     # Client
-    "ConductorClient",
+    "StoryboardClient",
     # Schemas
     "AgentSession",
     "AgentStep",

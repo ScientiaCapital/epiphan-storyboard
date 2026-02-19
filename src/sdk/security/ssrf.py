@@ -7,7 +7,7 @@ Validates URLs to prevent:
 - File:// and other dangerous protocols
 
 Usage:
-    from conductor_ai.sdk.security import validate_url, is_safe_url
+    from epiphan_storyboard.sdk.security import validate_url, is_safe_url
 
     # Validate and raise on error
     validate_url("https://example.com")  # OK

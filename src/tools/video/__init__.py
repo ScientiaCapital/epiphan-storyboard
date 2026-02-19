@@ -1,5 +1,5 @@
 """
-Video Tools Module for Conductor-AI
+Video Tools Module for Epiphan Storyboard
 ====================================
 
 AI-powered video prospecting orchestration suite:

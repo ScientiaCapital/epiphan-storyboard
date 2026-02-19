@@ -1,5 +1,5 @@
 """
-Stripe SDK wrapper for Conductor-AI billing.
+Stripe SDK wrapper for Epiphan Storyboard billing.
 
 Provides async-friendly interface to Stripe API for:
 - Checkout session creation

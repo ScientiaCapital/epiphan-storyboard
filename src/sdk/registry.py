@@ -1,4 +1,4 @@
-"""Plugin registry and loader for conductor-ai SDK.
+"""Plugin registry and loader for epiphan-storyboard SDK.
 
 Provides:
 - PluginRegistry: Isolated registry for plugin tools (doesn't pollute global)
@@ -6,7 +6,7 @@ Provides:
 
 Usage:
     # In your plugin's __init__.py
-    from conductor_ai.sdk import BaseTool, PluginRegistry
+    from epiphan_storyboard.sdk import BaseTool, PluginRegistry
 
     registry = PluginRegistry()
 
@@ -20,7 +20,7 @@ Usage:
             global_registry.register(tool)
 
     # Or in your main app
-    from conductor_ai.sdk import PluginLoader
+    from epiphan_storyboard.sdk import PluginLoader
     from src.tools.registry import ToolRegistry
 
     loader = PluginLoader()
@@ -105,7 +105,7 @@ class PluginRegistry:
 
 
 class PluginLoader:
-    """Loader for discovering and loading conductor-ai plugins.
+    """Loader for discovering and loading epiphan-storyboard plugins.
 
     Plugins can be loaded from:
     - A directory containing plugin packages

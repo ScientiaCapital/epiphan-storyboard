@@ -1,4 +1,4 @@
-"""HTTP client for interacting with conductor-ai API.
+"""HTTP client for interacting with epiphan-storyboard API.
 
 Provides async methods for:
 - Running agents with specific tools
@@ -7,9 +7,9 @@ Provides async methods for:
 - Listing available tools
 
 Usage:
-    from conductor_ai.sdk import ConductorClient
+    from epiphan_storyboard.sdk import StoryboardClient
 
-    client = ConductorClient(
+    client = StoryboardClient(
         base_url="http://localhost:8000",
         org_id="my-org",
     )
@@ -95,37 +95,37 @@ class ToolInfo:
     requires_approval: bool
 
 
-class ConductorClientError(Exception):
-    """Base exception for ConductorClient errors."""
+class StoryboardClientError(Exception):
+    """Base exception for StoryboardClient errors."""
 
     pass
 
 
-class SessionNotFoundError(ConductorClientError):
+class SessionNotFoundError(StoryboardClientError):
     """Session with given ID was not found."""
 
     pass
 
 
-class ToolNotFoundError(ConductorClientError):
+class ToolNotFoundError(StoryboardClientError):
     """Requested tool not found in registry."""
 
     pass
 
 
-class SessionConflictError(ConductorClientError):
+class SessionConflictError(StoryboardClientError):
     """Cannot perform operation on session (e.g., cancel completed session)."""
 
     pass
 
 
-class ConductorClient:
-    """Async HTTP client for conductor-ai API.
+class StoryboardClient:
+    """Async HTTP client for epiphan-storyboard API.
 
     Thread-safe and supports connection pooling via httpx.
 
     Args:
-        base_url: Base URL of conductor-ai API (e.g., "http://localhost:8000")
+        base_url: Base URL of epiphan-storyboard API (e.g., "http://localhost:8000")
         org_id: Organization ID for multi-tenant isolation
         timeout: Request timeout in seconds (default: 60)
     """
@@ -167,7 +167,7 @@ class ConductorClient:
             await self._client.aclose()
             self._client = None
 
-    async def __aenter__(self) -> "ConductorClient":
+    async def __aenter__(self) -> "StoryboardClient":
         """Context manager entry."""
         return self
 
@@ -198,7 +198,7 @@ class ConductorClient:
 
         Raises:
             ToolNotFoundError: If a requested tool doesn't exist
-            ConductorClientError: For other API errors
+            StoryboardClientError: For other API errors
         """
         client = await self._get_client()
 
@@ -216,10 +216,10 @@ class ConductorClient:
             error = response.json().get("detail", "Bad request")
             if "not found in registry" in error:
                 raise ToolNotFoundError(error)
-            raise ConductorClientError(error)
+            raise StoryboardClientError(error)
 
         if response.status_code == 422:
-            raise ConductorClientError(f"Validation error: {response.json()}")
+            raise StoryboardClientError(f"Validation error: {response.json()}")
 
         response.raise_for_status()
         data = response.json()
@@ -247,7 +247,7 @@ class ConductorClient:
 
         Raises:
             SessionNotFoundError: If session doesn't exist
-            ConductorClientError: For other API errors
+            StoryboardClientError: For other API errors
         """
         client = await self._get_client()
 
@@ -282,7 +282,7 @@ class ConductorClient:
         Raises:
             SessionNotFoundError: If session doesn't exist
             SessionConflictError: If session is already completed/failed
-            ConductorClientError: For other API errors
+            StoryboardClientError: For other API errors
         """
         client = await self._get_client()
 
@@ -320,7 +320,7 @@ class ConductorClient:
             List of ToolInfo objects
 
         Raises:
-            ConductorClientError: For API errors
+            StoryboardClientError: For API errors
         """
         client = await self._get_client()
 
@@ -365,7 +365,7 @@ class ConductorClient:
         Raises:
             TimeoutError: If session doesn't complete within timeout
             SessionNotFoundError: If session doesn't exist
-            ConductorClientError: For other API errors
+            StoryboardClientError: For other API errors
         """
         start_time = asyncio.get_event_loop().time()
         terminal_states = {"completed", "failed", "cancelled"}

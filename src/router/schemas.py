@@ -1,7 +1,7 @@
 """Pydantic schemas for Agent Router module.
 
 Defines request/response models for task classification and routing.
-Follows conductor-ai patterns from agents/schemas.py and storyboard/schemas.py.
+Follows epiphan-storyboard patterns from agents/schemas.py and storyboard/schemas.py.
 """
 
 from __future__ import annotations

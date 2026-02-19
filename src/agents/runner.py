@@ -328,7 +328,7 @@ IMPORTANT:
                 "max_tokens": 4096,
             },
             headers={
-                "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY', '')}",
+                "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY', '').strip()}",
                 "HTTP-Referer": "https://www.epiphan.com",
                 "X-Title": "Epiphan Storyboard",
             },

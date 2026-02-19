@@ -382,7 +382,7 @@ class TaskClassifier:
                     "max_tokens": 256,
                 },
                 headers={
-                    "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+                    "Authorization": f"Bearer {(os.getenv('OPENROUTER_API_KEY') or '').strip()}",
                     "Content-Type": "application/json",
                 },
             )

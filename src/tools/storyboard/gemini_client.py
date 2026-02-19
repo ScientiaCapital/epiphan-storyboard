@@ -209,9 +209,9 @@ class GeminiConfig:
 
     def __post_init__(self):
         if self.api_key is None:
-            self.api_key = os.getenv("GOOGLE_API_KEY")
+            self.api_key = (os.getenv("GOOGLE_API_KEY") or "").strip() or None
         if self.openrouter_api_key is None:
-            self.openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+            self.openrouter_api_key = (os.getenv("OPENROUTER_API_KEY") or "").strip() or None
 
 
 class GeminiStoryboardClient:

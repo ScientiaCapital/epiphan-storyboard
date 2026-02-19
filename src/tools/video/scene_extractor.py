@@ -120,7 +120,7 @@ class SceneExtractorTool(BaseTool):
     DEFAULT_TIMEOUT = 60
 
     def __init__(self) -> None:
-        self._api_key = os.getenv("OPENROUTER_API_KEY")
+        self._api_key = (os.getenv("OPENROUTER_API_KEY") or "").strip() or None
 
     @property
     def definition(self) -> ToolDefinition:

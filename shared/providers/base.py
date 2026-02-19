@@ -156,7 +156,7 @@ class BaseVLMProvider(ABC):
         """
         if not api_key or not api_key.strip():
             raise ValueError("API key cannot be empty")
-        self.api_key: str = api_key
+        self.api_key: str = api_key.strip()
         self._client: Any = None
 
     @abstractmethod

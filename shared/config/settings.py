@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -105,6 +105,18 @@ class Settings(BaseSettings):
         default=Path("/Users/tmkipper/Downloads/construction_research_extracted/home/ubuntu/construction_research"),
         description="Base path to test images",
     )
+
+    @field_validator(
+        "openrouter_api_key", "anthropic_api_key", "google_api_key", "langsmith_api_key",
+        mode="before",
+    )
+    @classmethod
+    def strip_api_keys(cls, v: str | None) -> str | None:
+        """Strip whitespace/newlines from API keys (common .env copy-paste issue)."""
+        if isinstance(v, str):
+            v = v.strip()
+            return v or None
+        return v
 
     class Config:
         env_file = ".env"

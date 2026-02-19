@@ -38,7 +38,7 @@ class ExtractorConfig:
 
     def __post_init__(self):
         if not self.openrouter_api_key:
-            self.openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "")
+            self.openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
 
 
 EXTRACTION_PROMPT = """Extract reusable knowledge from this content.

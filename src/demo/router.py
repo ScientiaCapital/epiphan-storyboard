@@ -97,6 +97,7 @@ class GenerateRequest(BaseModel):
     code: str | None = Field(
         None,
         description="Raw code string.",
+        max_length=50_000,
     )
     icp_preset: str = Field(
         "epiphan_av",

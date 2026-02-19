@@ -21,6 +21,8 @@ class ConnectorType(str, Enum):
     LOOM = "loom"
     MIRO = "miro"
     CLOSE = "close"
+    HUBSPOT = "hubspot"
+    CLARI = "clari"
 
 
 class AuthType(str, Enum):

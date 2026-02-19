@@ -80,8 +80,8 @@ def test_list_available_connectors(client):
     # Should return a list
     assert isinstance(data, list)
 
-    # Should have 8 connectors
-    assert len(data) == 8
+    # Should have 10 connectors (8 original + HubSpot + Clari)
+    assert len(data) == 10
 
     # Check structure of first connector
     connector = data[0]
@@ -103,6 +103,8 @@ def test_list_available_connectors(client):
         "loom",
         "miro",
         "close",
+        "hubspot",
+        "clari",
     }
     assert connector_types == expected_types
 

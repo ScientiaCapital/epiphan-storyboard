@@ -18,6 +18,8 @@ class SourceType(str, Enum):
     ENGINEER_CODE = "engineer_code"
     GONG_TRANSCRIPT = "gong_transcript"
     MANUAL_ENTRY = "manual_entry"
+    HUBSPOT_CALL = "hubspot_call"
+    CLARI_CALL = "clari_call"
 
 
 class KnowledgeType(str, Enum):

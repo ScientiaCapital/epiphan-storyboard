@@ -1,5 +1,5 @@
 # Product Requirements Document (PRD)
-# Conductor-AI v1.0 - Screen Recording Module
+# Epiphan Storyboard v1.0 - Screen Recording Module
 # PLANNING DOC - Future Feature for App Walkthrough Video Generation
 
 > **Note**: This describes a planned screen recording feature to complement the existing storyboard generation capabilities. The system would crawl web apps, record UI interactions, and generate narrated training videos.

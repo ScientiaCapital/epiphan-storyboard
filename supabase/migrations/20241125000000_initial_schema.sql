@@ -1,4 +1,4 @@
--- Conductor-AI Initial Schema
+-- Epiphan Storyboard Initial Schema
 -- Organizations, Users, API Keys, Agent Sessions, Usage Tracking
 
 -- ===========================================

@@ -1,6 +1,6 @@
-# PLANNING.md - Conductor-AI Architecture
+# PLANNING.md - Epiphan Storyboard Architecture
 
-**Project**: conductor-ai
+**Project**: epiphan-storyboard
 **Type**: Multi-provider LLM agent orchestration with ReAct pattern
 **Status**: Phase 9.0 Complete (Screen Recording Module)
 **Version**: 0.9.0
@@ -10,7 +10,7 @@
 
 ## Project Overview
 
-**conductor-ai** is a Python-based agentic AI orchestration platform that runs multi-step ReAct loops using multiple LLM providers (Anthropic Claude, Google Gemini, DeepSeek, Qwen, Moonshot via OpenRouter). It provides:
+**epiphan-storyboard** is a Python-based agentic AI orchestration platform that runs multi-step ReAct loops using multiple LLM providers (Anthropic Claude, Google Gemini, DeepSeek, Qwen, Moonshot via OpenRouter). It provides:
 
 1. **SDK for plugin developers** - 5 imports only (BaseTool, ToolCategory, ToolDefinition, ToolResult, PluginRegistry)
 2. **Tool registry system** - Auto-discover plugins from `plugins/` directory
@@ -24,12 +24,12 @@
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                        CONDUCTOR-AI                               │
+│                        EPIPHAN STORYBOARD                               │
 │                                                                    │
 │  ┌────────────────┐  ┌─────────────────┐  ┌──────────────────┐  │
 │  │  HTTP Client   │  │  AgentRunner    │  │  AuditLogger     │  │
 │  │  (SDK)         │──│  (ReAct Loop)   │──│  @audit_logged   │  │
-│  │  ConductorCli  │  │  StateManager   │  │  decorator       │  │
+│  │  StoryboardCli  │  │  StateManager   │  │  decorator       │  │
 │  └────────────────┘  └─────────────────┘  └──────────────────┘  │
 │         │                     │                      │            │
 │         │                     ▼                      │            │
@@ -79,7 +79,7 @@ External LLM Providers:
 
 **Exports**:
 ```python
-from conductor_ai.sdk import (
+from epiphan_storyboard.sdk import (
     BaseTool,           # Base class for all tools
     ToolCategory,       # Enum: DATA, COMMUNICATION, CODE, etc.
     ToolDefinition,     # Tool metadata (name, description, parameters)
@@ -90,13 +90,13 @@ from conductor_ai.sdk import (
 
 **Design Philosophy**:
 - **5 imports only** - Minimize cognitive load for plugin developers
-- **Zero conductor-ai internals** - Plugins don't depend on core implementation
+- **Zero platform internals** - Plugins don't depend on core implementation
 - **Type-safe** - Pydantic v2 models for all data
 - **Async-first** - All tool.run() methods are async
 
 **Example Plugin**:
 ```python
-from conductor_ai.sdk import BaseTool, ToolDefinition, ToolResult, PluginRegistry
+from epiphan_storyboard.sdk import BaseTool, ToolDefinition, ToolResult, PluginRegistry
 
 registry = PluginRegistry()
 
@@ -296,9 +296,9 @@ GET  /health              # Health check
 
 **Example Usage**:
 ```python
-from conductor_ai.sdk import ConductorClient
+from epiphan_storyboard.sdk import StoryboardClient
 
-async with ConductorClient("http://localhost:8000", org_id="my-org") as client:
+async with StoryboardClient("http://localhost:8000", org_id="my-org") as client:
     # Start agent
     session = await client.run_agent(
         messages=[{"role": "user", "content": "Scrape Tesla dealer locator"}],
@@ -517,7 +517,7 @@ pytest tests/ -v
 ### Production
 ```bash
 # Build Docker image
-docker build -t conductor-ai:latest .
+docker build -t epiphan-storyboard:latest .
 
 # Run with docker-compose
 docker-compose -f docker-compose.prod.yml up -d

@@ -1,4 +1,4 @@
--- Conductor-AI Storyboard Jobs SQL Migration
+-- Epiphan Storyboard Jobs SQL Migration
 -- Run in Supabase SQL Editor
 -- Created: 2025-12-02
 -- Purpose: Async storyboard generation API with Redis hot state + PostgreSQL persistence

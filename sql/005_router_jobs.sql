@@ -1,4 +1,4 @@
--- Conductor-AI Router Jobs SQL Migration
+-- Epiphan Storyboard Router Jobs SQL Migration
 -- Run in Supabase SQL Editor
 -- Created: 2025-12-24
 -- Purpose: Async agent router jobs with Redis hot state + PostgreSQL persistence

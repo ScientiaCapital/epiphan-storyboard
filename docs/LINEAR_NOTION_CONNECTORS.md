@@ -507,7 +507,7 @@ CREATE TABLE knowledge (
 
 ### Implementation
 ```
-/Users/tmkipper/Desktop/tk_projects/conductor-ai/src/connectors/
+/Users/tmkipper/Desktop/tk_projects/epiphan-storyboard/src/connectors/
 ├── linear/
 │   ├── __init__.py (13 lines)
 │   ├── schemas.py (201 lines)
@@ -525,7 +525,7 @@ CREATE TABLE knowledge (
 
 ### Tests
 ```
-/Users/tmkipper/Desktop/tk_projects/conductor-ai/tests/connectors/
+/Users/tmkipper/Desktop/tk_projects/epiphan-storyboard/tests/connectors/
 ├── test_linear/
 │   ├── __init__.py (1 line)
 │   ├── test_client.py (154 lines)

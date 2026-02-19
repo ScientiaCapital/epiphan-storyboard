@@ -1,5 +1,5 @@
 # Architecture Document
-# Conductor-AI - Screen Recording Module
+# Epiphan Storyboard - Screen Recording Module
 # PLANNING DOC - Technical Architecture for Future Feature
 
 > **Note**: This describes architecture for a planned screen recording feature. The existing system focuses on storyboard generation from images/text. This module would add actual screen recording capabilities.
@@ -8,7 +8,7 @@
 
 ## System Overview
 
-The screen recording module extends Conductor-AI with automated video capture:
+The screen recording module extends Epiphan Storyboard with automated video capture:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -45,7 +45,7 @@ The screen recording module extends Conductor-AI with automated video capture:
 ## Directory Structure (Proposed Additions)
 
 ```
-conductor-ai/
+epiphan-storyboard/
 ├── src/
 │   ├── tools/
 │   │   ├── recording/              # NEW MODULE

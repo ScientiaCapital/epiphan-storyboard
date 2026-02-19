@@ -1,6 +1,6 @@
 # Multi-Phase Validation Command
 
-Run comprehensive validation checks on the conductor-ai codebase using modern Python tooling.
+Run comprehensive validation checks on the epiphan-storyboard codebase using modern Python tooling.
 
 ## Phase 1: Code Quality (Ruff)
 

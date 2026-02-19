@@ -1,4 +1,4 @@
--- Conductor-AI Plugin System SQL Migration
+-- Epiphan Storyboard Plugin System SQL Migration
 -- Run in Supabase SQL Editor
 -- Created: 2025-11-27
 
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     input_params JSONB,  -- Input arguments (sanitized)
     output_summary TEXT,  -- Brief result description
     target_entity TEXT,  -- 'lead:123', 'contractor:456'
-    source_project TEXT,  -- 'dealer-scraper-mvp', 'sales-agent', 'conductor-ai'
+    source_project TEXT,  -- 'dealer-scraper-mvp', 'sales-agent', 'epiphan-storyboard'
     success BOOLEAN NOT NULL DEFAULT TRUE,
     error_message TEXT,
     duration_ms INTEGER,
@@ -224,7 +224,7 @@ GRANT SELECT ON tool_usage_stats TO service_role;
 -- Print success message
 DO $$
 BEGIN
-    RAISE NOTICE 'Conductor-AI Plugin System SQL migration completed successfully!';
+    RAISE NOTICE 'Epiphan Storyboard Plugin System SQL migration completed successfully!';
     RAISE NOTICE 'Tables created: audit_logs, tool_executions, leads';
     RAISE NOTICE 'Views created: recent_failures, lead_pipeline, tool_usage_stats';
 END $$;

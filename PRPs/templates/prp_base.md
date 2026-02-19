@@ -3,7 +3,7 @@
 **Created**: YYYY-MM-DD
 **Status**: Draft | In Progress | Review | Complete
 **Owner**: [Developer Name]
-**Project**: conductor-ai
+**Project**: epiphan-storyboard
 
 ---
 
@@ -28,11 +28,11 @@
 ## 2. Technical Design
 
 ### Architecture Overview
-**How does this fit into conductor-ai architecture?**
+**How does this fit into epiphan-storyboard architecture?**
 
 ```
 ┌─────────────────────────────────────────┐
-│         CONDUCTOR-AI                     │
+│         EPIPHAN STORYBOARD                     │
 │  ┌──────────┐  ┌────────────┐           │
 │  │ SDK      │  │ ToolRegistry│           │
 │  │ (Public) │──│ (Global)   │           │
@@ -131,7 +131,7 @@ class FeatureOutput(BaseModel):
 
 ### Phase 2: Integration (Day 2)
 
-**Goal**: Integrate with existing conductor-ai components
+**Goal**: Integrate with existing epiphan-storyboard components
 
 - [ ] **Task 2.1**: Wire into PluginRegistry or ToolRegistry
   - Update `src/tools/registry.py` or `src/sdk/registry.py`
@@ -342,7 +342,7 @@ async def feature_function(param1: str, param2: int) -> FeatureResult:
 """
 Example usage of [Feature Name].
 
-This demonstrates how to use the new feature in conductor-ai.
+This demonstrates how to use the new feature in epiphan-storyboard.
 """
 
 import asyncio
@@ -461,5 +461,5 @@ if __name__ == "__main__":
 
 ---
 
-**Template Version**: 1.0 (conductor-ai)
+**Template Version**: 1.0 (epiphan-storyboard)
 **Last Updated**: 2025-11-30

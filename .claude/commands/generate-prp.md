@@ -1,6 +1,6 @@
 # Generate PRP (Planning & Review Protocol)
 
-Create a comprehensive implementation plan following conductor-ai project standards.
+Create a comprehensive implementation plan following epiphan-storyboard project standards.
 
 ## Usage
 
@@ -43,7 +43,7 @@ Generate `PRPs/[feature-name]-[YYYYMMDD].md` with:
 ## 2. Technical Design
 
 ### Architecture Changes
-[How does this fit into conductor-ai architecture?]
+[How does this fit into epiphan-storyboard architecture?]
 
 ### Component Breakdown
 | Component | Changes | Estimated LOC |
@@ -155,7 +155,7 @@ class FeatureResponse(BaseModel):
 
 ## 3. Review Against Standards
 
-### Conductor-AI Standards
+### Epiphan Storyboard Standards
 - ✅ **SDK-first design**: 5 imports only (BaseTool, ToolCategory, ToolDefinition, ToolResult, PluginRegistry)
 - ✅ **Model selection**: Use DeepSeek V3, DeepSeek R1, Qwen3-235B, Kimi K2, or Claude
 - ✅ **Async patterns**: All I/O operations use async/await

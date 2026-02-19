@@ -1,11 +1,11 @@
-"""Example plugin demonstrating conductor-ai SDK usage.
+"""Example plugin demonstrating epiphan-storyboard SDK usage.
 
 This plugin provides:
 - EchoTool: Simple tool that echoes input back (useful for testing)
 - RandomNumberTool: Generates random numbers within a range
 
 To use this plugin:
-    from conductor_ai.sdk import PluginLoader
+    from epiphan_storyboard.sdk import PluginLoader
     from src.tools.registry import ToolRegistry
 
     loader = PluginLoader()

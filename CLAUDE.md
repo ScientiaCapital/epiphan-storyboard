@@ -1,7 +1,7 @@
 # Epiphan Storyboard
 
 ## Identity
-- Fork of Conductor AI, rebranded for Epiphan Video
+- Epiphan Video storyboard and content generation platform
 - Owner: THK Enterprises LLC
 - Deployed on Vercel
 
@@ -39,5 +39,5 @@
 
 ## Rules
 - NO OpenAI — use Anthropic, Google Gemini, or OpenRouter only
-- NO Coperniq references — this is an Epiphan product
+- All content must reference Epiphan products only
 - All storyboard content must use epiphan_presets.py ICP

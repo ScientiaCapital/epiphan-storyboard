@@ -1,7 +1,7 @@
 """Integration tests for 3-way plugin system.
 
 Tests integration between:
-- conductor-ai (SDK + observability)
+- epiphan-storyboard (SDK + observability)
 - dealer-scraper-mvp (scraper plugin tools)
 - sales-agent (sales plugin tools)
 """
@@ -12,11 +12,11 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 # Add project paths for cross-project imports
-CONDUCTOR_ROOT = Path(__file__).parent.parent.parent
-DEALER_SCRAPER_ROOT = CONDUCTOR_ROOT.parent / "dealer-scraper-mvp"
-SALES_AGENT_ROOT = CONDUCTOR_ROOT.parent / "sales-agent"
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+DEALER_SCRAPER_ROOT = PROJECT_ROOT.parent / "dealer-scraper-mvp"
+SALES_AGENT_ROOT = PROJECT_ROOT.parent / "sales-agent"
 
-sys.path.insert(0, str(CONDUCTOR_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(DEALER_SCRAPER_ROOT))
 sys.path.insert(0, str(SALES_AGENT_ROOT))
 

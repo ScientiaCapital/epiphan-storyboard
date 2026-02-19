@@ -22,7 +22,7 @@ git status | grep "working tree clean" || echo "ERROR: Uncommitted changes"
 git checkout -b feature/[feature-name]
 
 # 3. Verify environment
-source venv/bin/activate  # or conda activate conductor-ai
+source venv/bin/activate  # or conda activate epiphan-storyboard
 python --version | grep "3.1[12]"  # Python 3.11+
 
 # 4. Install dev dependencies
@@ -257,7 +257,7 @@ git tag -a v0.1.x -m "Release: [feature-name]"
 ✅ **Tests**: >90% coverage, all passing
 ✅ **Security**: No OpenAI models, no hardcoded API keys
 ✅ **Documentation**: CLAUDE.md, docstrings, examples updated
-✅ **Integration**: Works with existing conductor-ai components
+✅ **Integration**: Works with existing epiphan-storyboard components
 
 ---
 

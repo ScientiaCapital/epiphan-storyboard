@@ -1,1 +1,1 @@
-"""Tests for conductor-ai SDK."""
+"""Tests for epiphan-storyboard SDK."""

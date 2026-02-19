@@ -1,14 +1,14 @@
-"""Tests for ConductorClient HTTP client."""
+"""Tests for StoryboardClient HTTP client."""
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 import json
 
 from src.sdk.client import (
-    ConductorClient,
+    StoryboardClient,
     AgentSessionResponse,
     ToolInfo,
-    ConductorClientError,
+    StoryboardClientError,
     SessionNotFoundError,
     ToolNotFoundError,
     SessionConflictError,
@@ -24,34 +24,34 @@ def make_mock_response(status_code: int, json_data: dict):
     return response
 
 
-class TestConductorClientInit:
-    """Tests for ConductorClient initialization."""
+class TestStoryboardClientInit:
+    """Tests for StoryboardClient initialization."""
 
     def test_init_with_defaults(self):
         """Client initializes with required args."""
-        client = ConductorClient("http://localhost:8000", "test-org")
+        client = StoryboardClient("http://localhost:8000", "test-org")
         assert client.base_url == "http://localhost:8000"
         assert client.org_id == "test-org"
         assert client.timeout == 60.0
 
     def test_init_with_custom_timeout(self):
         """Client accepts custom timeout."""
-        client = ConductorClient("http://localhost:8000", "org", timeout=120.0)
+        client = StoryboardClient("http://localhost:8000", "org", timeout=120.0)
         assert client.timeout == 120.0
 
     def test_init_strips_trailing_slash(self):
         """Base URL trailing slash is stripped."""
-        client = ConductorClient("http://localhost:8000/", "org")
+        client = StoryboardClient("http://localhost:8000/", "org")
         assert client.base_url == "http://localhost:8000"
 
 
-class TestConductorClientRunAgent:
+class TestStoryboardClientRunAgent:
     """Tests for run_agent method."""
 
     @pytest.mark.asyncio
     async def test_run_agent_success(self):
         """run_agent returns session on success."""
-        client = ConductorClient("http://localhost:8000", "test-org")
+        client = StoryboardClient("http://localhost:8000", "test-org")
         mock_response = make_mock_response(202, {
             "session_id": "sess-123",
             "status": "pending",
@@ -75,7 +75,7 @@ class TestConductorClientRunAgent:
     @pytest.mark.asyncio
     async def test_run_agent_tool_not_found(self):
         """run_agent raises ToolNotFoundError for missing tool."""
-        client = ConductorClient("http://localhost:8000", "test-org")
+        client = StoryboardClient("http://localhost:8000", "test-org")
         mock_response = make_mock_response(400, {
             "detail": "Tool 'nonexistent' not found in registry"
         })
@@ -92,13 +92,13 @@ class TestConductorClientRunAgent:
                 )
 
 
-class TestConductorClientGetSession:
+class TestStoryboardClientGetSession:
     """Tests for get_session method."""
 
     @pytest.mark.asyncio
     async def test_get_session_success(self):
         """get_session returns session details."""
-        client = ConductorClient("http://localhost:8000", "test-org")
+        client = StoryboardClient("http://localhost:8000", "test-org")
         mock_response = make_mock_response(200, {
             "session_id": "sess-123",
             "status": "completed",
@@ -124,7 +124,7 @@ class TestConductorClientGetSession:
     @pytest.mark.asyncio
     async def test_get_session_not_found(self):
         """get_session raises SessionNotFoundError."""
-        client = ConductorClient("http://localhost:8000", "test-org")
+        client = StoryboardClient("http://localhost:8000", "test-org")
         mock_response = make_mock_response(404, {})
 
         with patch.object(client, "_get_client") as mock_get:
@@ -136,13 +136,13 @@ class TestConductorClientGetSession:
                 await client.get_session("sess-999")
 
 
-class TestConductorClientCancelSession:
+class TestStoryboardClientCancelSession:
     """Tests for cancel_session method."""
 
     @pytest.mark.asyncio
     async def test_cancel_session_success(self):
         """cancel_session returns cancelled status."""
-        client = ConductorClient("http://localhost:8000", "test-org")
+        client = StoryboardClient("http://localhost:8000", "test-org")
         mock_response = make_mock_response(200, {
             "session_id": "sess-123",
             "status": "cancelled",
@@ -160,7 +160,7 @@ class TestConductorClientCancelSession:
     @pytest.mark.asyncio
     async def test_cancel_session_conflict(self):
         """cancel_session raises SessionConflictError for completed session."""
-        client = ConductorClient("http://localhost:8000", "test-org")
+        client = StoryboardClient("http://localhost:8000", "test-org")
         mock_response = make_mock_response(409, {
             "detail": "Cannot cancel session with status 'completed'"
         })
@@ -174,13 +174,13 @@ class TestConductorClientCancelSession:
                 await client.cancel_session("sess-123")
 
 
-class TestConductorClientListTools:
+class TestStoryboardClientListTools:
     """Tests for list_tools method."""
 
     @pytest.mark.asyncio
     async def test_list_tools_success(self):
         """list_tools returns tool info."""
-        client = ConductorClient("http://localhost:8000", "test-org")
+        client = StoryboardClient("http://localhost:8000", "test-org")
         mock_response = make_mock_response(200, {
             "tools": [
                 {
@@ -212,13 +212,13 @@ class TestConductorClientListTools:
             assert tools[1].requires_approval is True
 
 
-class TestConductorClientHealthCheck:
+class TestStoryboardClientHealthCheck:
     """Tests for health_check method."""
 
     @pytest.mark.asyncio
     async def test_health_check_healthy(self):
         """health_check returns True when healthy."""
-        client = ConductorClient("http://localhost:8000", "test-org")
+        client = StoryboardClient("http://localhost:8000", "test-org")
         mock_response = make_mock_response(200, {"status": "healthy"})
 
         with patch.object(client, "_get_client") as mock_get:
@@ -231,7 +231,7 @@ class TestConductorClientHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_unhealthy(self):
         """health_check returns False on error."""
-        client = ConductorClient("http://localhost:8000", "test-org")
+        client = StoryboardClient("http://localhost:8000", "test-org")
 
         with patch.object(client, "_get_client") as mock_get:
             mock_http = AsyncMock()
@@ -241,12 +241,12 @@ class TestConductorClientHealthCheck:
             assert await client.health_check() is False
 
 
-class TestConductorClientContextManager:
+class TestStoryboardClientContextManager:
     """Tests for context manager usage."""
 
     @pytest.mark.asyncio
     async def test_context_manager(self):
         """Client works as async context manager."""
-        async with ConductorClient("http://localhost:8000", "test-org") as client:
+        async with StoryboardClient("http://localhost:8000", "test-org") as client:
             assert client.org_id == "test-org"
         # Client should be closed after context

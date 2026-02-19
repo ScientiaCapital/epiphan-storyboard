@@ -1,9 +1,9 @@
 # audit-saas Business Config
 
 business:
-  name: "Conductor AI"
+  name: "Epiphan Storyboard"
   type: "product"  # product | service | hybrid
-  value_proposition: "Agent orchestration platform with Docker sandboxing for safe AI code execution"
+  value_proposition: "AI-powered storyboard generation for Epiphan Video products"
   target_customer: "AI developers, enterprise teams building agent systems"
   price_point: "$299/month per team"
 

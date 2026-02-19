@@ -1,5 +1,5 @@
-# Conductor-AI API Dockerfile
-# FastAPI + Python 3.11 for Agent Orchestration
+# Epiphan Storyboard API Dockerfile
+# FastAPI + Python 3.11 for Storyboard Generation
 
 FROM python:3.11-slim
 
@@ -31,8 +31,8 @@ RUN pip install --no-cache-dir \
 COPY src/ /app/src/
 
 # Create non-root user
-RUN useradd -m -u 1000 conductor
-USER conductor
+RUN useradd -m -u 1000 epiphan
+USER epiphan
 
 # Expose port
 EXPOSE 8000

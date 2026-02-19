@@ -1,6 +1,6 @@
-# conductor-ai
+# epiphan-storyboard
 
-**Branch**: main | **Updated**: 2025-12-24
+**Branch**: main | **Updated**: 2026-02-19
 
 ## Status
 Phase 11.0 complete. Stripe billing infrastructure implemented with:

@@ -1,5 +1,5 @@
-# Conductor-AI Project Context
-Last Updated: 2025-11-27
+# Epiphan Storyboard Project Context
+Last Updated: 2026-02-19
 
 ## Current Sprint: Plugin SDK & Project Integration
 
@@ -8,7 +8,7 @@ All Week 1 tasks finished:
 - [x] SDK directory structure (`src/sdk/`)
 - [x] Public API exports (BaseTool, ToolCategory, ToolDefinition, ToolResult)
 - [x] PluginRegistry + PluginLoader for auto-discovery
-- [x] ConductorClient HTTP client
+- [x] StoryboardClient HTTP client
 - [x] Security utilities (SSRF, timeout, approval gates)
 - [x] Testing utilities (MockRegistry, ToolTestBase)
 - [x] Example plugin template (`plugins/example_plugin/`)
@@ -27,7 +27,7 @@ Ready to start:
 
 ### SDK Public API (5 imports)
 ```python
-from conductor_ai.sdk import (
+from epiphan_storyboard.sdk import (
     BaseTool,           # Abstract base for custom tools
     ToolCategory,       # Enum: WEB, DATA, CODE, FILE, SYSTEM
     ToolDefinition,     # Pydantic model for tool metadata
@@ -48,7 +48,7 @@ class MyTool(BaseTool):
     async def run(self, arguments: dict) -> ToolResult:
         ...
 
-# Register with conductor-ai
+# Register with epiphan-storyboard
 def register(global_registry):
     for tool in registry.tools:
         global_registry.register(tool)
@@ -72,7 +72,7 @@ model = select_model(budget="budget")      # -> deepseek/deepseek-r1-distill-qwe
 |------|---------|
 | `src/sdk/__init__.py` | Public API exports |
 | `src/sdk/registry.py` | PluginRegistry, PluginLoader |
-| `src/sdk/client.py` | ConductorClient HTTP client |
+| `src/sdk/client.py` | StoryboardClient HTTP client |
 | `src/sdk/security/` | SSRF, timeout, approval utilities |
 | `src/sdk/testing/` | MockRegistry, ToolTestBase |
 
@@ -85,12 +85,11 @@ model = select_model(budget="budget")      # -> deepseek/deepseek-r1-distill-qwe
 | `src/api.py` | FastAPI endpoints |
 | `src/agents/` | AgentRunner, StateManager, schemas |
 
-## Recent Changes (2025-11-27)
-1. Created full SDK in `src/sdk/`
-2. Added Chinese LLMs to model catalog (DeepSeek V3, R1, Qwen3-235B, Kimi K2)
-3. Added `select_model()` black box selector
-4. Created example plugin template
-5. 59 SDK tests passing
+## Recent Changes (2026-02-19)
+1. Full branding cleanup — all references updated to Epiphan Storyboard
+2. Demo UI rebranded with Epiphan colors (navy #1D2B51 + green #8CBE3F)
+3. Gemini client decomposed from 1801 → 940 lines
+4. 8 real buyer personas aligned with BDR Playbook
 
 ## Environment
 ```bash

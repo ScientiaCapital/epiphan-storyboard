@@ -88,7 +88,7 @@ Dispatching database-design:database-architect agent...
 Task: Design database schema for [feature]
 - Use Supabase PostgreSQL patterns
 - Include Row Level Security (RLS) policies
-- Follow conductor-ai naming conventions
+- Follow epiphan-storyboard naming conventions
 - Generate migration SQL
 ```
 

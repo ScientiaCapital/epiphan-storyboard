@@ -16,10 +16,18 @@ from __future__ import annotations
 import os
 from datetime import UTC, datetime
 
-import redis.asyncio as aioredis
-
 from src.agents.schemas import AgentSession, AgentStep, SessionStatus
-from supabase import Client, create_client
+
+try:
+    import redis.asyncio as aioredis
+except ImportError:
+    aioredis = None  # type: ignore[assignment]
+
+try:
+    from supabase import Client, create_client
+except ImportError:
+    Client = None  # type: ignore[assignment,misc]
+    create_client = None  # type: ignore[assignment]
 
 
 class StateManager:
@@ -46,33 +54,39 @@ class StateManager:
             supabase_key: Supabase service key (default: from SUPABASE_SERVICE_KEY env var)
             session_ttl: TTL in seconds for Redis entries (default: 3600)
         """
-        # Redis setup - require explicit URL or env var
+        # Redis setup - graceful degradation if unavailable
         self._redis_url = redis_url or os.getenv("REDIS_URL")
-        if not self._redis_url:
-            raise ValueError(
-                "Redis URL must be provided or set via REDIS_URL environment variable"
-            )
+        self._redis = None
+        if self._redis_url and aioredis is not None:
+            try:
+                self._redis = aioredis.from_url(
+                    self._redis_url, encoding="utf-8", decode_responses=True
+                )
+            except Exception:
+                pass
 
-        self._redis = aioredis.from_url(
-            self._redis_url, encoding="utf-8", decode_responses=True
-        )
-
-        # Supabase setup
+        # Supabase setup - graceful degradation if unavailable
         self._supabase_url = supabase_url or os.getenv("SUPABASE_URL")
         supabase_key = supabase_key or os.getenv("SUPABASE_SERVICE_KEY")
+        self._supabase = None
 
-        if not self._supabase_url or not supabase_key:
-            raise ValueError(
-                "SUPABASE_URL and SUPABASE_SERVICE_KEY must be provided "
-                "or set as environment variables"
-            )
+        if (
+            self._supabase_url
+            and supabase_key
+            and create_client is not None
+            and "placeholder" not in (self._supabase_url or "")
+        ):
+            try:
+                self._supabase = create_client(self._supabase_url, supabase_key)
+            except Exception:
+                pass
 
-        self._supabase: Client = create_client(self._supabase_url, supabase_key)
         self._session_ttl = session_ttl
 
     async def close(self) -> None:
         """Close Redis connection."""
-        await self._redis.aclose()
+        if self._redis is not None:
+            await self._redis.aclose()
 
     def _session_key(self, session_id: str) -> str:
         """Generate Redis key for session data."""

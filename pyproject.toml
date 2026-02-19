@@ -41,8 +41,6 @@ dependencies = [
     "redis>=5.0.0",
     "supabase>=2.0.0",
     "google-genai>=1.0.0",
-    # Scientia Capital core infrastructure
-    "lang-core @ git+https://github.com/ScientiaCapital/lang-core.git",
 ]
 
 [project.optional-dependencies]

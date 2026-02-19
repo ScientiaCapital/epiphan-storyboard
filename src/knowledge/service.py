@@ -15,7 +15,11 @@ from src.knowledge.base import (
 )
 from src.knowledge.close_crm import CloseCRMIngester
 from src.knowledge.extraction import KnowledgeExtractor
-from supabase import Client, create_client
+try:
+    from supabase import Client, create_client
+except ImportError:
+    Client = None  # type: ignore[assignment,misc]
+    create_client = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 

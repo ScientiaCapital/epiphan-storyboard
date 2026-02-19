@@ -16,7 +16,10 @@ from __future__ import annotations
 import logging
 import os
 
-import redis.asyncio as aioredis
+try:
+    import redis.asyncio as aioredis
+except ImportError:
+    aioredis = None  # type: ignore[assignment]
 
 from src.tools.video.demo_pipeline_schemas import (
     DemoPipelineJob,

@@ -18,7 +18,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-import aiohttp
+try:
+    import aiohttp
+except ImportError:
+    aiohttp = None  # type: ignore[assignment]
 
 logging.basicConfig(level=logging.INFO)
 

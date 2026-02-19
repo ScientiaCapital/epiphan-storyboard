@@ -96,13 +96,14 @@ class TestStateManagerInit:
             assert manager._redis_url == "redis://env-redis:6379"
             assert manager._supabase_url == "https://env.supabase.co"
 
-    def test_init_without_connections_raises(self):
-        """Test that missing required config raises error."""
+    def test_init_without_connections_degrades_gracefully(self):
+        """Test that missing config degrades gracefully instead of crashing."""
         from src.agents.state import StateManager
 
         with patch.dict("os.environ", {}, clear=True):
-            with pytest.raises(ValueError, match="Redis URL"):
-                StateManager()
+            manager = StateManager()
+            assert manager._redis is None or manager._redis_url is None
+            assert manager._supabase is None
 
     @patch("src.agents.state.create_client")
     def test_init_default_session_ttl(self, mock_create):

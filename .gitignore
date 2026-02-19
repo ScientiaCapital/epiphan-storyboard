@@ -31,6 +31,9 @@ htmlcov/
 # Audit output (generated storyboard PNGs)
 audit_output/
 
+# Smoke test / pipeline output
+output/
+
 # OS
 .DS_Store
 Thumbs.db

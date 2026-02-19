@@ -212,6 +212,37 @@ async def test_client_context_manager():
 
 
 @pytest.mark.asyncio
+@respx.mock
+async def test_retry_after_cap_at_60s():
+    """Test that Retry-After header is capped at 60 seconds."""
+    import asyncio
+    from unittest.mock import patch
+
+    mock_response = {"calls": [], "metadata": {"total": 0}}
+
+    respx.get("https://rest-api.copilot.clari.com/calls").mock(
+        side_effect=[
+            httpx.Response(429, headers={"Retry-After": "3600"}),
+            httpx.Response(200, json=mock_response),
+        ]
+    )
+
+    sleep_times: list[float] = []
+    original_sleep = asyncio.sleep
+
+    async def mock_sleep(seconds: float) -> None:
+        sleep_times.append(seconds)
+        await original_sleep(0)
+
+    with patch("asyncio.sleep", side_effect=mock_sleep):
+        async with ClariCopilotClient(api_key="test-key", api_password="test-pass") as client:
+            await client.get_calls()
+
+    assert len(sleep_times) == 1
+    assert sleep_times[0] == 60
+
+
+@pytest.mark.asyncio
 async def test_call_without_context_manager_raises():
     """Test calling methods without context manager raises RuntimeError."""
     client = ClariCopilotClient(api_key="test-key", api_password="test-pass")

@@ -2,8 +2,8 @@
 
 **Project**: epiphan-storyboard
 **Type**: Multi-provider LLM agent orchestration with ReAct pattern
-**Status**: Phase 15 Complete (Smoke Test + HubSpot & Clari Connectors)
-**Version**: 0.15.0
+**Status**: Phase 16 Complete (Smoke Test Validation, Retry-After Cap, Auto-Trigger)
+**Version**: 0.16.0
 **Last Updated**: 2026-02-19
 
 ---
@@ -401,7 +401,7 @@ plugins/
 - **DeepSeek/Qwen/Kimi**: Via OpenRouter
 
 ### Testing & Quality
-- **pytest**: Testing framework (1900 passing)
+- **pytest**: Testing framework (1930 collected)
 - **pytest-asyncio**: Async test support
 - **ruff**: Linting and formatting (replaces black + isort + flake8)
 - **mypy**: Type checking
@@ -571,6 +571,7 @@ APP_ENV=development
 
 | Phase | Description | Tests |
 |-------|-------------|-------|
+| 16.0 | Smoke Test Validation, Retry-After Cap, OpenRouter Image Routing, Auto-Trigger Storyboard | 1930 |
 | 15.0 | Smoke Test + HubSpot & Clari Connectors (2 new data connectors, smoke test script) | 1900 |
 | 14.0 | Transcript-to-Scenarios Pipeline (20 scenarios, 4-stage pipeline, BDR email) | 1807 |
 | 13.0 | Doc hygiene, CVE fix, visual audit script, exponential backoff | 1530 |
@@ -589,7 +590,7 @@ APP_ENV=development
 | 2.0 | Plugin Integration | 28 |
 | 1.0 | SDK Foundation | 59 |
 
-**Total Tests**: 1900 passing, 22 skipped
+**Total Tests**: 1930 collected, 1913 passing, 21 skipped
 
 ---
 
@@ -605,4 +606,4 @@ APP_ENV=development
 ---
 
 **Last Updated**: 2026-02-19
-**Version**: 0.15.0 (Phase 15 Complete)
+**Version**: 0.16.0 (Phase 16 Complete)

@@ -208,7 +208,7 @@ IMPORTANT:
         try:
             data = json.loads(response_text)
         except json.JSONDecodeError as e:
-            raise ParseError(f"Invalid JSON in LLM response: {e}")
+            raise ParseError(f"Invalid JSON in LLM response: {e}") from e
 
         # Validate required fields
         if "thought" not in data:
@@ -393,7 +393,7 @@ IMPORTANT:
         conversation = list(request.messages)
 
         try:
-            for step_num in range(request.max_steps):
+            for _step_num in range(request.max_steps):
                 # Check if session was cancelled
                 current_session = await self._state_manager.get_session(
                     session.session_id

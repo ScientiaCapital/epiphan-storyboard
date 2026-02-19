@@ -245,7 +245,7 @@ class HubSpotAPIClient:
 
                     retry_after = e.response.headers.get("Retry-After")
                     if retry_after and retry_after.isdigit():
-                        wait_time = int(retry_after)
+                        wait_time = min(int(retry_after), 60)
 
                     logger.warning(
                         f"[HUBSPOT] Rate limited, waiting {wait_time}s "

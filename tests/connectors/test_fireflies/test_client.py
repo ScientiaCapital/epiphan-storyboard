@@ -259,6 +259,35 @@ async def test_client_context_manager():
 
 
 @pytest.mark.asyncio
+@respx.mock
+async def test_retry_after_cap_at_60s():
+    """Test that Retry-After header is capped at 60 seconds."""
+    import asyncio
+    from unittest.mock import patch
+
+    respx.post("https://api.fireflies.ai/graphql").mock(
+        side_effect=[
+            httpx.Response(429, headers={"Retry-After": "3600"}),
+            httpx.Response(200, json={"data": {"transcripts": []}}),
+        ]
+    )
+
+    sleep_times: list[float] = []
+    original_sleep = asyncio.sleep
+
+    async def mock_sleep(seconds: float) -> None:
+        sleep_times.append(seconds)
+        await original_sleep(0)
+
+    with patch("asyncio.sleep", side_effect=mock_sleep):
+        async with FirefliesGraphQLClient(api_key="test-key") as client:
+            await client.get_transcripts()
+
+    assert len(sleep_times) == 1
+    assert sleep_times[0] == 60
+
+
+@pytest.mark.asyncio
 async def test_call_without_context_manager_raises():
     """Test calling methods without context manager raises error."""
     client = FirefliesGraphQLClient(api_key="test-key")

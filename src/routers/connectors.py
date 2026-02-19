@@ -15,11 +15,14 @@ Endpoints:
 
 from __future__ import annotations
 
+import asyncio
+import base64
 import logging
 import os
 import secrets
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
+from pathlib import Path
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
@@ -228,6 +231,123 @@ def _serialize_instance(row: dict) -> ConnectorInstanceResponse:
     )
 
 
+async def _auto_generate_storyboards(
+    instance: ConnectorInstance,
+) -> None:
+    """
+    Auto-generate storyboards for calls synced from HubSpot or Clari.
+
+    Non-blocking post-sync hook. Failures are logged as warnings and
+    never affect the sync result. PNGs saved to output/auto_storyboards/.
+    """
+    from src.tools.storyboard.transcript_to_scenarios import TranscriptToScenariosTool
+
+    connector_type = instance.connector_type.value
+    output_dir = Path("output/auto_storyboards")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    semaphore = asyncio.Semaphore(3)
+
+    # Fetch recent transcripts from the connector
+    transcript_requests: list[tuple[str, dict]] = []
+
+    try:
+        if instance.connector_type == ConnectorType.HUBSPOT:
+            from src.connectors.hubspot.client import HubSpotAPIClient
+            from src.connectors.hubspot.transformer import HubSpotTransformer
+
+            token = instance.config.get("api_key") or (
+                instance.oauth_tokens.access_token if instance.oauth_tokens else None
+            )
+            if not token:
+                logger.warning("[AUTO_STORYBOARD] No HubSpot token available")
+                return
+
+            async with HubSpotAPIClient(access_token=token) as client:
+                response = await client.get_calls(limit=10)
+
+            transformer = HubSpotTransformer()
+            for call in response.results:
+                body = call.properties.hs_call_body or ""
+                if len(body.strip()) > 100:
+                    req = transformer.call_to_transcript_request(call)
+                    transcript_requests.append((call.id, req))
+
+        elif instance.connector_type == ConnectorType.CLARI:
+            from src.connectors.clari.client import ClariCopilotClient
+            from src.connectors.clari.transformer import ClariTransformer
+
+            api_key = instance.config.get("api_key")
+            api_password = instance.config.get("api_password")
+            if not api_key or not api_password:
+                logger.warning("[AUTO_STORYBOARD] No Clari credentials available")
+                return
+
+            async with ClariCopilotClient(
+                api_key=api_key, api_password=api_password
+            ) as client:
+                response = await client.get_calls()
+                transformer = ClariTransformer()
+                for call in response.calls[:10]:
+                    details = await client.get_call_details(call.id)
+                    text = details.transcript_to_text()
+                    if text and len(text.strip()) > 100:
+                        req = transformer.call_to_transcript_request(details)
+                        transcript_requests.append((call.id, req))
+        else:
+            return  # Only HubSpot and Clari supported
+
+        if not transcript_requests:
+            logger.info(f"[AUTO_STORYBOARD] No transcripts found for {connector_type}")
+            return
+
+        logger.info(
+            f"[AUTO_STORYBOARD] Processing {len(transcript_requests)} transcripts "
+            f"from {connector_type}"
+        )
+
+        tool = TranscriptToScenariosTool()
+
+        async def _process_call(call_id: str, request: dict) -> None:
+            async with semaphore:
+                try:
+                    result = await tool.run(request)
+                    if result.success:
+                        scenarios = result.result.get("scenarios", [])
+                        for i, scenario in enumerate(scenarios):
+                            png_b64 = scenario.get("storyboard_png", "")
+                            if png_b64:
+                                sid = scenario.get("scenario_id", f"s{i}")
+                                safe_sid = sid.replace("/", "_").replace(" ", "_")
+                                path = output_dir / f"{connector_type}_{call_id}_{safe_sid}.png"
+                                png_bytes = base64.b64decode(png_b64)
+                                path.write_bytes(png_bytes)
+                                logger.info(
+                                    f"[AUTO_STORYBOARD] Saved {path.name} "
+                                    f"({len(png_bytes)} bytes)"
+                                )
+                    else:
+                        logger.warning(
+                            f"[AUTO_STORYBOARD] Pipeline failed for call {call_id}: "
+                            f"{result.error}"
+                        )
+                except Exception as e:
+                    logger.warning(
+                        f"[AUTO_STORYBOARD] Error processing call {call_id}: {e}"
+                    )
+
+        tasks = [_process_call(cid, req) for cid, req in transcript_requests]
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+        logger.info(
+            f"[AUTO_STORYBOARD] Completed for {len(transcript_requests)} calls "
+            f"from {connector_type}"
+        )
+
+    except Exception as e:
+        logger.warning(f"[AUTO_STORYBOARD] Auto-generation failed: {e}")
+
+
 async def _run_sync_task(
     instance_id: str,
     org_id: str,
@@ -351,6 +471,13 @@ async def _run_sync_task(
         logger.info(
             f"Sync completed for instance {instance_id}: {result.items_created} items created"
         )
+
+        # Auto-generate storyboards for HubSpot/Clari syncs (non-blocking)
+        if result.success and instance.connector_type in (
+            ConnectorType.HUBSPOT,
+            ConnectorType.CLARI,
+        ):
+            asyncio.create_task(_auto_generate_storyboards(instance))
 
     except Exception as e:
         logger.error(f"Sync task failed for instance {instance_id}: {e}")

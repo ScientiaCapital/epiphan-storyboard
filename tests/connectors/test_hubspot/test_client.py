@@ -219,6 +219,38 @@ async def test_client_context_manager():
 
 
 @pytest.mark.asyncio
+@respx.mock
+async def test_retry_after_cap_at_60s():
+    """Test that Retry-After header is capped at 60 seconds."""
+    import asyncio
+    from unittest.mock import patch
+
+    mock_response = {"results": [], "paging": None}
+
+    respx.get("https://api.hubapi.com/crm/v3/objects/calls").mock(
+        side_effect=[
+            httpx.Response(429, headers={"Retry-After": "3600"}),
+            httpx.Response(200, json=mock_response),
+        ]
+    )
+
+    sleep_times: list[float] = []
+    original_sleep = asyncio.sleep
+
+    async def mock_sleep(seconds: float) -> None:
+        sleep_times.append(seconds)
+        await original_sleep(0)  # Don't actually wait
+
+    with patch("asyncio.sleep", side_effect=mock_sleep):
+        async with HubSpotAPIClient(access_token="test-token") as client:
+            await client.get_calls()
+
+    # Server sent 3600s but client should cap at 60s
+    assert len(sleep_times) == 1
+    assert sleep_times[0] == 60
+
+
+@pytest.mark.asyncio
 async def test_call_without_context_manager_raises():
     """Test calling methods without context manager raises RuntimeError."""
     client = HubSpotAPIClient(access_token="test-token")

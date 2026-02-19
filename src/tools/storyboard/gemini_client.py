@@ -196,9 +196,12 @@ class GeminiConfig:
     )
     deepseek_model: str = "deepseek/deepseek-chat"  # DeepSeek V3 - fast, excellent for structured extraction
 
-    # Stage 3 (GENERATE): Image generation (Gemini only - no alternatives)
+    # Stage 3 (GENERATE): Image generation
     image_model: str = (
-        "models/gemini-3-pro-image-preview"  # Nano Banana - FREE during preview
+        "models/gemini-2.0-flash-exp-image-generation"  # Direct Google API fallback
+    )
+    openrouter_image_model: str = (
+        "google/gemini-2.5-flash-image"  # Nano Banana via OpenRouter (preferred)
     )
 
     timeout: int = 90
@@ -330,6 +333,106 @@ class GeminiStoryboardClient:
                 raise
 
         raise Exception("Max retries exceeded for OpenRouter API")
+
+    async def _generate_image_via_openrouter(self, prompt: str) -> bytes:
+        """
+        Generate image via OpenRouter using Gemini image model (Nano Banana).
+
+        Sends a text prompt to google/gemini-2.5-flash-image and extracts
+        the generated PNG from the response content.
+
+        Args:
+            prompt: Image generation prompt
+
+        Returns:
+            PNG image bytes
+        """
+        if not self.config.openrouter_api_key:
+            raise ValueError("OPENROUTER_API_KEY not set for image generation")
+
+        headers = {
+            "Authorization": f"Bearer {self.config.openrouter_api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://www.epiphan.com",
+            "X-Title": "Epiphan Storyboard Generator",
+        }
+
+        payload = {
+            "model": self.config.openrouter_image_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 4096,
+            "temperature": 0.9,
+        }
+
+        for attempt in range(self.config.max_retries):
+            try:
+                async with httpx.AsyncClient(timeout=self.config.timeout) as client:
+                    response = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        json=payload,
+                        headers=headers,
+                    )
+
+                    if response.status_code == 429:
+                        wait_time = min(2**attempt, 32) + random.uniform(0, 0.5)
+                        logger.warning(
+                            f"[OPENROUTER-IMG] Rate limited, waiting {wait_time:.1f}s "
+                            f"(attempt {attempt + 1}/{self.config.max_retries})"
+                        )
+                        await asyncio.sleep(wait_time)
+                        continue
+
+                    response.raise_for_status()
+                    data = response.json()
+
+                message = data["choices"][0]["message"]
+
+                # OpenRouter returns images in a top-level "images" array
+                # Format: [{"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}]
+                images = message.get("images", [])
+                if images:
+                    for img in images:
+                        if isinstance(img, dict) and img.get("type") == "image_url":
+                            url = img["image_url"]["url"]
+                            if url.startswith("data:"):
+                                b64_data = url.split(",", 1)[1]
+                                png_bytes = base64.b64decode(b64_data)
+                                logger.info(f"[OPENROUTER-IMG] Got image: {len(png_bytes)} bytes")
+                                return png_bytes
+                            async with httpx.AsyncClient() as dl:
+                                img_resp = await dl.get(url)
+                                img_resp.raise_for_status()
+                                return img_resp.content
+
+                # Fallback: check content field for inline images
+                content = message.get("content", "")
+                if isinstance(content, str) and content:
+                    data_url_match = re.search(
+                        r"data:image/[^;]+;base64,([A-Za-z0-9+/=]+)", content
+                    )
+                    if data_url_match:
+                        return base64.b64decode(data_url_match.group(1))
+
+                raise ValueError(
+                    f"No image found in OpenRouter response. "
+                    f"Message keys: {list(message.keys())}, "
+                    f"images count: {len(images)}"
+                )
+
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 429 and attempt < self.config.max_retries - 1:
+                    wait_time = min(2**attempt, 32) + random.uniform(0, 0.5)
+                    logger.warning(f"[OPENROUTER-IMG] Rate limited, waiting {wait_time:.1f}s")
+                    await asyncio.sleep(wait_time)
+                    continue
+                raise
+
+        raise Exception("Max retries exceeded for OpenRouter image generation")
+
+    @property
+    def _has_google_api_key(self) -> bool:
+        """Check if a real (non-placeholder) Google API key is configured."""
+        return bool(self.config.api_key and self.config.api_key != "placeholder")
 
     async def _call_qwen_vision(
         self,
@@ -485,15 +588,19 @@ Return ONLY valid JSON matching this exact structure:
         try:
             # Route to alternate model based on content type
             if content_type == "text":
-                # Text was initially processed by DeepSeek, refine with... DeepSeek again (no vision alt for text)
-                # Actually for text, we can try Gemini as alternate
-                self._ensure_client()
-                logger.info("[REFINE] Using Gemini as alternate for text refinement")
-                response = self._client.models.generate_content(
-                    model=self.config.gemini_vision_model,
-                    contents=refinement_prompt,
-                )
-                response_text = response.text
+                if self._has_google_api_key:
+                    # Use Gemini as alternate for text refinement
+                    self._ensure_client()
+                    logger.info("[REFINE] Using Gemini as alternate for text refinement")
+                    response = self._client.models.generate_content(
+                        model=self.config.gemini_vision_model,
+                        contents=refinement_prompt,
+                    )
+                    response_text = response.text
+                else:
+                    # No Google key — use Qwen as alternate for text refinement
+                    logger.info("[REFINE] Using Qwen VL as alternate for text refinement (no Google key)")
+                    response_text = await self._call_qwen_vision(refinement_prompt)
             else:
                 # Image was initially processed by Qwen, refine with DeepSeek for reasoning
                 logger.info(
@@ -582,31 +689,42 @@ Return ONLY valid JSON matching this exact structure:
                         images_data=images_data,
                     )
                 else:
-                    self._ensure_client()
-                    logger.info(
-                        f"[UNDERSTAND] Using Gemini ({self.config.gemini_vision_model}) for {source_label} understanding"
-                    )
-                    from google.genai import types
+                    if self._has_google_api_key:
+                        self._ensure_client()
+                        logger.info(
+                            f"[UNDERSTAND] Using Gemini ({self.config.gemini_vision_model}) for {source_label} understanding"
+                        )
+                        from google.genai import types
 
-                    if images_data:
-                        content_parts = [
-                            types.Part.from_bytes(data=img, mime_type="image/png")
-                            for img in images_data
-                        ]
-                        content_parts.append(prompt)
+                        if images_data:
+                            content_parts = [
+                                types.Part.from_bytes(data=img, mime_type="image/png")
+                                for img in images_data
+                            ]
+                            content_parts.append(prompt)
+                        else:
+                            content_parts = [
+                                types.Part.from_bytes(
+                                    data=image_data, mime_type="image/png"
+                                ),
+                                prompt,
+                            ]
+
+                        response = self._client.models.generate_content(
+                            model=self.config.gemini_vision_model,
+                            contents=content_parts,
+                        )
+                        response_text = response.text
                     else:
-                        content_parts = [
-                            types.Part.from_bytes(
-                                data=image_data, mime_type="image/png"
-                            ),
+                        # Fall back to Qwen VL via OpenRouter when no Google key
+                        logger.info(
+                            f"[UNDERSTAND] Falling back to Qwen VL for {source_label} (no Google key)"
+                        )
+                        response_text = await self._call_qwen_vision(
                             prompt,
-                        ]
-
-                    response = self._client.models.generate_content(
-                        model=self.config.gemini_vision_model,
-                        contents=content_parts,
-                    )
-                    response_text = response.text
+                            image_data=image_data,
+                            images_data=images_data,
+                        )
             else:
                 # Text path: DeepSeek or Gemini text
                 if self.config.text_provider == "deepseek":
@@ -614,7 +732,7 @@ Return ONLY valid JSON matching this exact structure:
                         f"[UNDERSTAND] Using DeepSeek ({self.config.deepseek_model}) for {source_label} understanding"
                     )
                     response_text = await self._call_deepseek(prompt)
-                else:
+                elif self._has_google_api_key:
                     self._ensure_client()
                     logger.info(
                         f"[UNDERSTAND] Using Gemini ({self.config.gemini_vision_model}) for {source_label} understanding"
@@ -624,6 +742,12 @@ Return ONLY valid JSON matching this exact structure:
                         contents=prompt,
                     )
                     response_text = response.text
+                else:
+                    # Fall back to DeepSeek via OpenRouter when no Google key
+                    logger.info(
+                        f"[UNDERSTAND] Falling back to DeepSeek for {source_label} (no Google key)"
+                    )
+                    response_text = await self._call_deepseek(prompt)
 
             # Parse with safe fallback (consistent for all content types)
             initial_result = _safe_parse_understanding(
@@ -817,8 +941,6 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
         Returns:
             PNG image bytes
         """
-        self._ensure_client()
-
         from src.tools.storyboard.epiphan_presets import (
             EPIPHAN_ICP,
             get_audience_persona,
@@ -901,56 +1023,66 @@ DESIGN PRINCIPLES:
 {prompts.get_format_output_instructions(output_format)}"""
 
         try:
-            from google.genai import types
-
-            # Log key content being sent for debugging
             logger.info(
-                f"[GEMINI-IMG] Generating image for audience={audience}, seed={unique_seed}"
+                f"[GENERATE] Creating image for audience={audience}, seed={unique_seed}"
             )
-            logger.info(f"[GEMINI-IMG] Headline: {understanding.headline}")
+            logger.info(f"[GENERATE] Headline: {understanding.headline}")
 
-            # Use temperature to avoid cached responses
-            temperature = 0.9 + random.uniform(0, 0.1)  # 0.9-1.0
+            if self._has_google_api_key:
+                # Direct Google genai SDK path
+                self._ensure_client()
+                from google.genai import types
 
-            response = self._client.models.generate_content(
-                model=self.config.image_model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_modalities=["IMAGE", "TEXT"],
-                    temperature=temperature,
-                    seed=random.randint(1, 1000000),  # Random seed for cache busting
-                ),
-            )
-
-            # Extract image from response
-            for part in response.candidates[0].content.parts:
-                if hasattr(part, "inline_data") and part.inline_data:
-                    return part.inline_data.data
-
-            raise ValueError("No image generated in response")
+                temperature = 0.9 + random.uniform(0, 0.1)
+                response = self._client.models.generate_content(
+                    model=self.config.image_model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE", "TEXT"],
+                        temperature=temperature,
+                        seed=random.randint(1, 1000000),
+                    ),
+                )
+                for part in response.candidates[0].content.parts:
+                    if hasattr(part, "inline_data") and part.inline_data:
+                        return part.inline_data.data
+                raise ValueError("No image generated in Google API response")
+            else:
+                # OpenRouter path — route through Nano Banana
+                logger.info(
+                    f"[GENERATE] Using OpenRouter ({self.config.openrouter_image_model}) — no Google API key"
+                )
+                return await self._generate_image_via_openrouter(prompt)
 
         except Exception as e:
-            logger.error(f"[GEMINI] Image generation failed: {e}")
+            logger.error(f"[GENERATE] Image generation failed: {e}")
             raise
 
     async def health_check(self) -> dict[str, Any]:
         """
-        Check if Gemini client is properly configured.
+        Check if storyboard client is properly configured.
 
         Returns:
             Health status dictionary
         """
-        try:
-            self._ensure_client()
+        has_google = self._has_google_api_key
+        has_openrouter = bool(self.config.openrouter_api_key)
+
+        if has_google or has_openrouter:
+            image_backend = "google_direct" if has_google else "openrouter"
             return {
                 "status": "healthy",
-                "vision_model": self.config.gemini_vision_model,
-                "image_model": self.config.image_model,
-                "api_key_configured": bool(self.config.api_key),
+                "image_backend": image_backend,
+                "image_model": self.config.image_model if has_google else self.config.openrouter_image_model,
+                "text_provider": self.config.text_provider,
+                "vision_provider": self.config.vision_provider,
+                "google_api_key_configured": has_google,
+                "openrouter_api_key_configured": has_openrouter,
             }
-        except Exception as e:
-            return {
-                "status": "unhealthy",
-                "error": str(e),
-                "api_key_configured": bool(self.config.api_key),
+
+        return {
+            "status": "unhealthy",
+            "error": "Neither GOOGLE_API_KEY nor OPENROUTER_API_KEY configured",
+            "google_api_key_configured": False,
+            "openrouter_api_key_configured": False,
             }

@@ -226,10 +226,10 @@ class ClariCopilotClient:
                         min(attempt, len(self.RETRY_DELAYS) - 1)
                     ]
 
-                    # Honour Retry-After header if present
+                    # Honour Retry-After header if present (capped at 60s)
                     retry_after = e.response.headers.get("Retry-After")
                     if retry_after and retry_after.isdigit():
-                        wait_time = int(retry_after)
+                        wait_time = min(int(retry_after), 60)
 
                     logger.warning(
                         f"[CLARI] Rate limited, waiting {wait_time}s "

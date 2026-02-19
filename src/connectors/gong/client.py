@@ -224,10 +224,10 @@ class GongAPIClient:
                         min(attempt, len(self.RETRY_DELAYS) - 1)
                     ]
 
-                    # Check for Retry-After header
+                    # Check for Retry-After header (capped at 60s)
                     retry_after = e.response.headers.get("Retry-After")
                     if retry_after and retry_after.isdigit():
-                        wait_time = int(retry_after)
+                        wait_time = min(int(retry_after), 60)
 
                     logger.warning(
                         f"[GONG] Rate limited, waiting {wait_time}s (attempt {attempt + 1}/{self.MAX_RETRIES})"

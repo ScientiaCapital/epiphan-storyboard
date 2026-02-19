@@ -25,7 +25,8 @@ class TestGeminiConfig:
             config = GeminiConfig()
             # NOTE: Config now has split model config for multi-model architecture
             assert config.gemini_vision_model == "models/gemini-2.0-flash"
-            assert config.image_model == "models/gemini-3-pro-image-preview"
+            assert config.image_model == "models/gemini-2.0-flash-exp-image-generation"
+            assert config.openrouter_image_model == "google/gemini-2.5-flash-image"
             assert config.timeout == 90
             assert config.max_retries == 3
 
@@ -125,29 +126,36 @@ class TestGeminiClientHealthCheck:
     """Tests for health check functionality."""
 
     @pytest.mark.asyncio
-    async def test_health_check_no_api_key(self):
-        """Test health check fails without API key."""
+    async def test_health_check_no_keys(self):
+        """Test health check fails without any API keys."""
         with patch.dict("os.environ", {}, clear=True):
-            config = GeminiConfig(api_key=None)
+            config = GeminiConfig(api_key=None, openrouter_api_key=None)
             client = GeminiStoryboardClient(config=config)
             health = await client.health_check()
             assert health["status"] == "unhealthy"
-            assert health["api_key_configured"] is False
+            assert health["google_api_key_configured"] is False
+            assert health["openrouter_api_key_configured"] is False
 
     @pytest.mark.asyncio
-    async def test_health_check_with_api_key(self):
-        """Test health check with API key (mocked import)."""
-        config = GeminiConfig(api_key="test-key")
+    async def test_health_check_with_openrouter_key(self):
+        """Test health check healthy with OpenRouter key only (no Google key)."""
+        config = GeminiConfig(api_key=None, openrouter_api_key="test-or-key")
         client = GeminiStoryboardClient(config=config)
+        health = await client.health_check()
+        assert health["status"] == "healthy"
+        assert health["image_backend"] == "openrouter"
+        assert health["google_api_key_configured"] is False
+        assert health["openrouter_api_key_configured"] is True
 
-        # Mock the google.genai import
-        mock_genai = MagicMock()
-        mock_genai.Client.return_value = MagicMock()
-
-        with patch.dict("sys.modules", {"google": MagicMock(), "google.genai": mock_genai}):
-            health = await client.health_check()
-            # Will still fail because actual import differs, but API key is configured
-            assert health["api_key_configured"] is True
+    @pytest.mark.asyncio
+    async def test_health_check_with_google_key(self):
+        """Test health check healthy with Google API key (prefers direct)."""
+        config = GeminiConfig(api_key="test-key", openrouter_api_key="test-or-key")
+        client = GeminiStoryboardClient(config=config)
+        health = await client.health_check()
+        assert health["status"] == "healthy"
+        assert health["image_backend"] == "google_direct"
+        assert health["google_api_key_configured"] is True
 
 
 class TestLanguageGuidelines:
@@ -586,10 +594,10 @@ class TestHealthCheckFixed:
             health = await client.health_check()
 
         # Should not crash with AttributeError
-        assert health["api_key_configured"] is True
-        # If healthy, should have vision_model key
+        assert health["google_api_key_configured"] is True
+        # If healthy, should have image_backend key
         if health["status"] == "healthy":
-            assert health["vision_model"] == "models/gemini-2.0-flash"
+            assert health["image_backend"] == "google_direct"
 
 
 class TestOpenRouterRetryBackoff:

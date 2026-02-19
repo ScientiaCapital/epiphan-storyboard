@@ -28,6 +28,7 @@ class JobType(str, Enum):
 
     CODE_TO_STORYBOARD = "code_to_storyboard"
     ROADMAP_TO_STORYBOARD = "roadmap_to_storyboard"
+    TRANSCRIPT_TO_STORYBOARD = "transcript_to_storyboard"
 
 
 class CodeStoryboardRequest(BaseModel):
@@ -58,6 +59,9 @@ class CodeStoryboardRequest(BaseModel):
         "corp_comms",
         "ehs_manager",
         "law_firm_it",
+        "provost",
+        "university_president",
+        "university_finance",
         "technical_director",
     ] = Field(
         "av_director",
@@ -97,6 +101,9 @@ class RoadmapStoryboardRequest(BaseModel):
         "corp_comms",
         "ehs_manager",
         "law_firm_it",
+        "provost",
+        "university_president",
+        "university_finance",
         "technical_director",
     ] = Field(
         "av_director",
@@ -224,4 +231,110 @@ class StoryboardJob(BaseModel):
     metadata: dict = Field(
         default_factory=dict,
         description="Additional metadata",
+    )
+
+
+# ============================================================================
+# Transcript-to-Scenarios Pipeline Models
+# ============================================================================
+
+
+class TranscriptStoryboardRequest(BaseModel):
+    """Request model for POST /storyboard/transcript endpoint."""
+
+    transcript: str = Field(
+        ...,
+        description="Pasted call transcript or summary text",
+        min_length=1,
+        max_length=100_000,
+    )
+    vertical_hint: str | None = Field(
+        None,
+        description="Optional vertical hint if BDR already knows (e.g., 'higher_ed')",
+    )
+    persona_hint: str | None = Field(
+        None,
+        description="Optional persona hint if BDR already knows (e.g., 'av_director')",
+    )
+    prospect_name: str | None = Field(
+        None,
+        description="Prospect name for email personalization",
+        max_length=200,
+    )
+    prospect_company: str | None = Field(
+        None,
+        description="Prospect company name for email personalization",
+        max_length=200,
+    )
+
+    @field_validator("transcript")
+    @classmethod
+    def validate_transcript_not_empty(cls, v: str) -> str:
+        """Ensure transcript is not empty."""
+        if not v or not v.strip():
+            raise ValueError("transcript must not be empty")
+        return v
+
+
+class EmailDraft(BaseModel):
+    """BDR follow-up email draft."""
+
+    subject: str = Field(..., description="Email subject line")
+    body: str = Field(..., description="Email body text (under 150 words)")
+
+
+class ScenarioResult(BaseModel):
+    """A single matched and customized deployment scenario."""
+
+    scenario_id: str = Field(..., description="Scenario identifier")
+    scenario_name: str = Field(..., description="Human-readable scenario name")
+    vertical: str = Field(..., description="Target vertical")
+    products: list[str] = Field(
+        default_factory=list,
+        description="Recommended product names (no pricing)",
+    )
+    bundle_name: str | None = Field(
+        None,
+        description="Optional bundle name",
+    )
+    setup_description: str = Field(
+        ...,
+        description="Customized deployment narrative with call-specific details",
+    )
+    reference_story: str | None = Field(
+        None,
+        description="Customer reference story for proof",
+    )
+    storyboard_png: str = Field(
+        default="",
+        description="Base64-encoded PNG storyboard image",
+    )
+    creative_hook: str = Field(
+        default="",
+        description="The non-obvious angle that sparks imagination",
+    )
+
+
+class TranscriptStoryboardResponse(BaseModel):
+    """Response model for completed transcript-to-scenarios job."""
+
+    scenarios: list[ScenarioResult] = Field(
+        default_factory=list,
+        description="Matched and customized deployment scenarios with storyboard PNGs",
+    )
+    email_draft: EmailDraft | None = Field(
+        None,
+        description="BDR follow-up email draft",
+    )
+    detected_vertical: str = Field(
+        default="",
+        description="AI-detected vertical from transcript",
+    )
+    detected_persona: str = Field(
+        default="",
+        description="AI-detected buyer persona from transcript",
+    )
+    extraction_confidence: float = Field(
+        default=0.0,
+        description="Confidence score for transcript extraction (0-1)",
     )

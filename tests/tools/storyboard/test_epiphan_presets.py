@@ -39,7 +39,7 @@ class TestEpiphanICPStructure:
         assert "pain_points" in chars
 
     def test_icp_has_audience_personas(self):
-        """ICP should have all 8 BDR Playbook personas."""
+        """ICP should have all 11 personas (8 original + 3 Higher Ed executive)."""
         assert "audience_personas" in EPIPHAN_ICP
         personas = EPIPHAN_ICP["audience_personas"]
         # ATL personas (7 from BDR Playbook)
@@ -50,9 +50,13 @@ class TestEpiphanICPStructure:
         assert AudiencePersona.CORP_COMMS in personas
         assert AudiencePersona.EHS_MANAGER in personas
         assert AudiencePersona.LAW_FIRM_IT in personas
+        # ATL personas (3 Higher Ed executive)
+        assert AudiencePersona.PROVOST in personas
+        assert AudiencePersona.UNIVERSITY_PRESIDENT in personas
+        assert AudiencePersona.UNIVERSITY_FINANCE in personas
         # BTL persona (1 from BDR Playbook)
         assert AudiencePersona.TECHNICAL_DIRECTOR in personas
-        assert len(personas) == 8
+        assert len(personas) == 11
 
     def test_icp_has_language_style(self):
         """ICP should have language style guidelines."""
@@ -143,6 +147,33 @@ class TestAudiencePersonas:
         persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.EHS_MANAGER]
         assert "EHS" in persona["title"]
         assert "OSHA compliance" in persona["cares_about"]
+
+    def test_provost_persona(self):
+        """Provost persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.PROVOST]
+        assert "Provost" in persona["title"]
+        assert persona["persona_type"] == "ATL"
+        assert "higher_ed" in persona["verticals"]
+        assert "student outcomes" in persona["cares_about"]
+        assert persona["value_angle"] == "ROI"
+
+    def test_university_president_persona(self):
+        """University president persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.UNIVERSITY_PRESIDENT]
+        assert "President" in persona["title"]
+        assert persona["persona_type"] == "ATL"
+        assert "higher_ed" in persona["verticals"]
+        assert "institutional reputation" in persona["cares_about"]
+        assert persona["value_angle"] == "ROI"
+
+    def test_university_finance_persona(self):
+        """University finance persona should have required fields."""
+        persona = EPIPHAN_ICP["audience_personas"][AudiencePersona.UNIVERSITY_FINANCE]
+        assert "Finance" in persona["title"] or "CFO" in persona["title"]
+        assert persona["persona_type"] == "ATL"
+        assert "higher_ed" in persona["verticals"]
+        assert "total cost of ownership" in persona["cares_about"]
+        assert persona["value_angle"] == "ROI"
 
     def test_all_personas_have_required_fields(self):
         """Every persona should have the required fields."""
@@ -374,12 +405,14 @@ class TestAudiencePersonaEnum:
         """AV director enum value (primary ATL)."""
         assert AudiencePersona.AV_DIRECTOR.value == "av_director"
 
-    def test_all_8_personas_exist(self):
-        """All 8 BDR Playbook personas should be present in the enum."""
-        assert len(AudiencePersona) == 8
+    def test_all_11_personas_exist(self):
+        """All 11 personas should be present in the enum (8 original + 3 Higher Ed executive)."""
+        assert len(AudiencePersona) == 11
         expected = [
             "av_director", "ld_director", "sim_center_director", "court_admin",
-            "corp_comms", "ehs_manager", "law_firm_it", "technical_director",
+            "corp_comms", "ehs_manager", "law_firm_it",
+            "provost", "university_president", "university_finance",
+            "technical_director",
         ]
         actual = [p.value for p in AudiencePersona]
         for val in expected:

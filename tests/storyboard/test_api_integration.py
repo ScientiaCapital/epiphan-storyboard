@@ -328,7 +328,7 @@ class TestJobType:
         assert JobType.ROADMAP_TO_STORYBOARD == "roadmap_to_storyboard"
 
     def test_type_count(self):
-        """Test that we have exactly 2 job types."""
+        """Test that we have exactly 3 job types."""
         from src.storyboard.schemas import JobType
 
-        assert len(JobType) == 2
+        assert len(JobType) == 3

@@ -4,6 +4,7 @@ FastAPI router for Storyboard Pipeline API.
 Endpoints:
 - POST /storyboard/code - Generate storyboard from code
 - POST /storyboard/roadmap - Generate storyboard from roadmap screenshot
+- POST /storyboard/transcript - Generate deployment scenario storyboards from call transcript
 - GET /storyboard/jobs/{job_id} - Get job status and results
 """
 
@@ -26,6 +27,7 @@ from src.storyboard.schemas import (
     RoadmapStoryboardRequest,
     StoryboardJobResponse,
     StoryboardJobStatusResponse,
+    TranscriptStoryboardRequest,
 )
 from src.storyboard.state import StoryboardJobManager
 
@@ -91,8 +93,8 @@ async def run_code_storyboard_task(
                 ),
                 timeout=300.0,
             )
-        except TimeoutError:
-            raise Exception("Job timed out after 5 minutes")
+        except TimeoutError as e:
+            raise Exception("Job timed out after 5 minutes") from e
 
         # Update job with result or error
         execution_time_ms = int((perf_counter() - start_time) * 1000)
@@ -173,8 +175,8 @@ async def run_roadmap_storyboard_task(
                 ),
                 timeout=300.0,
             )
-        except TimeoutError:
-            raise Exception("Job timed out after 5 minutes")
+        except TimeoutError as e:
+            raise Exception("Job timed out after 5 minutes") from e
 
         # Update job with result or error
         execution_time_ms = int((perf_counter() - start_time) * 1000)
@@ -221,6 +223,102 @@ async def run_roadmap_storyboard_task(
         except Exception as persist_error:
             logger.error(
                 f"[ROADMAP_STORYBOARD_TASK] Failed to persist error for job {job_id}: {persist_error}"
+            )
+
+
+async def run_transcript_storyboard_task(
+    job_id: str,
+    request: TranscriptStoryboardRequest,
+    job_manager: StoryboardJobManager,
+) -> None:
+    """Background task to run transcript-to-scenarios pipeline."""
+    from src.tools.storyboard.transcript_to_scenarios import TranscriptToScenariosTool
+
+    start_time = perf_counter()
+
+    try:
+        # Get job
+        job = await job_manager.get_job(job_id)
+        if not job:
+            logger.error(f"[TRANSCRIPT_STORYBOARD_TASK] Job {job_id} not found")
+            return
+
+        # Update status to processing
+        job.status = JobStatus.PROCESSING
+        await job_manager.update_job(job)
+
+        # Run tool with timeout (10 minutes — generates multiple storyboards)
+        tool = TranscriptToScenariosTool()
+        try:
+            result = await asyncio.wait_for(
+                tool.run(
+                    {
+                        "transcript": request.transcript,
+                        "vertical_hint": request.vertical_hint,
+                        "persona_hint": request.persona_hint,
+                        "prospect_name": request.prospect_name,
+                        "prospect_company": request.prospect_company,
+                    }
+                ),
+                timeout=600.0,
+            )
+        except TimeoutError as e:
+            raise Exception("Job timed out after 10 minutes") from e
+
+        # Update job with result or error
+        execution_time_ms = int((perf_counter() - start_time) * 1000)
+        job.execution_time_ms = execution_time_ms
+        job.completed_at = datetime.now(UTC)
+
+        if result.success:
+            job.status = JobStatus.COMPLETED
+            # Store first scenario storyboard as result_image for compatibility
+            scenarios = result.result.get("scenarios", [])
+            if scenarios and scenarios[0].get("storyboard_png"):
+                job.result_image = scenarios[0]["storyboard_png"]
+            job.understanding = {
+                "scenarios": scenarios,
+                "email_draft": result.result.get("email_draft"),
+                "detected_vertical": result.result.get("detected_vertical"),
+                "detected_persona": result.result.get("detected_persona"),
+                "extraction_confidence": result.result.get("extraction_confidence"),
+            }
+            job.metadata = {
+                "scenario_count": len(scenarios),
+                "detected_vertical": result.result.get("detected_vertical"),
+                "detected_persona": result.result.get("detected_persona"),
+                "prospect_company": request.prospect_company,
+            }
+            logger.info(
+                f"[TRANSCRIPT_STORYBOARD_TASK] Job {job_id} completed in {execution_time_ms}ms "
+                f"({len(scenarios)} scenarios)"
+            )
+        else:
+            job.status = JobStatus.FAILED
+            job.error_message = result.error
+            logger.error(
+                f"[TRANSCRIPT_STORYBOARD_TASK] Job {job_id} failed: {result.error}"
+            )
+
+        # Persist to Supabase
+        await job_manager.persist_to_supabase(job)
+
+    except Exception as e:
+        logger.error(
+            f"[TRANSCRIPT_STORYBOARD_TASK] Unexpected error for job {job_id}: {e}"
+        )
+        # Try to update job status to failed
+        try:
+            job = await job_manager.get_job(job_id)
+            if job:
+                job.status = JobStatus.FAILED
+                job.error_message = str(e)
+                job.execution_time_ms = int((perf_counter() - start_time) * 1000)
+                job.completed_at = datetime.now(UTC)
+                await job_manager.persist_to_supabase(job)
+        except Exception as persist_error:
+            logger.error(
+                f"[TRANSCRIPT_STORYBOARD_TASK] Failed to persist error for job {job_id}: {persist_error}"
             )
 
 
@@ -317,6 +415,58 @@ async def generate_roadmap_storyboard(
     # Start background task
     background_tasks.add_task(
         run_roadmap_storyboard_task,
+        job_id=job.job_id,
+        request=request,
+        job_manager=job_manager,
+    )
+
+    return StoryboardJobResponse(
+        job_id=job.job_id,
+        status=job.status,
+        poll_url=f"/storyboard/jobs/{job.job_id}",
+    )
+
+
+@router.post(
+    "/transcript",
+    response_model=StoryboardJobResponse,
+    status_code=202,
+    summary="Generate deployment scenario storyboards from call transcript",
+    description=(
+        "Paste a call transcript or summary to get 2-4 deployment scenario storyboards "
+        "tailored to the prospect's vertical and interests, plus a BDR follow-up email draft. "
+        "Returns immediately with job_id and poll_url. "
+        "Use GET /storyboard/jobs/{job_id} to poll for completion."
+    ),
+    responses={
+        402: {"description": "Payment required - subscription issue"},
+        429: {"description": "Quota exceeded"},
+    },
+)
+async def generate_transcript_storyboard(
+    request: TranscriptStoryboardRequest,
+    background_tasks: BackgroundTasks,
+    billing: BillingContext = Depends(require_billing(estimated_tokens=15000)),
+    job_manager: StoryboardJobManager = Depends(get_job_manager),
+) -> StoryboardJobResponse:
+    """
+    Generate deployment scenario storyboards from call transcript.
+
+    Returns immediately with job ID. Poll GET /storyboard/jobs/{job_id} for completion.
+    Result includes 2-4 scenario storyboard PNGs and a BDR follow-up email draft.
+
+    Requires valid subscription and available quota.
+    """
+    # Create job (billing.org_id is validated by require_billing)
+    job = await job_manager.create_job(
+        org_id=billing.org_id,
+        job_type=JobType.TRANSCRIPT_TO_STORYBOARD,
+        input_params=request.model_dump(),
+    )
+
+    # Start background task
+    background_tasks.add_task(
+        run_transcript_storyboard_task,
         job_id=job.job_id,
         request=request,
         job_manager=job_manager,

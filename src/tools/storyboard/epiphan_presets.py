@@ -170,7 +170,7 @@ EPIPHAN_PRODUCTS = {
 EPIPHAN_VERTICALS = {
     "higher_ed": {
         "name": "Higher Education",
-        "atl_buyers": ["av_director", "ld_director"],
+        "atl_buyers": ["av_director", "ld_director", "provost", "university_president", "university_finance"],
         "btl_users": ["technical_director"],
         "use_cases": [
             "Lecture capture",
@@ -389,6 +389,11 @@ class AudiencePersona(str, Enum):
     CORP_COMMS = "corp_comms"
     EHS_MANAGER = "ehs_manager"
     LAW_FIRM_IT = "law_firm_it"
+
+    # ATL — Higher Ed Executive Buyers (3 new)
+    PROVOST = "provost"
+    UNIVERSITY_PRESIDENT = "university_president"
+    UNIVERSITY_FINANCE = "university_finance"
 
     # BTL — Operators (1 from study app)
     TECHNICAL_DIRECTOR = "technical_director"
@@ -789,6 +794,133 @@ EPIPHAN_ICP = {
                 "cutting-edge",
             ],
             "default_visual_style": "clean",
+        },
+        # ── ATL: Higher Ed Executive Buyers ────────────────────────
+        AudiencePersona.PROVOST: {
+            "title": "Provost / VP Academic Affairs",
+            "persona_type": "ATL",
+            "verticals": ["higher_ed"],
+            "cares_about": [
+                "student outcomes",
+                "faculty satisfaction",
+                "accreditation readiness",
+                "digital learning strategy",
+            ],
+            "tone": "Academic executive. Speak to strategic impact on teaching and learning mission.",
+            "value_angle": "ROI",
+            "value_framing": "Every classroom without reliable lecture capture is a missed opportunity for student success and retention.",
+            "hooks": [
+                "UNLV saw measurable retention gains after deploying lecture capture in 215 rooms",
+                "Faculty adoption rates soar when recording is one-button simple",
+                "Hybrid learning isn't optional — your accreditor expects it",
+            ],
+            "voice_tone": "Strategic academic leader. You think in terms of student outcomes, faculty workload, and institutional mission.",
+            "vocabulary": [
+                "student outcomes",
+                "retention",
+                "accreditation",
+                "faculty satisfaction",
+                "digital learning",
+                "hybrid pedagogy",
+                "strategic plan",
+                "provost council",
+                "academic technology",
+                "institutional effectiveness",
+            ],
+            "forbidden_phrases": [
+                "synergize",
+                "paradigm shift",
+                "cutting-edge",
+                "game-changing",
+                "disruptive",
+                "best-in-class",
+                "robust platform",
+            ],
+            "default_visual_style": "polished",
+        },
+        AudiencePersona.UNIVERSITY_PRESIDENT: {
+            "title": "University President",
+            "persona_type": "ATL",
+            "verticals": ["higher_ed"],
+            "cares_about": [
+                "institutional reputation",
+                "innovation narrative",
+                "student experience",
+                "board of trustees visibility",
+            ],
+            "tone": "Institutional leader. Speak to vision, reputation, and competitive positioning.",
+            "value_angle": "ROI",
+            "value_framing": "Campus-wide AV infrastructure is a strategic investment in institutional reputation and the student experience that drives enrollment.",
+            "hooks": [
+                "NC State's 300+ room deployment became a recruiting differentiator",
+                "Your board wants to see innovation — show them a campus that just works",
+                "Students choose universities that invest in their learning experience",
+            ],
+            "voice_tone": "Presidential gravitas. Vision, legacy, and institutional excellence.",
+            "vocabulary": [
+                "strategic vision",
+                "board of trustees",
+                "institutional excellence",
+                "student experience",
+                "campus innovation",
+                "enrollment",
+                "accreditation",
+                "capital investment",
+                "institutional reputation",
+                "competitive positioning",
+            ],
+            "forbidden_phrases": [
+                "synergize",
+                "leverage",
+                "paradigm shift",
+                "disruptive",
+                "game-changing",
+                "best-in-class",
+                "cutting-edge",
+            ],
+            "default_visual_style": "polished",
+        },
+        AudiencePersona.UNIVERSITY_FINANCE: {
+            "title": "VP Finance / CFO",
+            "persona_type": "ATL",
+            "verticals": ["higher_ed"],
+            "cares_about": [
+                "total cost of ownership",
+                "capital vs operating budget",
+                "procurement compliance",
+                "vendor stability",
+            ],
+            "tone": "Finance executive. Speak to TCO, lifecycle cost, and fiscal responsibility.",
+            "value_angle": "ROI",
+            "value_framing": "Hardware-based AV is a capital asset that depreciates predictably — no surprise SaaS renewals, no per-seat fees eating your operating budget.",
+            "hooks": [
+                "Pearl hardware lasts 7+ years — compare that to annual SaaS renewals",
+                "Capital expenditure today vs. recurring OpEx forever — the math is clear",
+                "MTSU manages 428 rooms with the same small AV team — that's TCO efficiency",
+            ],
+            "voice_tone": "Fiscally disciplined. Every dollar must be justified with lifecycle math.",
+            "vocabulary": [
+                "TCO",
+                "capital expenditure",
+                "depreciation",
+                "bond cycle",
+                "procurement",
+                "RFP",
+                "operating budget",
+                "lifecycle cost",
+                "vendor stability",
+                "fiscal year",
+            ],
+            "forbidden_phrases": [
+                "game-changing",
+                "revolutionary",
+                "cutting-edge",
+                "disruptive",
+                "synergy",
+                "paradigm",
+                "best-in-class",
+            ],
+            "default_visual_style": "data_viz",
         },
         # ── BTL: Operators ────────────────────────────────────────
         AudiencePersona.TECHNICAL_DIRECTOR: {

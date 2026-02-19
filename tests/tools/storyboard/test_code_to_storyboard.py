@@ -77,7 +77,7 @@ class TestCodeToStoryboardParameters:
         assert params["stage"]["enum"] == ["preview", "demo", "shipped"]
 
     def test_accepts_audience_parameter(self):
-        """Tool should accept audience parameter with all 8 BDR Playbook personas."""
+        """Tool should accept audience parameter with all 11 personas."""
         tool = CodeToStoryboardTool()
         params = tool.definition.parameters["properties"]
         assert "audience" in params
@@ -89,9 +89,13 @@ class TestCodeToStoryboardParameters:
         assert "corp_comms" in params["audience"]["enum"]
         assert "ehs_manager" in params["audience"]["enum"]
         assert "law_firm_it" in params["audience"]["enum"]
+        # ATL personas (3 Higher Ed executive)
+        assert "provost" in params["audience"]["enum"]
+        assert "university_president" in params["audience"]["enum"]
+        assert "university_finance" in params["audience"]["enum"]
         # BTL persona (1 from BDR Playbook)
         assert "technical_director" in params["audience"]["enum"]
-        assert len(params["audience"]["enum"]) == 8
+        assert len(params["audience"]["enum"]) == 11
 
     def test_accepts_icp_preset_parameter(self):
         """Tool should accept icp_preset parameter."""

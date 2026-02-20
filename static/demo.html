@@ -7,704 +7,262 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --color-primary: #1D2B51;
-            --color-accent: #8CBE3F;
-            --color-text: #1F2937;
-            --color-text-dark: #111827;
-            --color-muted: #888;
-            --color-subtle: #555;
-            --color-danger: #dc3545;
-            --color-danger-hover: #c82333;
-            --color-link: #3E67D2;
-            --color-border: #ddd;
-            --color-bg: #f6f7f9;
-            --color-bg-light: #f8f9fa;
-            --radius: 8px;
-            --radius-lg: 12px;
-            --transition: all 0.3s ease;
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        epiphan: {
+                            navy: '#1D2B51',
+                            green: '#8CBE3F',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Albert Sans', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
+                    keyframes: {
+                        'fade-in': {
+                            '0%': { opacity: '0', transform: 'translateY(8px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                    },
+                    animation: {
+                        'fade-in': 'fade-in 0.4s ease-out',
+                    },
+                },
+            },
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Albert Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--color-bg);
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--color-text);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            color: var(--color-text);
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            letter-spacing: -1.5px;
-            color: var(--color-text);
-        }
-
+    </script>
+    <style type="text/tailwindcss">
         .ai-accent {
-            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            @apply bg-clip-text text-transparent bg-gradient-to-br from-epiphan-navy to-epiphan-green;
         }
-
-        .subtitle {
-            font-size: 1.15rem;
-            color: #4B5563;
-            font-weight: 400;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: var(--color-primary);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Drop Zone */
-        .drop-zone {
-            border: 3px dashed var(--color-primary);
-            border-radius: var(--radius);
-            padding: 60px 20px;
-            text-align: center;
-            transition: var(--transition);
-            cursor: pointer;
-            background: var(--color-bg-light);
-        }
-
-        .drop-zone:hover,
-        .drop-zone.drag-over {
-            border-color: var(--color-accent);
-            background: #f0f4e8;
-        }
-
-        .drop-zone-content {
-            pointer-events: none;
-        }
-
-        .drop-zone-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-
-        .drop-zone-text {
-            font-size: 1.1rem;
-            color: var(--color-subtle);
-            margin-bottom: 10px;
-        }
-
-        .drop-zone-hint {
-            font-size: 0.9rem;
-            color: var(--color-muted);
-        }
-
-        .image-preview-container {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .image-previews {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 15px;
-        }
-
-        .image-preview-item {
-            position: relative;
-            display: inline-block;
-        }
-
-        .image-preview-item img {
-            max-width: 200px;
-            max-height: 150px;
-            border-radius: var(--radius);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-danger {
-            background: var(--color-danger);
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-danger:hover {
-            background: var(--color-danger-hover);
-        }
-
-        .image-preview-item .remove-btn {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            font-size: 14px;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .image-count {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        .clear-image {
-            margin-top: 10px;
-            padding: 8px 20px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-        }
-
-        /* Divider */
-        .divider {
-            text-align: center;
-            margin: 30px 0;
-            position: relative;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #ddd;
-        }
-
-        .divider span {
-            background: white;
-            padding: 0 20px;
-            position: relative;
-            color: #888;
-            font-weight: 600;
-        }
-
-        /* Code Input */
-        textarea {
-            width: 100%;
-            min-height: 200px;
-            padding: 15px;
-            border: 2px solid var(--color-border);
-            border-radius: var(--radius);
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 0.9rem;
-            resize: vertical;
-            transition: var(--transition);
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--color-primary);
-        }
-
-        /* Options */
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .option-group label {
-            display: block;
-            font-weight: 600;
-            color: var(--color-subtle);
-            margin-bottom: 8px;
-        }
-
-        select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid var(--color-border);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            background: white;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        select:focus {
-            outline: none;
-            border-color: var(--color-primary);
-        }
-
-        /* Buttons */
-        .button-group {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-
-        button {
-            padding: 14px 30px;
-            border: none;
-            border-radius: var(--radius);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .btn-primary {
-            background: var(--color-text);
-            color: white;
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background: var(--color-text-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(31, 41, 55, 0.3);
-        }
-
-        .btn-primary:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .btn-example {
-            background: var(--color-bg-light);
-            color: #333;
-            border: 2px solid var(--color-border);
-            padding: 10px 20px;
-            font-size: 0.9rem;
-        }
-
-        .btn-example:hover {
-            background: #e9ecef;
-            border-color: var(--color-accent);
-        }
-
-        /* Loading */
-        .loading {
-            text-align: center;
-            padding: 40px;
-        }
-
+        @keyframes spin { to { transform: rotate(360deg); } }
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--color-primary);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            @apply w-12 h-12 rounded-full border-4 border-gray-200 border-t-epiphan-navy mx-auto mb-5;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Result */
-        .result-container {
-            margin-top: 20px;
-        }
-
-        .result-image {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .result-image img {
-            max-width: 100%;
-            border-radius: var(--radius);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        .result-insights {
-            background: var(--color-bg-light);
-            padding: 20px;
-            border-radius: var(--radius);
-            border-left: 4px solid var(--color-accent);
-        }
-
-        .result-insights h3 {
-            color: var(--color-primary);
-            margin-bottom: 10px;
-        }
-
-        .result-insights p {
-            color: var(--color-subtle);
-            line-height: 1.6;
-        }
-
-        .collateral-link {
-            color: var(--color-link);
-            margin-right: 0.75rem;
-        }
-
-        .collateral-link--accent {
-            color: var(--color-accent);
-            font-weight: 600;
-        }
-
-        .char-counter {
-            text-align: right;
-            font-size: 0.8rem;
-            color: var(--color-muted);
-            margin-top: 4px;
-        }
-
-        /* Error */
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: var(--radius);
-            border-left: 4px solid var(--color-danger);
-            margin-top: 20px;
-        }
-
-        /* Hidden */
-        .hidden {
-            display: none;
-        }
-
-        /* Input file */
-        #fileInput {
-            display: none;
-        }
-
-        /* Two-column input layout */
-        .input-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .input-row .card {
-            margin-bottom: 0;
-        }
-
-        .input-row .section-title {
-            font-size: 1.1rem;
-            margin-bottom: 12px;
-        }
-
-        .input-row .drop-zone {
-            padding: 30px 15px;
-        }
-
-        .input-row .drop-zone-icon {
-            font-size: 2rem;
-            margin-bottom: 8px;
-        }
-
-        .input-row .drop-zone-text {
-            font-size: 0.95rem;
-        }
-
-        .input-row .drop-zone-hint {
-            font-size: 0.8rem;
-        }
-
-        .input-row textarea {
-            min-height: 140px;
-        }
-
-        /* Options card (top) */
-        .options-card {
-            padding: 20px 30px;
-            margin-bottom: 20px;
-        }
-
-        .options-card .options-grid {
-            margin-top: 0;
-        }
-
-        /* Generate section */
-        .generate-section {
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .btn-generate {
-            width: 100%;
-            max-width: 400px;
-            padding: 16px 40px;
-            font-size: 1.1rem;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-
-            .card {
-                padding: 20px;
-            }
-
-            .input-row {
-                grid-template-columns: 1fr;
-            }
-
-            .options-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            .btn-primary {
-                min-width: 100%;
-            }
+        .drop-zone.drag-over {
+            @apply border-epiphan-green bg-green-50;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Epiphan <span class="ai-accent">Storyboard</span></h1>
-            <p class="subtitle">Transform transcripts, code, and screenshots into executive-ready visuals</p>
+<body class="font-sans bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 min-h-screen p-5 text-gray-800">
+    <div class="max-w-5xl mx-auto">
+
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-gray-800 mb-3">
+                Epiphan <span class="ai-accent">Storyboard</span>
+            </h1>
+            <p class="text-lg text-gray-500 max-w-lg mx-auto">
+                Transform transcripts, code, and screenshots into executive-ready visuals
+            </p>
         </header>
 
-        <!-- Options on top -->
-        <div class="card options-card">
-            <div class="options-grid">
-                <!-- Stage hidden - defaults to demo -->
+        <!-- Options Bar -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-5 mb-5 shadow-lg border border-white/50">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <input type="hidden" id="stageSelect" value="demo">
 
-                <div class="option-group">
-                    <label for="audienceSelect">Persona</label>
-                    <select id="audienceSelect">
-                        <optgroup label="ATL — Decision Makers">
-                            <option value="av_director" selected>🎬 AV Director</option>
-                            <option value="ld_director">📚 L&D Director</option>
-                            <option value="sim_center_director">🏥 Sim Center Dir</option>
-                            <option value="court_admin">⚖️ Court Admin</option>
-                            <option value="corp_comms">📢 Corp Comms</option>
-                            <option value="ehs_manager">🦺 EHS Manager</option>
-                            <option value="law_firm_it">💼 Law Firm IT</option>
+                <div>
+                    <label for="audienceSelect" class="block text-sm font-semibold text-gray-500 mb-1.5">Persona</label>
+                    <select id="audienceSelect" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
+                        <optgroup label="ATL Decision Makers">
+                            <option value="av_director" selected>AV Director</option>
+                            <option value="ld_director">L&D Director</option>
+                            <option value="sim_center_director">Sim Center Dir</option>
+                            <option value="court_admin">Court Admin</option>
+                            <option value="corp_comms">Corp Comms</option>
+                            <option value="ehs_manager">EHS Manager</option>
+                            <option value="law_firm_it">Law Firm IT</option>
                         </optgroup>
-                        <optgroup label="ATL — Higher Ed / Edtech">
-                            <option value="provost">🎓 Provost</option>
-                            <option value="university_president">🏛️ Univ President</option>
-                            <option value="university_finance">📊 Univ Finance</option>
-                            <option value="edtech_manager">💻 Edtech Manager</option>
+                        <optgroup label="ATL Higher Ed / Edtech">
+                            <option value="provost">Provost</option>
+                            <option value="university_president">Univ President</option>
+                            <option value="university_finance">Univ Finance</option>
+                            <option value="edtech_manager">Edtech Manager</option>
                         </optgroup>
-                        <optgroup label="ATL — Live Events">
-                            <option value="venue_manager">🏟️ Venue Manager</option>
-                            <option value="production_director">🎥 Production Dir</option>
+                        <optgroup label="ATL Live Events">
+                            <option value="venue_manager">Venue Manager</option>
+                            <option value="production_director">Production Dir</option>
                         </optgroup>
-                        <optgroup label="BTL — Operators">
-                            <option value="technical_director">🔧 Technical Dir</option>
+                        <optgroup label="BTL Operators">
+                            <option value="technical_director">Technical Dir</option>
                         </optgroup>
-                        <optgroup label="CHANNEL — Partners">
-                            <option value="dealer_dave">🤝 Dealer Dave</option>
-                            <option value="system_engineer">⚙️ System Engineer</option>
+                        <optgroup label="CHANNEL Partners">
+                            <option value="dealer_dave">Dealer Dave</option>
+                            <option value="system_engineer">System Engineer</option>
                         </optgroup>
                     </select>
                 </div>
 
-                <div class="option-group">
-                    <label for="verticalSelect">Vertical</label>
-                    <select id="verticalSelect">
+                <div>
+                    <label for="verticalSelect" class="block text-sm font-semibold text-gray-500 mb-1.5">Vertical</label>
+                    <select id="verticalSelect" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
                         <option value="">Auto-detect</option>
-                        <option value="higher_ed">🎓 Higher Ed</option>
-                        <option value="corporate">🏢 Corporate</option>
-                        <option value="live_events">🎤 Live Events</option>
-                        <option value="government">🏛️ Government</option>
-                        <option value="houses_of_worship">⛪ Worship</option>
-                        <option value="healthcare">🏥 Healthcare</option>
-                        <option value="industrial">🏭 Industrial</option>
-                        <option value="legal">⚖️ Legal</option>
-                        <option value="ux_research">🔬 UX Research</option>
-                        <option value="k12">📚 K-12</option>
+                        <option value="higher_ed">Higher Ed</option>
+                        <option value="corporate">Corporate</option>
+                        <option value="live_events">Live Events</option>
+                        <option value="government">Government</option>
+                        <option value="houses_of_worship">Worship</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="industrial">Industrial</option>
+                        <option value="legal">Legal</option>
+                        <option value="ux_research">UX Research</option>
+                        <option value="k12">K-12</option>
                     </select>
                 </div>
 
-                <div class="option-group">
-                    <label for="outputFormatSelect">Format</label>
-                    <select id="outputFormatSelect">
-                        <option value="infographic" selected>📐 Infograph</option>
-                        <option value="storyboard">📱 Storyboard</option>
+                <div>
+                    <label for="outputFormatSelect" class="block text-sm font-semibold text-gray-500 mb-1.5">Format</label>
+                    <select id="outputFormatSelect" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
+                        <option value="infographic" selected>Infograph</option>
+                        <option value="storyboard">Storyboard</option>
                     </select>
                 </div>
 
-                <div class="option-group">
-                    <label for="visualStyleSelect">Style</label>
-                    <select id="visualStyleSelect">
-                        <option value="polished" selected>✨ Polished</option>
-                        <option value="clean">🍎 Clean</option>
-                        <option value="photo_realistic">📷 Photo</option>
-                        <option value="minimalist">🔷 Minimal</option>
-                        <option value="isometric">🧊 3D</option>
-                        <option value="sketch">✏️ Sketch</option>
-                        <option value="data_viz">📊 Data</option>
-                        <option value="bold">🔶 Bold</option>
+                <div>
+                    <label for="visualStyleSelect" class="block text-sm font-semibold text-gray-500 mb-1.5">Style</label>
+                    <select id="visualStyleSelect" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
+                        <option value="polished" selected>Polished</option>
+                        <option value="clean">Clean</option>
+                        <option value="photo_realistic">Photo</option>
+                        <option value="minimalist">Minimal</option>
+                        <option value="isometric">3D</option>
+                        <option value="sketch">Sketch</option>
+                        <option value="data_viz">Data</option>
+                        <option value="bold">Bold</option>
                     </select>
                 </div>
 
-                <div class="option-group">
-                    <label for="artistStyleSelect">Artist</label>
-                    <select id="artistStyleSelect">
-                        <option value="none" selected>🎨 None</option>
-                        <option value="salvador_dali">🕐 Dali</option>
-                        <option value="monet">🌸 Monet</option>
-                        <option value="diego_rivera">🎺 Rivera</option>
-                        <option value="warhol">🎯 Warhol</option>
-                        <option value="van_gogh">🌻 Van Gogh</option>
-                        <option value="picasso">🔺 Picasso</option>
-                        <option value="giger">🦾 Giger</option>
+                <div>
+                    <label for="artistStyleSelect" class="block text-sm font-semibold text-gray-500 mb-1.5">Artist</label>
+                    <select id="artistStyleSelect" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
+                        <option value="none" selected>None</option>
+                        <option value="salvador_dali">Dali</option>
+                        <option value="monet">Monet</option>
+                        <option value="diego_rivera">Rivera</option>
+                        <option value="warhol">Warhol</option>
+                        <option value="van_gogh">Van Gogh</option>
+                        <option value="picasso">Picasso</option>
+                        <option value="giger">Giger</option>
                     </select>
                 </div>
             </div>
         </div>
 
-        <!-- Two-column input row -->
-        <div class="input-row">
-            <!-- Image Input Section -->
-            <div class="card">
-                <h2 class="section-title">
-                    <span>📸</span>
-                    Images
-                </h2>
+        <!-- Two-column Input Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
 
-                <div class="drop-zone" id="dropZone">
-                    <div class="drop-zone-content">
-                        <div class="drop-zone-icon">⬆️</div>
-                        <div class="drop-zone-text">Drop up to 3 images</div>
-                        <div class="drop-zone-hint">Miro • Screenshots • Cmd+V</div>
+            <!-- Image Input -->
+            <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
+                <h2 class="text-lg font-semibold text-epiphan-navy mb-3 flex items-center gap-2">
+                    <span>Images</span>
+                </h2>
+                <div class="drop-zone border-3 border-dashed border-epiphan-navy rounded-lg py-10 px-4 text-center cursor-pointer bg-gray-50 hover:border-epiphan-green hover:bg-green-50 transition-all" id="dropZone" style="border-width: 3px;">
+                    <div class="pointer-events-none">
+                        <div class="text-3xl mb-2">&#x2B06;&#xFE0F;</div>
+                        <div class="text-sm text-gray-500 mb-1">Drop up to 3 images</div>
+                        <div class="text-xs text-gray-400">Miro &bull; Screenshots &bull; Cmd+V</div>
                     </div>
                 </div>
-
-                <input type="file" id="fileInput" accept="image/*" multiple>
-
-                <div id="imagePreviewContainer" class="image-preview-container hidden">
-                    <div id="imagePreviews" class="image-previews"></div>
-                    <button class="btn-danger clear-image" onclick="clearAllImages()">Clear</button>
+                <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
+                <div id="imagePreviewContainer" class="mt-4 text-center hidden">
+                    <div id="imagePreviews" class="flex flex-wrap gap-3 justify-center mb-3"></div>
+                    <button onclick="clearAllImages()" class="px-4 py-1.5 text-sm bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors">Clear</button>
                 </div>
             </div>
 
-            <!-- Text Input Section -->
-            <div class="card">
-                <h2 class="section-title">
-                    <span>💬</span>
-                    Text / Code
+            <!-- Text Input -->
+            <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
+                <h2 class="text-lg font-semibold text-epiphan-navy mb-3 flex items-center gap-2">
+                    <span>Text / Code</span>
                 </h2>
-
                 <textarea
                     id="codeInput"
                     maxlength="50000"
+                    class="w-full min-h-[140px] p-3 border-2 border-gray-200 rounded-lg font-mono text-sm resize-y transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40"
                     placeholder="Paste transcript, code, or notes...
 
 Example:
 - Pain points from call
 - Feature code snippets
 - Meeting notes"></textarea>
-                <div id="charCount" class="char-counter">0 / 50,000</div>
-
-                <!-- Quick Examples -->
+                <div id="charCount" class="text-right text-xs text-gray-400 mt-1">0 / 50,000</div>
                 <div id="examplesSection" class="hidden">
-                    <div class="button-group" id="examplesButtons"></div>
+                    <div class="flex flex-wrap gap-2 mt-3" id="examplesButtons"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Generate button below inputs -->
-        <div class="generate-section">
-            <button class="btn-primary btn-generate" id="generateBtn" onclick="generate()">
+        <!-- Generate Button -->
+        <div class="text-center my-6">
+            <button id="generateBtn" onclick="generate()"
+                class="w-full max-w-md px-10 py-4 text-lg font-bold text-white rounded-xl
+                       bg-gradient-to-r from-epiphan-navy to-epiphan-green
+                       shadow-xl shadow-epiphan-navy/20
+                       hover:shadow-2xl hover:shadow-epiphan-green/30 hover:-translate-y-0.5
+                       active:translate-y-0
+                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-xl
+                       transition-all duration-200">
                 Generate Storyboard
             </button>
         </div>
 
         <!-- Loading -->
-        <div id="loadingSection" class="card hidden">
-            <div class="loading">
+        <div id="loadingSection" class="bg-white/80 backdrop-blur-sm rounded-xl p-10 shadow-lg border border-white/50 hidden animate-fade-in">
+            <div class="text-center">
                 <div class="spinner"></div>
-                <p>Generating your storyboard...</p>
-                <p style="color: #888; margin-top: 10px;">This may take 30-60 seconds</p>
+                <p class="text-gray-700 font-medium">Generating your storyboard...</p>
+                <p class="text-gray-400 text-sm mt-2">This may take 30-60 seconds</p>
             </div>
         </div>
 
         <!-- Error -->
-        <div id="errorSection" class="error hidden"></div>
+        <div id="errorSection" class="bg-red-50 text-red-800 p-4 rounded-lg border-l-4 border-red-500 mt-5 hidden"></div>
 
         <!-- Result -->
-        <div id="resultSection" class="card hidden">
-            <h2 class="section-title">
-                <span>✨</span>
+        <div id="resultSection" class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-2xl border border-white/50 mt-5 hidden animate-fade-in">
+            <h2 class="text-xl font-semibold text-epiphan-navy mb-4 flex items-center gap-2">
                 Generated Storyboard
             </h2>
-
-            <div class="result-container">
-                <div class="result-image">
-                    <img id="resultImg" src="" alt="Generated Storyboard">
+            <div class="mt-4">
+                <div class="text-center mb-5">
+                    <img id="resultImg" src="" alt="Generated Storyboard" class="max-w-full rounded-lg shadow-2xl">
                 </div>
 
-                <div class="button-group">
-                    <button class="btn-primary" onclick="downloadImage()">
+                <div class="flex flex-wrap gap-3 mt-5">
+                    <button onclick="downloadImage()"
+                        class="flex-1 min-w-[180px] px-6 py-3 text-sm font-semibold text-white bg-gray-800 rounded-lg
+                               hover:bg-gray-900 hover:-translate-y-0.5 hover:shadow-lg
+                               transition-all">
                         Download PNG
                     </button>
-                    <button class="btn-secondary" onclick="openInNewTab()">
+                    <button onclick="openInNewTab()"
+                        class="px-6 py-3 text-sm font-semibold text-white bg-gray-500 rounded-lg
+                               hover:bg-gray-600 transition-all">
                         Open in New Tab
                     </button>
                 </div>
 
-                <div id="insightsSection" class="result-insights hidden">
-                    <h3>Understanding Insights</h3>
-                    <p id="insightsText"></p>
+                <div id="insightsSection" class="mt-5 p-4 bg-gray-50 rounded-lg border-l-4 border-epiphan-green hidden">
+                    <h3 class="text-epiphan-navy font-semibold mb-2">Understanding Insights</h3>
+                    <p id="insightsText" class="text-gray-600 leading-relaxed text-sm"></p>
                 </div>
 
-                <div id="collateralSection" class="result-insights hidden" style="margin-top: 1rem;">
-                    <h3>Share with Prospect</h3>
-                    <div id="collateralLinks"></div>
+                <div id="collateralSection" class="mt-4 p-4 bg-gray-50 rounded-lg border-l-4 border-epiphan-green hidden">
+                    <h3 class="text-epiphan-navy font-semibold mb-2">Share with Prospect</h3>
+                    <div id="collateralLinks" class="text-sm"></div>
                 </div>
             </div>
         </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 pb-6 text-xs text-gray-400">
+            Powered by <span class="font-semibold text-epiphan-navy">Epiphan Video</span> &middot; THK Enterprises LLC
+        </footer>
     </div>
 
     <script>
@@ -717,6 +275,11 @@ Example:
         const $ = (id) => document.getElementById(id);
         const show = (id) => $(id).classList.remove('hidden');
         const hide = (id) => $(id).classList.add('hidden');
+
+        // Safe helper: clear all children of an element
+        function clearChildren(el) {
+            while (el.firstChild) el.removeChild(el.firstChild);
+        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -734,7 +297,11 @@ Example:
             textarea.addEventListener('input', () => {
                 const len = textarea.value.length;
                 counter.textContent = `${len.toLocaleString()} / 50,000`;
-                counter.style.color = len > MAX * 0.9 ? 'var(--color-danger)' : len > MAX * 0.7 ? '#f0ad4e' : 'var(--color-muted)';
+                counter.className = len > MAX * 0.9
+                    ? 'text-right text-xs mt-1 text-red-500'
+                    : len > MAX * 0.7
+                        ? 'text-right text-xs mt-1 text-amber-500'
+                        : 'text-right text-xs mt-1 text-gray-400';
             });
         }
 
@@ -750,10 +317,15 @@ Example:
                 const examples = await response.json();
 
                 if (examples.length > 0) {
-                    const examplesButtons = $('examplesButtons');
-                    examplesButtons.innerHTML = examples.map(ex =>
-                        `<button class="btn-example" onclick="loadExample('${ex.name}')">${ex.name}</button>`
-                    ).join('');
+                    const container = $('examplesButtons');
+                    clearChildren(container);
+                    examples.forEach(ex => {
+                        const btn = document.createElement('button');
+                        btn.className = 'px-3 py-1.5 text-xs bg-gray-50 text-gray-600 border border-gray-200 rounded-md hover:bg-gray-100 hover:border-epiphan-green transition-all';
+                        btn.textContent = ex.name;
+                        btn.addEventListener('click', () => loadExample(ex.name));
+                        container.appendChild(btn);
+                    });
                     show('examplesSection');
                 }
             } catch (error) {
@@ -764,7 +336,7 @@ Example:
         // Load specific example
         async function loadExample(name) {
             try {
-                const response = await fetch(`/demo/examples/${name}`);
+                const response = await fetch(`/demo/examples/${encodeURIComponent(name)}`);
                 if (!response.ok) {
                     showError('Failed to load example');
                     return;
@@ -798,14 +370,11 @@ Example:
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 dropZone.classList.remove('drag-over');
-
-                const files = Array.from(e.dataTransfer.files);
-                files.forEach(file => handleFile(file));
+                Array.from(e.dataTransfer.files).forEach(file => handleFile(file));
             });
 
             fileInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                files.forEach(file => handleFile(file));
+                Array.from(e.target.files).forEach(file => handleFile(file));
             });
         }
 
@@ -813,12 +382,10 @@ Example:
         function setupPaste() {
             document.addEventListener('paste', (e) => {
                 const items = e.clipboardData.items;
-
                 for (let item of items) {
                     if (item.type.startsWith('image/')) {
                         e.preventDefault();
-                        const file = item.getAsFile();
-                        handleFile(file);
+                        handleFile(item.getAsFile());
                         break;
                     }
                 }
@@ -845,7 +412,7 @@ Example:
             reader.readAsDataURL(file);
         }
 
-        // Update image previews display
+        // Update image previews display (safe DOM construction)
         function updateImagePreviews() {
             const container = $('imagePreviewContainer');
             const previews = $('imagePreviews');
@@ -856,17 +423,33 @@ Example:
             }
 
             container.classList.remove('hidden');
+            clearChildren(previews);
 
-            previews.innerHTML = imagesBase64.map((img, index) => `
-                <div class="image-preview-item">
-                    <img src="${img}" alt="Image ${index + 1}">
-                    <button class="btn-danger remove-btn" onclick="removeImage(${index})">×</button>
-                </div>
-            `).join('');
+            // Count indicator
+            const countDiv = document.createElement('div');
+            countDiv.className = 'text-xs text-gray-400 mb-2 w-full';
+            countDiv.textContent = `${imagesBase64.length}/${MAX_IMAGES} images`;
+            previews.appendChild(countDiv);
 
-            // Add count indicator
-            const countHtml = `<div class="image-count">${imagesBase64.length}/${MAX_IMAGES} images</div>`;
-            previews.innerHTML = countHtml + previews.innerHTML;
+            // Image thumbnails
+            imagesBase64.forEach((imgData, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative inline-block';
+
+                const img = document.createElement('img');
+                img.src = imgData;
+                img.alt = `Image ${index + 1}`;
+                img.className = 'max-w-[200px] max-h-[150px] rounded-lg shadow-md';
+                wrapper.appendChild(img);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white text-sm flex items-center justify-center transition-colors';
+                removeBtn.textContent = '\u00d7';
+                removeBtn.addEventListener('click', () => removeImage(index));
+                wrapper.appendChild(removeBtn);
+
+                previews.appendChild(wrapper);
+            });
         }
 
         // Remove single image
@@ -934,9 +517,7 @@ Example:
                 const payload = buildPayload();
                 const response = await fetch('/demo/generate', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
@@ -947,7 +528,6 @@ Example:
 
                 const result = await response.json();
 
-                // Check if API returned success: false
                 if (result.success === false) {
                     throw new Error(result.error || 'Storyboard generation failed');
                 }
@@ -962,11 +542,11 @@ Example:
             }
         }
 
-        // Build a row of links for collateral display
+        // Build a row of links for collateral display (safe DOM)
         function addLinkRow(container, label, items, urlKey, textKey) {
             if (!items || items.length === 0) return;
             const row = document.createElement('div');
-            row.style.marginBottom = '0.5rem';
+            row.className = 'mb-2';
             const strong = document.createElement('strong');
             strong.textContent = label + ': ';
             row.appendChild(strong);
@@ -974,30 +554,29 @@ Example:
                 const a = document.createElement('a');
                 a.href = item[urlKey];
                 a.target = '_blank';
-                a.className = 'collateral-link';
+                a.rel = 'noopener';
+                a.className = 'text-blue-600 hover:text-blue-800 mr-3 hover:underline';
                 a.textContent = item[textKey];
                 row.appendChild(a);
             });
             container.appendChild(row);
         }
 
-        // Display result
+        // Display result (safe DOM construction throughout)
         function displayResult(result) {
             resultImageBase64 = result.storyboard_png;
-            $('resultImg').src = `data:image/png;base64,${resultImageBase64}`;
+            $('resultImg').src = 'data:image/png;base64,' + resultImageBase64;
             show('resultSection');
 
-            // Show insights if available
             if (result.understanding) {
                 $('insightsText').textContent = result.understanding;
                 show('insightsSection');
             }
 
-            // Show collateral links if available
             if (result.collateral_links) {
                 const collateralLinks = $('collateralLinks');
                 const cl = result.collateral_links;
-                collateralLinks.textContent = '';
+                clearChildren(collateralLinks);
 
                 addLinkRow(collateralLinks, 'Products', cl.product_links, 'url', 'name');
                 addLinkRow(collateralLinks, 'Case Studies', cl.case_study_links, 'url', 'title');
@@ -1013,7 +592,10 @@ Example:
                         const a = document.createElement('a');
                         a.href = url;
                         a.target = '_blank';
-                        a.className = key === 'request_demo' ? 'collateral-link collateral-link--accent' : 'collateral-link';
+                        a.rel = 'noopener';
+                        a.className = key === 'request_demo'
+                            ? 'text-epiphan-green font-semibold hover:underline mr-3'
+                            : 'text-blue-600 hover:text-blue-800 hover:underline mr-3';
                         a.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                         row.appendChild(a);
                         if (i < entries.length - 1) {
@@ -1034,26 +616,31 @@ Example:
         // Download image
         function downloadImage() {
             if (!resultImageBase64) return;
-
             const link = document.createElement('a');
-            link.href = `data:image/png;base64,${resultImageBase64}`;
+            link.href = 'data:image/png;base64,' + resultImageBase64;
             link.download = `storyboard-${Date.now()}.png`;
             link.click();
         }
 
-        // Open in new tab
+        // Open in new tab (safe DOM construction via createElement)
         function openInNewTab() {
             if (!resultImageBase64) return;
 
-            const win = window.open();
-            win.document.write(`
-                <html>
-                <head><title>Storyboard</title></head>
-                <body style="margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0;">
-                    <img src="data:image/png;base64,${resultImageBase64}" style="max-width: 100%; height: auto;">
-                </body>
-                </html>
-            `);
+            const win = window.open('', '_blank');
+            if (!win) return;
+
+            win.document.title = 'Storyboard';
+
+            const style = win.document.createElement('style');
+            style.textContent = 'body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f0f0f0}';
+            win.document.head.appendChild(style);
+
+            const img = win.document.createElement('img');
+            img.src = 'data:image/png;base64,' + resultImageBase64;
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.alt = 'Storyboard';
+            win.document.body.appendChild(img);
         }
 
         // Show error

@@ -90,7 +90,7 @@ class TestUnifiedStoryboardParameters:
         assert "law_firm_it" in params["audience"]["enum"]
         # BTL persona (1 from BDR Playbook)
         assert "technical_director" in params["audience"]["enum"]
-        assert len(params["audience"]["enum"]) == 8
+        assert len(params["audience"]["enum"]) == 16
 
     def test_accepts_icp_preset_parameter(self):
         """Tool should accept icp_preset parameter."""

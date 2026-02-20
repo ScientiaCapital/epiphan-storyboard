@@ -155,6 +155,7 @@ SPEAK TO THE OPERATOR'S REALITY:
 - One-button start. Every source. Every time.
 - Built for the operator who can't afford a crash during the show.
 - "The gear that works when the pressure is highest."
+- Open to trying new solutions to stand out from competitors.
 
 VOCABULARY THAT RESONATES:
 - "cue", "cut", "fade", "PGM/PVW", "tally"
@@ -165,6 +166,98 @@ FORBIDDEN (sounds corporate):
 - "leverage", "synergize", "enterprise", "stakeholder", "paradigm"
 
 EMOTIONAL CORE: Operator pride. Clean shows. Gear you can trust when it matters most.
+""",
+        # ── CHANNEL: Sales Intermediaries (from PDF research) ────────
+        "dealer_dave": """VALUE FRAMING: ENABLEMENT (Channel Sales Support) - AMPLIFIED
+
+SPEAK AS A FELLOW SALES PROFESSIONAL (peer-to-peer, NOT vendor-to-buyer):
+- "#1 is building long-term relationships through customer satisfaction."
+- "Arm your team with assets that close deals."
+- "Products that install cleanly, work reliably, generate minimal support calls."
+- "One-pagers, spec sheets, competitive differentiators he can copy/paste to clients."
+
+VOCABULARY THAT RESONATES:
+- "deal reg", "margin", "demo", "proof of concept", "RFP", "bid"
+- "territory", "install base", "upsell", "attach rate", "ASP"
+- "one-pager", "spec sheet", "copy/paste to client"
+
+FORBIDDEN (sounds like internal corporate):
+- "corporate jargon", "synergize", "paradigm shift", "holistic"
+
+EMOTIONAL CORE: Sales enablement. Arm the channel with assets that close deals and build relationships.
+""",
+        "system_engineer": """VALUE FRAMING: TECHNICAL (Integration-First) - AMPLIFIED
+
+SPEAK AS A TECHNICAL PEER:
+- "Sharp and self-sufficient, does own testing, needs clear API access and configuration guides."
+- "Open API, native NDI/SRT, integrates with Q-SYS and Kaltura out of the box."
+- "Case studies from integrators who've deployed 60+ units."
+- "Highlight partner ecosystem (Q-SYS, Kaltura, Panopto)."
+
+VOCABULARY THAT RESONATES:
+- "API", "Q-SYS", "Crestron", "AMX", "Dante", "NDI", "AV-over-IP"
+- "signal flow", "as-built", "rack unit", "PoE budget", "VLAN", "multicast"
+- "integration flexibility", "peer validation"
+
+FORBIDDEN (sounds like marketing):
+- "marketing fluff", "vague claims without specs", "game-changing"
+
+EMOTIONAL CORE: Technical credibility. Specs, integration stories, and peer validation from fellow integrators.
+""",
+        # ── ATL: Edtech & Live Events (from PDF research) ───────────
+        "edtech_manager": """VALUE FRAMING: ADOPTION (Faculty Actually Use It) - AMPLIFIED
+
+SPEAK AS AN EDTECH PEER:
+- "Visionary, wants seamless edtech experience."
+- "Faculty don't change their workflow — native Panopto and Kaltura integration."
+- "Capture happens automatically — adoption isn't an issue when there's nothing to adopt."
+- "Works alongside AV Director but focuses on CMS/LMS."
+
+VOCABULARY THAT RESONATES:
+- "LMS", "CMS", "Panopto", "Kaltura", "SCORM", "accessibility"
+- "faculty adoption", "student engagement", "lecture capture"
+- "universal design", "platform integration"
+
+FORBIDDEN (leave pure AV to AV Andy):
+- "pure AV jargon", "hardware specs without learning context"
+
+EMOTIONAL CORE: Seamless edtech vision. Faculty resistance disappears when technology is invisible.
+""",
+        "venue_manager": """VALUE FRAMING: VERSATILITY (One System, Every Event) - AMPLIFIED
+
+SPEAK AS A VENUE OPERATIONS PROFESSIONAL:
+- "Orchestra on Monday, corporate keynote on Tuesday — same Pearl, different layout."
+- "Oslo Opera runs 300+ shows/year on Pearl."
+- "Budget constraints, equipment limitations, client retention — you juggle all three."
+- "Staff can operate without extensive training."
+
+VOCABULARY THAT RESONATES:
+- "green room", "load-in", "strike", "house system", "venue tech"
+- "client specs", "AV rider", "house camera", "IMAG", "program feed"
+- "multi-camera", "webcast"
+
+FORBIDDEN (sounds like enterprise software):
+- "enterprise software language", "cloud-first", "synergize"
+
+EMOTIONAL CORE: Venue versatility. One reliable system for every event type, operable by any staff.
+""",
+        "production_director": """VALUE FRAMING: SCALE (Manage 100 Units Like 1) - AMPLIFIED
+
+SPEAK AS AN ENTERPRISE PRODUCTION EXECUTIVE:
+- "Values reliability, low-risk solutions that ensure uptime."
+- "Management at Scale: Inventory, uptime, lifecycle, reliability."
+- "Freeman trusts Pearl for the world's largest events."
+- "MSAVi runs Disney events — 'Haven't failed us once.'"
+
+VOCABULARY THAT RESONATES:
+- "fleet management", "inventory", "lifecycle", "uptime SLA"
+- "redundancy", "failover", "standardization", "deployment template"
+- "enterprise support", "spare pool", "RMA"
+
+FORBIDDEN (sounds small-scale):
+- "affordable", "compact", "portable", "small-scale"
+
+EMOTIONAL CORE: Enterprise scale confidence. Fleet management, reliability SLAs, and zero tolerance for downtime.
 """,
     }
     return value_angles.get(audience, value_angles["av_director"])
@@ -215,6 +308,33 @@ def get_persona_extraction_focus(audience: str, audience_info: dict) -> str:
 - What RELIABILITY UNDER PRESSURE during live events?
 - How does this simplify QUICK SETUP and teardown?
 - What REAL-TIME MONITORING and confidence monitoring?""",
+        # ── CHANNEL: Sales Intermediaries ────────────────────────────
+        "dealer_dave": """FOCUS FOR CHANNEL ACCOUNT MANAGER (Dealer/Reseller):
+- What DEAL SUPPORT or DEMO ASSETS were discussed?
+- What COMPETITIVE DIFFERENTIATORS vs other vendors?
+- What MARGIN or VENDOR RELIABILITY benefits?
+- What INSTALL SIMPLICITY minimizes post-sale support calls?""",
+        "system_engineer": """FOCUS FOR AV SYSTEMS DESIGNER (Integrator Technical):
+- What API QUALITY or INTEGRATION SPECS were discussed?
+- What PARTNER ECOSYSTEM compatibility (Q-SYS, Crestron, Kaltura)?
+- What INSTALLATION SIMPLICITY or deployment guides?
+- What PEER VALIDATION from other integrators?""",
+        # ── ATL: Edtech & Live Events ────────────────────────────────
+        "edtech_manager": """FOCUS FOR EDUCATIONAL TECHNOLOGY MANAGER:
+- What LMS/CMS INTEGRATION (Panopto, Kaltura, Brightcove) was discussed?
+- What FACULTY ADOPTION improvements or barriers addressed?
+- What STUDENT ACCESSIBILITY or platform compatibility?
+- How does this create a SEAMLESS EDTECH EXPERIENCE?""",
+        "venue_manager": """FOCUS FOR VENUE AV MANAGER:
+- What MULTI-EVENT FLEXIBILITY across different event types?
+- What CLIENT SATISFACTION or venue reputation benefits?
+- How does this work with LIMITED STAFF and minimal training?
+- What EQUIPMENT RELIABILITY for back-to-back events?""",
+        "production_director": """FOCUS FOR DIRECTOR OF EVENT TECHNOLOGY:
+- What FLEET MANAGEMENT AT SCALE (50-500+ units)?
+- What RELIABILITY/UPTIME SLA and redundancy features?
+- What STANDARDIZATION across multiple venues?
+- What ENTERPRISE SUPPORT or lifecycle management?""",
     }
     return extractions.get(audience, extractions["av_director"])
 
@@ -288,6 +408,38 @@ VOICE: {voice_tone}
 VALUE ANGLE: EASE - one-button operation, reliability under pressure
 VISUAL STYLE: {default_style} (operator's view, control room aesthetic, multiview)
 DESIGN: Show flow layout, one-touch control panel, confidence monitoring view
+AVOID WORDS: {", ".join(forbidden[:5])}""",
+        # ── CHANNEL: Sales Intermediaries ────────────────────────────
+        "dealer_dave": f"""FOR: {title}
+VOICE: {voice_tone}
+VALUE ANGLE: ENABLEMENT - deal support assets, competitive differentiators, channel enablement
+VISUAL STYLE: {default_style} (sales battlecard aesthetic, clean product comparison)
+DESIGN: Competitive comparison table, product one-pager, deal support assets
+AVOID WORDS: {", ".join(forbidden[:5])}""",
+        "system_engineer": f"""FOR: {title}
+VOICE: {voice_tone}
+VALUE ANGLE: TECHNICAL - API quality, integration specs, partner ecosystem
+VISUAL STYLE: {default_style} (technical diagram, signal flow, rack layout)
+DESIGN: Integration architecture, signal flow diagram, partner ecosystem map
+AVOID WORDS: {", ".join(forbidden[:5])}""",
+        # ── ATL: Edtech & Live Events ────────────────────────────────
+        "edtech_manager": f"""FOR: {title}
+VOICE: {voice_tone}
+VALUE ANGLE: ADOPTION - faculty use it because it works with their LMS, invisible technology
+VISUAL STYLE: {default_style} (edtech platform aesthetic, LMS integration view)
+DESIGN: LMS integration flow, faculty adoption journey, platform compatibility grid
+AVOID WORDS: {", ".join(forbidden[:5])}""",
+        "venue_manager": f"""FOR: {title}
+VOICE: {voice_tone}
+VALUE ANGLE: VERSATILITY - one system for every event type, multi-use flexibility
+VISUAL STYLE: {default_style} (venue operations aesthetic, event type grid)
+DESIGN: Multi-event layout comparison, venue tech setup, client satisfaction flow
+AVOID WORDS: {", ".join(forbidden[:5])}""",
+        "production_director": f"""FOR: {title}
+VOICE: {voice_tone}
+VALUE ANGLE: SCALE - fleet management, 100 units managed as one, enterprise reliability
+VISUAL STYLE: {default_style} (fleet dashboard, enterprise management aesthetic)
+DESIGN: Fleet management dashboard, uptime metrics, multi-venue deployment map
 AVOID WORDS: {", ".join(forbidden[:5])}""",
     }
 
@@ -453,3 +605,61 @@ def get_format_output_instructions(output_format: str) -> str:
 - Single image, LANDSCAPE 16:9 aspect ratio (widescreen horizontal)
 - 1920x1080 resolution (HD widescreen)
 - PNG format"""
+
+
+def get_vertical_generation_context(vertical: str | None) -> str:
+    """
+    Get vertical-specific context for storyboard generation.
+
+    Injects vertical pain points, reference stories, and recommended products
+    into the generation prompt so the storyboard is contextually relevant.
+
+    Args:
+        vertical: Vertical identifier (e.g., "higher_ed", "live_events")
+
+    Returns:
+        Prompt fragment with vertical context, or empty string if no vertical.
+    """
+    if not vertical:
+        return ""
+
+    from src.tools.storyboard.epiphan_presets import EPIPHAN_VERTICALS, get_reference_stories
+
+    vert_data = EPIPHAN_VERTICALS.get(vertical)
+    if not vert_data:
+        return ""
+
+    sections = [f"\nVERTICAL CONTEXT: {vert_data['name']}"]
+
+    # Pain points specific to this vertical
+    pain_points = vert_data.get("pain_points", [])
+    if pain_points:
+        sections.append(f"INDUSTRY PAIN POINTS: {'; '.join(pain_points[:3])}")
+
+    # Reference stories filtered by vertical
+    stories = get_reference_stories(vertical)
+    if stories:
+        story_lines = []
+        for s in stories[:3]:
+            quote = s.get("quote", "")
+            story_lines.append(f"- {s['customer']}: {s['metric']} — \"{quote}\"")
+        sections.append("PROOF POINTS:\n" + "\n".join(story_lines))
+
+    # Use cases
+    use_cases = vert_data.get("use_cases", [])
+    if use_cases:
+        sections.append(f"USE CASES: {', '.join(use_cases)}")
+
+    # Recommended products (names only, no pricing per user request)
+    from src.tools.storyboard.epiphan_presets import EPIPHAN_PRODUCTS
+
+    rec_products = vert_data.get("recommended_products", [])
+    if rec_products:
+        product_names = [
+            EPIPHAN_PRODUCTS[pid]["name"]
+            for pid in rec_products
+            if pid in EPIPHAN_PRODUCTS
+        ]
+        sections.append(f"RECOMMENDED PRODUCTS: {', '.join(product_names)}")
+
+    return "\n".join(sections)

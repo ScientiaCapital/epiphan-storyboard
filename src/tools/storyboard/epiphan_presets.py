@@ -170,8 +170,9 @@ EPIPHAN_PRODUCTS = {
 EPIPHAN_VERTICALS = {
     "higher_ed": {
         "name": "Higher Education",
-        "atl_buyers": ["av_director", "ld_director", "provost", "university_president", "university_finance"],
+        "atl_buyers": ["av_director", "ld_director", "provost", "university_president", "university_finance", "edtech_manager"],
         "btl_users": ["technical_director"],
+        "channel_partners": ["dealer_dave", "system_engineer"],
         "use_cases": [
             "Lecture capture",
             "Hybrid classrooms",
@@ -215,15 +216,22 @@ EPIPHAN_VERTICALS = {
     },
     "live_events": {
         "name": "Live Events / Production",
-        "atl_buyers": ["av_director", "technical_director"],
+        "atl_buyers": ["av_director", "venue_manager", "production_director"],
         "btl_users": ["technical_director"],
+        "channel_partners": ["dealer_dave", "system_engineer"],
         "use_cases": [
             "Multi-camera production",
             "Live streaming",
             "IMAG",
             "Event recording",
         ],
-        "reference_stories": [],
+        "reference_stories": [
+            "Freeman — Pearl fleet for world's largest events",
+            "MSAVi — Disney, Imagine Dragons — 'Haven't failed us once'",
+            "Talon AV — 30+ unstaffed rooms via Epiphan Cloud",
+            "Oslo Opera — 300+ shows/year, minimal staff",
+            "The Volume — Shannon Sharpe show production",
+        ],
         "pain_points": [
             "Software encoders crash mid-show — hardware reliability is non-negotiable",
             "Need to ingest 6+ sources and switch live with zero latency",
@@ -242,7 +250,10 @@ EPIPHAN_VERTICALS = {
             "Public access streaming",
             "Training",
         ],
-        "reference_stories": [],
+        "reference_stories": [
+            "Hawaii Senate — 6 Pearl-2 units, NDI, 'Any user can operate with confidence'",
+            "Redfish Technologies — 60+ Pearl installations across WA state",
+        ],
         "pain_points": [
             "Public transparency mandates require reliable recording/streaming",
             "Strict procurement processes — need clear TCO justification",
@@ -280,7 +291,10 @@ EPIPHAN_VERTICALS = {
             "Telemedicine",
             "Grand rounds",
         ],
-        "reference_stories": [],
+        "reference_stories": [
+            "BabyFlix — Multi-clinic ultrasound streaming, 'By far the best'",
+            "Charles Sturt — 6 sim labs, 'Intuitive enough, rarely explain'",
+        ],
         "pain_points": [
             "HIPAA compliance — video data must stay secure and controlled",
             "Simulation debriefs require multi-angle synchronized playback",
@@ -318,7 +332,12 @@ EPIPHAN_VERTICALS = {
             "Remote testimony",
             "Training",
         ],
-        "reference_stories": [],
+        "reference_stories": [
+            "UCLA Law — Classrooms + courtrooms, 'Edge has been a lifesaver'",
+            "Anchor Point — Mock trial capture, 'Super simple, no complex computer'",
+            "Benchmark Legal — Multi-venue mock trials, 'Flexibility and versatility'",
+            "Verdict Advantage — 6-channel mock trial recording",
+        ],
         "pain_points": [
             "Chain of custody for video evidence — must be tamper-proof",
             "Remote depositions are now standard — quality and reliability matter",
@@ -348,8 +367,9 @@ EPIPHAN_VERTICALS = {
     },
     "k12": {
         "name": "K-12 Education",
-        "atl_buyers": ["av_director", "ld_director"],
+        "atl_buyers": ["av_director", "ld_director", "edtech_manager"],
         "btl_users": ["technical_director"],
+        "channel_partners": ["dealer_dave", "system_engineer"],
         "use_cases": [
             "Classroom recording",
             "Board meetings",
@@ -395,8 +415,17 @@ class AudiencePersona(str, Enum):
     UNIVERSITY_PRESIDENT = "university_president"
     UNIVERSITY_FINANCE = "university_finance"
 
+    # ATL — Edtech & Live Events (3 new from PDF research)
+    EDTECH_MANAGER = "edtech_manager"
+    VENUE_MANAGER = "venue_manager"
+    PRODUCTION_DIRECTOR = "production_director"
+
     # BTL — Operators (1 from study app)
     TECHNICAL_DIRECTOR = "technical_director"
+
+    # CHANNEL — Sales Intermediaries (2 new from PDF research)
+    DEALER_DAVE = "dealer_dave"
+    SYSTEM_ENGINEER = "system_engineer"
 
 
 class StoryboardStage(str, Enum):
@@ -451,34 +480,404 @@ COMPETITIVE_INTEL = {
 }
 
 
+# Product-specific competitive comparisons (from collateral CSVs)
+PRODUCT_COMPARISONS = {
+    "pearl_mini": {
+        "vs_extron_smp352": {
+            "competitor": "Extron SMP 352",
+            "key_diff": "Multi-source vs single-source, integrated recording vs external",
+            "epiphan_wins": "6 video sources, built-in recording, cloud management",
+        },
+        "vs_mediasite": {
+            "competitor": "Mediasite Recorders",
+            "key_diff": "Hardware encoding vs software, fleet management",
+            "epiphan_wins": "No PC dependency, Epiphan Cloud fleet management",
+        },
+    },
+    "pearl_nexus": {
+        "vs_extron_smp352": {
+            "competitor": "Extron SMP 352",
+            "key_diff": "Cloud-native vs local-only management",
+            "epiphan_wins": "Zero-touch provisioning, cloud management, SRT gateway",
+        },
+        "vs_mediasite": {
+            "competitor": "Mediasite Recorders",
+            "key_diff": "Cloud-first architecture vs legacy software capture",
+            "epiphan_wins": "No PC required, multi-site cloud management",
+        },
+        "vs_maevex_6020": {
+            "competitor": "Matrox Maevex 6020",
+            "key_diff": "All-in-one vs encode-only",
+            "epiphan_wins": "Recording + streaming + switching in one device",
+        },
+    },
+    "pearl_nano": {
+        "vs_extron_smp111": {
+            "competitor": "Extron SMP 111",
+            "key_diff": "Multi-source vs single-source at similar price",
+            "epiphan_wins": "2 video sources, SRT/RTMP, NDI input, portable",
+        },
+        "vs_monarch_hdx": {
+            "competitor": "Matrox Monarch HDX",
+            "key_diff": "Production features vs encode-only",
+            "epiphan_wins": "Built-in switching, layouts, and scheduling",
+        },
+    },
+    "pearl_2": {
+        "vs_newtek_capturecast": {
+            "competitor": "NewTek CaptureCast",
+            "key_diff": "All-in-one production vs switcher-only",
+            "epiphan_wins": "12+ sources, recording, streaming, switching in single rack unit",
+        },
+    },
+}
+
+
 # =============================================
 # Reference Stories (proof points)
 # =============================================
 
 REFERENCE_STORIES = {
+    # ── Higher Ed ────────────────────────────────────────────────
+    "ntnu": {
+        "customer": "NTNU (Norwegian University)",
+        "metric": "100+ rooms",
+        "vertical": "higher_ed",
+        "products": ["pearl_mini"],
+        "quote": "Pearls and Panopto are a perfect fit",
+        "quote_theme": "Seamless Panopto integration across 100+ lecture halls",
+    },
+    "mtsu": {
+        "customer": "Middle Tennessee State University",
+        "metric": "428 classrooms",
+        "vertical": "higher_ed",
+        "products": ["pearl_mini"],
+        "quote": "Do more with less — 2-person team, 400+ rooms",
+        "quote_theme": "One AV team manages 428 rooms via Epiphan Cloud",
+    },
     "nc_state": {
         "customer": "NC State University",
-        "metric": "300+ Pearl units deployed campus-wide",
+        "metric": "300+ rooms",
         "vertical": "higher_ed",
+        "products": ["pearl_mini"],
+        "quote": "It just works flawlessly",
         "quote_theme": "Standardized on Epiphan for reliability across 300+ rooms",
     },
     "unlv": {
         "customer": "UNLV",
-        "metric": "215 rooms with automated lecture capture",
+        "metric": "200+ rooms",
         "vertical": "higher_ed",
-        "quote_theme": "Automated capture in 215 classrooms — faculty just teach",
+        "products": ["pearl_nexus"],
+        "quote": "Super fast to install and pair",
+        "quote_theme": "Automated capture in 200+ classrooms — faculty just teach",
     },
-    "mtsu": {
-        "customer": "Middle Tennessee State University",
-        "metric": "428 rooms centrally managed",
+    "vanderbilt": {
+        "customer": "Vanderbilt University",
+        "metric": "One-button studios",
         "vertical": "higher_ed",
-        "quote_theme": "One AV team manages 428 rooms via Epiphan Cloud",
+        "products": ["pearl_mini"],
+        "quote": "Swiss army knife for us",
+        "quote_theme": "Pearl Mini as versatile self-service recording studio",
     },
+    "ub": {
+        "customer": "University at Buffalo",
+        "metric": "Campus-wide deployment",
+        "vertical": "higher_ed",
+        "products": ["pearl_nexus"],
+        "quote": "Eliminated 4-5 devices",
+        "quote_theme": "Consolidated AV stack to single Pearl device per room",
+    },
+    # ── Legal ────────────────────────────────────────────────────
+    "ucla_law": {
+        "customer": "UCLA School of Law",
+        "metric": "Classrooms + courtrooms",
+        "vertical": "legal",
+        "products": ["pearl_2", "pearl_nexus"],
+        "quote": "Edge has been a lifesaver",
+        "quote_theme": "Multi-use: classrooms, moot court, and event capture",
+    },
+    "anchor_point": {
+        "customer": "Anchor Point Litigation Support",
+        "metric": "Mock trials, mobile",
+        "vertical": "legal",
+        "products": ["pearl_2"],
+        "quote": "Super simple, no complex computer",
+        "quote_theme": "Simplified mock trial capture — portable and reliable",
+    },
+    "benchmark_legal": {
+        "customer": "Benchmark Legal Video",
+        "metric": "Multi-venue mock trials",
+        "vertical": "legal",
+        "products": ["pearl_2"],
+        "quote": "Flexibility and versatility",
+        "quote_theme": "Flexible multi-venue mock trial video capture",
+    },
+    "verdict_advantage": {
+        "customer": "Verdict Advantage",
+        "metric": "Mock trials, 6 channels",
+        "vertical": "legal",
+        "products": ["pearl_2"],
+        "quote": "Delivered exactly what we needed",
+        "quote_theme": "6-channel mock trial recording for jury analysis",
+    },
+    # ── Government ───────────────────────────────────────────────
+    "hawaii_senate": {
+        "customer": "Hawaii State Senate",
+        "metric": "6 units, NDI",
+        "vertical": "government",
+        "products": ["pearl_2"],
+        "quote": "Any user can operate with confidence",
+        "quote_theme": "Simple enough for any staff member to operate reliably",
+    },
+    "redfish": {
+        "customer": "Redfish Technologies",
+        "metric": "60+ installations",
+        "vertical": "government",
+        "products": ["pearl_mini", "pearl_2"],
+        "quote": "Confident in every single Pearl",
+        "quote_theme": "60+ Pearl systems across WA state courts and councils",
+    },
+    # ── Corporate ────────────────────────────────────────────────
     "openai": {
         "customer": "OpenAI",
-        "metric": "Pearl systems for internal video production",
+        "metric": "12 Days livestream",
         "vertical": "corporate",
-        "quote_theme": "The world's leading AI company trusts Epiphan for their video infrastructure",
+        "products": ["pearl_2"],
+        "quote": "The workhorse of our streams",
+        "quote_theme": "The world's leading AI company trusts Pearl for livestream production",
+    },
+    "crestron_hq": {
+        "customer": "Crestron",
+        "metric": "HQ webcasts",
+        "vertical": "corporate",
+        "products": ["pearl_2"],
+        "quote": "Changed the game for us",
+        "quote_theme": "Even AV industry leaders choose Pearl for their own HQ",
+    },
+    # ── Live Events ──────────────────────────────────────────────
+    "freeman": {
+        "customer": "Freeman",
+        "metric": "World's largest events",
+        "vertical": "live_events",
+        "products": ["pearl_2", "pearl_mini"],
+        "quote": "Game-changer in customer offering",
+        "quote_theme": "Global event production company trusts Pearl fleet for largest events",
+    },
+    "msavi": {
+        "customer": "MSAVi",
+        "metric": "Disney, Imagine Dragons",
+        "vertical": "live_events",
+        "products": ["pearl_2"],
+        "quote": "Haven't failed us once",
+        "quote_theme": "High-profile events — Disney, Imagine Dragons — zero failures",
+    },
+    "talon_av": {
+        "customer": "Talon AV",
+        "metric": "30+ unstaffed rooms",
+        "vertical": "live_events",
+        "products": ["pearl_nano"],
+        "quote": "Swiss Army knife",
+        "quote_theme": "30+ unstaffed rooms managed remotely via Epiphan Cloud",
+    },
+    "oslo_opera": {
+        "customer": "Oslo Opera House",
+        "metric": "300+ shows/year",
+        "vertical": "live_events",
+        "products": ["pearl_nano", "pearl_2"],
+        "quote": "As easy as their phone",
+        "quote_theme": "300+ annual productions captured with minimal staff",
+    },
+    "the_volume": {
+        "customer": "The Volume",
+        "metric": "Shannon Sharpe shows",
+        "vertical": "live_events",
+        "products": ["pearl_2"],
+        "quote": "Biggest game changer",
+        "quote_theme": "Celebrity podcast/show production powered by Pearl",
+    },
+    # ── Healthcare ───────────────────────────────────────────────
+    "babyflix": {
+        "customer": "BabyFlix",
+        "metric": "Multi-clinic ultrasound",
+        "vertical": "healthcare",
+        "products": ["pearl_nano", "avio_4k"],
+        "quote": "By far the best",
+        "quote_theme": "Multi-clinic ultrasound streaming for expecting parents",
+    },
+    "charles_sturt": {
+        "customer": "Charles Sturt University",
+        "metric": "6 sim labs",
+        "vertical": "healthcare",
+        "products": ["pearl_2"],
+        "quote": "Intuitive enough, rarely explain",
+        "quote_theme": "Simulation lab recording so intuitive it needs no training",
+    },
+}
+
+
+# =============================================
+# Sales Collateral Metadata
+# =============================================
+
+SALES_COLLATERAL = {
+    # Product pages — direct links for each Pearl model
+    "product_pages": {
+        "pearl_2": {
+            "name": "Pearl-2",
+            "url": "https://www.epiphan.com/products/pearl-2/",
+            "tagline": "Flagship 12+ source all-in-one production system",
+        },
+        "pearl_mini": {
+            "name": "Pearl Mini",
+            "url": "https://www.epiphan.com/products/pearl-mini/",
+            "tagline": "All-in-one video encoder, recorder, and streamer",
+        },
+        "pearl_nexus": {
+            "name": "Pearl Nexus",
+            "url": "https://www.epiphan.com/products/pearl-nexus/",
+            "tagline": "Cloud-managed video gateway for distributed teams",
+        },
+        "pearl_nano": {
+            "name": "Pearl Nano",
+            "url": "https://www.epiphan.com/products/pearl-nano/",
+            "tagline": "Ultra-compact live production system",
+        },
+        "ec20_ptz": {
+            "name": "EC20 PTZ Camera",
+            "url": "https://www.epiphan.com/products/ec20/",
+            "tagline": "PoE PTZ camera designed for Pearl integration",
+        },
+        "epiphan_cloud": {
+            "name": "Epiphan Cloud",
+            "url": "https://www.epiphan.com/products/epiphan-cloud/",
+            "tagline": "Fleet management — manage all your Pearls from one dashboard",
+        },
+    },
+    # Case studies with URLs — curated proof points by vertical
+    "case_studies": {
+        "ntnu": {
+            "title": "NTNU — 100+ Rooms with Panopto Integration",
+            "url": "https://www.epiphan.com/customers/ntnu/",
+            "vertical": "higher_ed",
+            "products": ["pearl_mini"],
+        },
+        "mtsu": {
+            "title": "MTSU — 428 Classrooms, 2-Person Team",
+            "url": "https://www.epiphan.com/customers/mtsu/",
+            "vertical": "higher_ed",
+            "products": ["pearl_mini"],
+        },
+        "nc_state": {
+            "title": "NC State — 300+ Pearl Units Campus-Wide",
+            "url": "https://www.epiphan.com/customers/nc-state/",
+            "vertical": "higher_ed",
+            "products": ["pearl_mini"],
+        },
+        "unlv": {
+            "title": "UNLV — 200+ Rooms with Pearl Nexus",
+            "url": "https://www.epiphan.com/customers/unlv/",
+            "vertical": "higher_ed",
+            "products": ["pearl_nexus"],
+        },
+        "freeman": {
+            "title": "Freeman — World's Largest Events on Pearl",
+            "url": "https://www.epiphan.com/customers/freeman/",
+            "vertical": "live_events",
+            "products": ["pearl_2", "pearl_mini"],
+        },
+        "msavi": {
+            "title": "MSAVi — Disney and Imagine Dragons Events",
+            "url": "https://www.epiphan.com/customers/msavi/",
+            "vertical": "live_events",
+            "products": ["pearl_2"],
+        },
+        "openai": {
+            "title": "OpenAI — 12 Days Livestream Production",
+            "url": "https://www.epiphan.com/customers/openai/",
+            "vertical": "corporate",
+            "products": ["pearl_2"],
+        },
+        "hawaii_senate": {
+            "title": "Hawaii Senate — 6 NDI-Enabled Units",
+            "url": "https://www.epiphan.com/customers/hawaii-state-senate/",
+            "vertical": "government",
+            "products": ["pearl_2"],
+        },
+        "ucla_law": {
+            "title": "UCLA Law — Classrooms and Courtrooms",
+            "url": "https://www.epiphan.com/customers/ucla-law/",
+            "vertical": "legal",
+            "products": ["pearl_2", "pearl_nexus"],
+        },
+        "babyflix": {
+            "title": "BabyFlix — Multi-Clinic Ultrasound Streaming",
+            "url": "https://www.epiphan.com/customers/babyflix/",
+            "vertical": "healthcare",
+            "products": ["pearl_nano", "avio_4k"],
+        },
+        "oslo_opera": {
+            "title": "Oslo Opera House — 300+ Shows/Year",
+            "url": "https://www.epiphan.com/customers/oslo-opera/",
+            "vertical": "live_events",
+            "products": ["pearl_nano", "pearl_2"],
+        },
+        "the_volume": {
+            "title": "The Volume — Shannon Sharpe Show Production",
+            "url": "https://www.epiphan.com/customers/the-volume/",
+            "vertical": "live_events",
+            "products": ["pearl_2"],
+        },
+    },
+    # Webinars
+    "webinars": [
+        {
+            "title": "Lecture Capture at Scale",
+            "vertical": "higher_ed",
+            "products": ["pearl_mini", "pearl_nexus"],
+            "url": "https://www.epiphan.com/resources/webinars/",
+            "description": "How universities deploy 100+ rooms with 2-person AV teams",
+        },
+        {
+            "title": "Live Event Production with Pearl",
+            "vertical": "live_events",
+            "products": ["pearl_2", "pearl_mini"],
+            "url": "https://www.epiphan.com/resources/webinars/",
+            "description": "Multi-camera production for concerts, conferences, and broadcasts",
+        },
+        {
+            "title": "Courtroom & Government Recording",
+            "vertical": "government",
+            "products": ["pearl_2", "pearl_mini"],
+            "url": "https://www.epiphan.com/resources/webinars/",
+            "description": "Reliable recording for transparency mandates and public access",
+        },
+    ],
+    # Competitive comparisons (metadata only — no URLs for competitor content)
+    "competitive": {
+        "pearl_mini": {
+            "vs_extron": "Pearl Mini vs Extron SMP 352 — multi-source vs single-source",
+            "vs_mediasite": "Pearl Mini vs Mediasite — hardware encoding vs software dependency",
+        },
+        "pearl_nexus": {
+            "vs_extron": "Pearl Nexus vs Extron SMP 352 — cloud-native vs local-only",
+            "vs_maevex": "Pearl Nexus vs Matrox Maevex 6020 — all-in-one vs encode-only",
+        },
+        "pearl_nano": {
+            "vs_extron": "Pearl Nano vs Extron SMP 111 — multi-source vs single-source",
+            "vs_monarch": "Pearl Nano vs Matrox Monarch HDX — production features vs encode-only",
+        },
+        "pearl_2": {
+            "vs_newtek": "Pearl-2 vs NewTek CaptureCast — all-in-one vs switcher-only",
+        },
+    },
+    # Key resource pages
+    "resources": {
+        "all_customers": "https://www.epiphan.com/customers/",
+        "all_products": "https://www.epiphan.com/products/",
+        "support": "https://www.epiphan.com/support/",
+        "contact_sales": "https://www.epiphan.com/contact/",
+        "partner_program": "https://www.epiphan.com/partners/",
+        "request_demo": "https://www.epiphan.com/request-demo/",
     },
 }
 
@@ -514,6 +913,8 @@ EPIPHAN_ICP = {
                 "fleet standardization",
                 "ease of management",
                 "vendor support quality",
+                "peer recognition",
+                "end-of-lifecycle planning",
             ],
             "tone": "Peer-level AV professional. Speak to the pressure of managing hundreds of rooms.",
             "value_angle": "COI",
@@ -522,8 +923,10 @@ EPIPHAN_ICP = {
                 "NC State runs 300+ Pearls — one AV team, zero headaches",
                 "What if every room just worked the same way?",
                 "Stop babysitting AV. Start managing it.",
+                "You're not alone — 300+ universities standardized on Pearl",
+                "Embrace end of lifecycle — replace aging gear before it fails you",
             ],
-            "voice_tone": "AV peer. You've both done the 6AM setup and the midnight troubleshooting call.",
+            "voice_tone": "AV peer. You've both done the 6AM setup and the midnight troubleshooting call. AV nerd who loves technology — trusts his peers, doesn't like being sold to.",
             "vocabulary": [
                 "fleet management",
                 "standardize",
@@ -538,6 +941,10 @@ EPIPHAN_ICP = {
                 "RTMP",
                 "Dante",
                 "PoE",
+                "end of lifecycle",
+                "AVIXA",
+                "InfoComm",
+                "peer network",
             ],
             "forbidden_phrases": [
                 "digital transformation",
@@ -548,6 +955,9 @@ EPIPHAN_ICP = {
                 "leverage",
             ],
             "default_visual_style": "clean",
+            "pdf_source": "AV Andy",
+            "measured_by": ["functionality", "uptime", "adoption", "satisfaction", "peer recognition"],
+            "key_messages": ["You're not alone", "There's a better way", "Embrace end of lifecycle", "Advocate for yourself"],
         },
         AudiencePersona.LD_DIRECTOR: {
             "title": "L&D Director",
@@ -642,16 +1052,20 @@ EPIPHAN_ICP = {
                 "chain of custody",
                 "reliability",
                 "public access compliance",
+                "compliance",
+                "redundancy",
+                "evidence integrity",
             ],
-            "tone": "Judicial professional. Reliability and record integrity are non-negotiable.",
+            "tone": "Judicial professional. Reliability and record integrity are non-negotiable. Failure isn't an option.",
             "value_angle": "COI",
             "value_framing": "A failed recording of court proceedings isn't an inconvenience — it's a legal crisis. Don't risk it.",
             "hooks": [
                 "Court recording that never fails, never loses footage",
                 "Tamper-proof records for chain of custody",
                 "Public access streaming that actually works for every hearing",
+                "Foolproof, compliant, simple — because failure isn't an option",
             ],
-            "voice_tone": "Judicial gravity. Every word matters. Reliability is the only feature that counts.",
+            "voice_tone": "Judicial gravity. Every word matters. Reliability is the only feature that counts. Needs tools that are foolproof, compliant, simple.",
             "vocabulary": [
                 "record of proceedings",
                 "chain of custody",
@@ -662,6 +1076,9 @@ EPIPHAN_ICP = {
                 "tamper-proof",
                 "archival",
                 "retention policy",
+                "redundancy",
+                "compliance",
+                "evidence integrity",
             ],
             "forbidden_phrases": [
                 "game-changing",
@@ -672,6 +1089,8 @@ EPIPHAN_ICP = {
                 "innovative",
             ],
             "default_visual_style": "clean",
+            "pdf_source": "Courtroom Carl",
+            "bdr_tip": "Emphasize redundancy, simplicity, peace of mind",
         },
         AudiencePersona.CORP_COMMS: {
             "title": "Corporate Communications Director",
@@ -938,6 +1357,8 @@ EPIPHAN_ICP = {
                 "reliability under pressure",
                 "quick setup",
                 "real-time monitoring",
+                "competitive edge",
+                "standing out from competitors",
             ],
             "tone": "Fellow operator. You've both been in the back of the room making live TV happen.",
             "value_angle": "EASE",
@@ -946,8 +1367,9 @@ EPIPHAN_ICP = {
                 "One-button start. Every source. Every time.",
                 "Built for the operator who can't afford a crash during the show",
                 "The gear that works when the pressure is highest",
+                "Stand out from competitors with production quality they can't match",
             ],
-            "voice_tone": "Operator empathy. You understand the stress of live production and the joy of a clean show.",
+            "voice_tone": "Operator empathy. You understand the stress of live production and the joy of a clean show. Open to trying new solutions to stand out.",
             "vocabulary": [
                 "cue",
                 "cut",
@@ -972,6 +1394,219 @@ EPIPHAN_ICP = {
                 "best-in-class",
             ],
             "default_visual_style": "sketch",
+            "pdf_source": "Expert Edward",
+            "challenges": ["competitive pressure", "limited resources", "budget constraints"],
+        },
+        # ── CHANNEL: Sales Intermediaries (from PDF research) ────────
+        AudiencePersona.DEALER_DAVE: {
+            "title": "Channel Account Manager / Regional Sales Manager",
+            "persona_type": "CHANNEL",
+            "verticals": [
+                "higher_ed", "corporate", "live_events", "government",
+                "houses_of_worship", "healthcare", "industrial", "legal",
+                "ux_research", "k12",
+            ],
+            "cares_about": [
+                "deal support",
+                "demo assets",
+                "competitive differentiators",
+                "margin",
+                "vendor reliability",
+                "minimal support calls",
+            ],
+            "tone": "Fellow sales professional; peer-to-peer, not vendor-to-buyer.",
+            "value_angle": "ENABLEMENT",
+            "value_framing": "Arm your team with assets that close deals. Products that install cleanly and generate zero support calls.",
+            "hooks": [
+                "Your customer's AV Director will forward this to their VP",
+                "Pre-built battlecard, ready for your next demo",
+                "Products that install cleanly and generate zero support calls",
+                "Arm him with one-pagers, spec sheets, competitive differentiators he can copy/paste to clients",
+            ],
+            "voice_tone": "Fellow sales professional. You understand deal cycles, margin pressure, and the importance of vendor reliability.",
+            "vocabulary": [
+                "deal reg", "margin", "demo", "proof of concept", "RFP", "bid",
+                "distribution", "rep", "territory", "install base", "upsell",
+                "attach rate", "ASP", "one-pager", "spec sheet", "copy/paste to client",
+            ],
+            "forbidden_phrases": [
+                "corporate jargon",
+                "synergize",
+                "paradigm shift",
+                "holistic",
+                "enterprise journey",
+                "leverage",
+            ],
+            "default_visual_style": "polished",
+            "pdf_source": "Dealer Dave",
+            "org_size": "10-250 employees (AVI-SPL, Diversified, Ford AV)",
+            "titles": ["Regional Sales Manager", "Sales Engineer", "Account Executive", "VP Sales"],
+            "buys_based_on": ["reliability track record", "margin", "vendor support", "ease of quoting"],
+            "fears": ["recommending something that fails at client site", "losing a customer relationship"],
+            "bdr_tip": "Arm him with one-pagers, spec sheets, competitive differentiators he can copy/paste to clients",
+        },
+        AudiencePersona.SYSTEM_ENGINEER: {
+            "title": "AV Systems Designer / Pre-sales Engineer",
+            "persona_type": "CHANNEL",
+            "verticals": [
+                "higher_ed", "corporate", "live_events", "government",
+                "houses_of_worship", "healthcare", "industrial", "legal",
+                "ux_research", "k12",
+            ],
+            "cares_about": [
+                "API quality",
+                "integration specs",
+                "partner ecosystem compatibility",
+                "installation simplicity",
+                "post-install support burden",
+            ],
+            "tone": "Technical peer; speak to specs, integration, and real-world deployment.",
+            "value_angle": "TECHNICAL",
+            "value_framing": "Designed to integrate cleanly with your stack. Open API, native NDI/SRT, works with Q-SYS and Kaltura out of the box.",
+            "hooks": [
+                "Open API, native NDI/SRT, integrates with Q-SYS and Kaltura out of the box",
+                "Case studies from integrators who've deployed 60+ units",
+                "Sharp and self-sufficient — clear API access and configuration guides",
+            ],
+            "voice_tone": "Technical peer. Sharp and self-sufficient. Speak to specs, integration, and real-world deployment challenges.",
+            "vocabulary": [
+                "API", "Q-SYS", "Crestron", "AMX", "Dante", "NDI", "AV-over-IP",
+                "signal flow", "as-built", "rack unit", "PoE budget", "network topology",
+                "VLAN", "multicast",
+            ],
+            "forbidden_phrases": [
+                "marketing fluff",
+                "game-changing",
+                "revolutionary",
+                "best-in-class",
+                "cutting-edge",
+                "synergy",
+            ],
+            "default_visual_style": "sketch",
+            "pdf_source": "System Engineer Sam",
+            "org_size": "10-100 employees (integrators)",
+            "titles": ["AV Systems Designer", "Technical Consultant", "Design Engineer", "Pre-sales Engineer"],
+            "buys_based_on": ["technical specs", "API quality", "integration flexibility", "peer validation"],
+            "fears": ["specifying a product that doesn't integrate cleanly", "having to support it post-install"],
+            "bdr_tip": "Show case studies, connect him with product champions, highlight partner ecosystem (Q-SYS, Kaltura, Panopto)",
+        },
+        # ── ATL: Edtech & Live Events (from PDF research) ───────────
+        AudiencePersona.EDTECH_MANAGER: {
+            "title": "Educational Technology Manager",
+            "persona_type": "ATL",
+            "verticals": ["higher_ed", "k12"],
+            "cares_about": [
+                "LMS/CMS integration",
+                "faculty adoption rates",
+                "student accessibility",
+                "platform compatibility",
+                "seamless edtech experience",
+            ],
+            "tone": "Edtech peer; you understand faculty resistance and the adoption challenge.",
+            "value_angle": "ADOPTION",
+            "value_framing": "Faculty actually use it because it just works with their LMS. Capture happens automatically — adoption isn't an issue when there's nothing to adopt.",
+            "hooks": [
+                "Native Panopto and Kaltura integration — faculty don't change their workflow",
+                "Capture happens automatically — adoption isn't an issue when there's nothing to adopt",
+                "Align with her vision for seamless edtech",
+            ],
+            "voice_tone": "Edtech peer. Visionary who wants seamless edtech experience. Understands faculty resistance to change.",
+            "vocabulary": [
+                "LMS", "CMS", "Panopto", "Kaltura", "SCORM", "accessibility",
+                "universal design", "faculty adoption", "student engagement",
+                "lecture capture", "content management", "platform integration",
+            ],
+            "forbidden_phrases": [
+                "pure AV jargon",
+                "hardware specs without learning context",
+                "game-changing",
+                "revolutionary",
+                "best-in-class",
+                "cutting-edge",
+            ],
+            "default_visual_style": "polished",
+            "pdf_source": "Software Sophie",
+            "titles": ["Educational Technology Manager", "Learning Technology Coordinator"],
+            "key_challenge": "Faculty resistance to change, driving adoption",
+            "bdr_tip": "Align with her vision for seamless edtech. Show Panopto/Kaltura integration stories.",
+        },
+        AudiencePersona.VENUE_MANAGER: {
+            "title": "Head of AV / Venue AV Manager",
+            "persona_type": "ATL",
+            "verticals": ["live_events", "houses_of_worship"],
+            "cares_about": [
+                "multi-event flexibility",
+                "client satisfaction",
+                "budget constraints",
+                "equipment reliability",
+                "staff that can operate without extensive training",
+            ],
+            "tone": "Venue operations professional; you understand the pressure of back-to-back events with different requirements.",
+            "value_angle": "VERSATILITY",
+            "value_framing": "One system, every event type. Orchestra on Monday, corporate keynote on Tuesday — same Pearl, different layout.",
+            "hooks": [
+                "Orchestra on Monday, corporate keynote on Tuesday — same Pearl, different layout",
+                "Oslo Opera runs 300+ shows/year on Pearl",
+                "One system, every event type",
+            ],
+            "voice_tone": "Venue operations professional. You understand back-to-back events with different requirements and the pressure of client satisfaction.",
+            "vocabulary": [
+                "green room", "load-in", "strike", "house system", "venue tech",
+                "event manager", "client specs", "AV rider", "house camera", "IMAG",
+                "program feed", "webcast", "multi-camera",
+            ],
+            "forbidden_phrases": [
+                "enterprise software language",
+                "cloud-first",
+                "synergize",
+                "paradigm",
+                "holistic",
+                "best-in-class",
+            ],
+            "default_visual_style": "clean",
+            "pdf_source": "Venue Vernon",
+            "titles": ["Head of AV", "AV Manager", "Technical Director"],
+            "project_types": ["Orchestra Houses", "Conference Centers", "Arts Centers", "Theaters"],
+            "challenges": ["budget", "equipment limitations", "client retention", "unexpected hurdles"],
+        },
+        AudiencePersona.PRODUCTION_DIRECTOR: {
+            "title": "Senior Video Engineer / Director of Event Technology",
+            "persona_type": "ATL",
+            "verticals": ["live_events"],
+            "cares_about": [
+                "fleet management at scale",
+                "reliability and uptime",
+                "inventory lifecycle",
+                "standardization across venues",
+                "enterprise support SLA",
+            ],
+            "tone": "Enterprise production executive; you think in fleets, not individual boxes.",
+            "value_angle": "SCALE",
+            "value_framing": "Manage 100 units like 1. Fleet management, standardization, enterprise support.",
+            "hooks": [
+                "Freeman trusts Pearl for the world's largest events",
+                "MSAVi runs Disney events — 'Haven't failed us once'",
+                "Epiphan Cloud manages your entire fleet from one dashboard",
+            ],
+            "voice_tone": "Enterprise production executive. You think in fleets, not individual boxes. Values reliability, low-risk solutions that ensure uptime.",
+            "vocabulary": [
+                "fleet management", "inventory", "lifecycle", "uptime SLA", "redundancy",
+                "failover", "standardization", "deployment template", "enterprise support",
+                "spare pool", "RMA",
+            ],
+            "forbidden_phrases": [
+                "affordable",
+                "compact",
+                "portable",
+                "small-scale",
+                "game-changing",
+                "best-in-class",
+            ],
+            "default_visual_style": "data_viz",
+            "pdf_source": "Solution Steve",
+            "org_size": "1K-10K employees (Freeman, Encore, AVI-SPL, GPJ)",
+            "titles": ["Senior Video Engineer", "Director Event Technology"],
+            "key_concern": "Management at Scale: Inventory, uptime, lifecycle, reliability",
         },
     },
     "language_style": {
@@ -1336,6 +1971,118 @@ def get_competitive_positioning(
             )
         return comp
     return list(COMPETITIVE_INTEL.values())
+
+
+def get_product_comparisons(product_id: str | None = None) -> dict[str, Any]:
+    """
+    Get product-specific competitive comparisons.
+
+    Args:
+        product_id: Optional product ID (e.g., "pearl_mini"). Returns all if None.
+
+    Returns:
+        Product comparison dict for one product, or all comparisons.
+    """
+    if product_id:
+        return PRODUCT_COMPARISONS.get(product_id, {})
+    return PRODUCT_COMPARISONS
+
+
+def get_sales_collateral(
+    category: str | None = None, vertical: str | None = None
+) -> dict[str, Any]:
+    """
+    Get sales collateral metadata, optionally filtered.
+
+    Args:
+        category: Optional category filter ("webinars", "competitive", "brochures", "case_studies")
+        vertical: Optional vertical filter (only applies to webinars and case_studies)
+
+    Returns:
+        Filtered collateral dict or full SALES_COLLATERAL.
+    """
+    if category:
+        data = SALES_COLLATERAL.get(category, {})
+        if vertical and isinstance(data, list):
+            return [item for item in data if item.get("vertical") == vertical]
+        if category == "case_studies" and vertical and isinstance(data, dict):
+            return {k: v for k, v in data.items() if v.get("vertical") == vertical}
+        return data
+    return SALES_COLLATERAL
+
+
+def get_collateral_links(
+    audience: str | None = None,
+    vertical: str | None = None,
+    products: list[str] | None = None,
+) -> dict[str, Any]:
+    """
+    Build a curated set of collateral links for a storyboard download.
+
+    Returns links to relevant product pages, case studies, and resources
+    based on the audience persona, vertical, and products mentioned.
+    The BDR can share these alongside the storyboard PDF.
+
+    Args:
+        audience: Audience persona string (e.g., "av_director")
+        vertical: Vertical string (e.g., "higher_ed")
+        products: Optional list of product IDs mentioned in the storyboard
+
+    Returns:
+        Dict with "product_links", "case_study_links", "resource_links" keys.
+    """
+    result: dict[str, Any] = {
+        "product_links": [],
+        "case_study_links": [],
+        "resource_links": {},
+    }
+
+    collateral = SALES_COLLATERAL
+
+    # Product links — from products mentioned or persona's recommended products
+    product_ids = set(products or [])
+    if not product_ids and vertical and vertical in EPIPHAN_VERTICALS:
+        product_ids = set(EPIPHAN_VERTICALS[vertical].get("recommended_products", []))
+
+    product_pages = collateral.get("product_pages", {})
+    for pid in product_ids:
+        if pid in product_pages:
+            result["product_links"].append(product_pages[pid])
+    # Always include Epiphan Cloud
+    if "epiphan_cloud" in product_pages:
+        result["product_links"].append(product_pages["epiphan_cloud"])
+
+    # Case study links — filtered by vertical
+    case_studies = collateral.get("case_studies", {})
+    for _key, study in case_studies.items():
+        if isinstance(study, dict):
+            if vertical and study.get("vertical") == vertical:
+                result["case_study_links"].append(study)
+            elif not vertical:
+                result["case_study_links"].append(study)
+
+    # Limit to top 3 most relevant case studies
+    result["case_study_links"] = result["case_study_links"][:3]
+
+    # Resource links — always include key pages
+    resources = collateral.get("resources", {})
+    # Channel personas get partner program link prominently
+    persona_config = None
+    if audience:
+        try:
+            persona_config = get_audience_persona(audience)
+        except Exception:
+            pass
+
+    result["resource_links"] = {
+        "request_demo": resources.get("request_demo", ""),
+        "contact_sales": resources.get("contact_sales", ""),
+        "all_customers": resources.get("all_customers", ""),
+    }
+    if persona_config and persona_config.get("persona_type") == "CHANNEL":
+        result["resource_links"]["partner_program"] = resources.get("partner_program", "")
+
+    return result
 
 
 def sanitize_content(content: str, rules: dict[str, Any] | None = None) -> str:

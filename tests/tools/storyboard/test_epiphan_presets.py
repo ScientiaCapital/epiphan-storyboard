@@ -39,7 +39,7 @@ class TestEpiphanICPStructure:
         assert "pain_points" in chars
 
     def test_icp_has_audience_personas(self):
-        """ICP should have all 11 personas (8 original + 3 Higher Ed executive)."""
+        """ICP should have all 16 personas (8 original + 3 Higher Ed exec + 3 vertical + 2 channel)."""
         assert "audience_personas" in EPIPHAN_ICP
         personas = EPIPHAN_ICP["audience_personas"]
         # ATL personas (7 from BDR Playbook)
@@ -56,7 +56,13 @@ class TestEpiphanICPStructure:
         assert AudiencePersona.UNIVERSITY_FINANCE in personas
         # BTL persona (1 from BDR Playbook)
         assert AudiencePersona.TECHNICAL_DIRECTOR in personas
-        assert len(personas) == 11
+        # New personas from PDF research (Phase 17)
+        assert AudiencePersona.EDTECH_MANAGER in personas
+        assert AudiencePersona.VENUE_MANAGER in personas
+        assert AudiencePersona.PRODUCTION_DIRECTOR in personas
+        assert AudiencePersona.DEALER_DAVE in personas
+        assert AudiencePersona.SYSTEM_ENGINEER in personas
+        assert len(personas) == 16
 
     def test_icp_has_language_style(self):
         """ICP should have language style guidelines."""
@@ -405,14 +411,17 @@ class TestAudiencePersonaEnum:
         """AV director enum value (primary ATL)."""
         assert AudiencePersona.AV_DIRECTOR.value == "av_director"
 
-    def test_all_11_personas_exist(self):
-        """All 11 personas should be present in the enum (8 original + 3 Higher Ed executive)."""
-        assert len(AudiencePersona) == 11
+    def test_all_16_personas_exist(self):
+        """All 16 personas should be present in the enum."""
+        assert len(AudiencePersona) == 16
         expected = [
             "av_director", "ld_director", "sim_center_director", "court_admin",
             "corp_comms", "ehs_manager", "law_firm_it",
             "provost", "university_president", "university_finance",
             "technical_director",
+            # Phase 17 additions
+            "edtech_manager", "venue_manager", "production_director",
+            "dealer_dave", "system_engineer",
         ]
         actual = [p.value for p in AudiencePersona]
         for val in expected:

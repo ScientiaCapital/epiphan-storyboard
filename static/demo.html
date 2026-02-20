@@ -8,6 +8,24 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --color-primary: #1D2B51;
+            --color-accent: #8CBE3F;
+            --color-text: #1F2937;
+            --color-text-dark: #111827;
+            --color-muted: #888;
+            --color-subtle: #555;
+            --color-danger: #dc3545;
+            --color-danger-hover: #c82333;
+            --color-link: #3E67D2;
+            --color-border: #ddd;
+            --color-bg: #f6f7f9;
+            --color-bg-light: #f8f9fa;
+            --radius: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.3s ease;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,10 +34,10 @@
 
         body {
             font-family: 'Albert Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f6f7f9;
+            background: var(--color-bg);
             min-height: 100vh;
             padding: 20px;
-            color: #1F2937;
+            color: var(--color-text);
         }
 
         .container {
@@ -29,7 +47,7 @@
 
         header {
             text-align: center;
-            color: #1F2937;
+            color: var(--color-text);
             margin-bottom: 40px;
         }
 
@@ -38,11 +56,11 @@
             font-weight: 700;
             margin-bottom: 12px;
             letter-spacing: -1.5px;
-            color: #1F2937;
+            color: var(--color-text);
         }
 
         .ai-accent {
-            background: linear-gradient(135deg, #1D2B51 0%, #8CBE3F 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -58,7 +76,7 @@
 
         .card {
             background: white;
-            border-radius: 12px;
+            border-radius: var(--radius-lg);
             padding: 30px;
             margin-bottom: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -67,7 +85,7 @@
         .section-title {
             font-size: 1.3rem;
             font-weight: 600;
-            color: #1D2B51;
+            color: var(--color-primary);
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -76,18 +94,18 @@
 
         /* Drop Zone */
         .drop-zone {
-            border: 3px dashed #1D2B51;
-            border-radius: 8px;
+            border: 3px dashed var(--color-primary);
+            border-radius: var(--radius);
             padding: 60px 20px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             cursor: pointer;
-            background: #f8f9fa;
+            background: var(--color-bg-light);
         }
 
         .drop-zone:hover,
         .drop-zone.drag-over {
-            border-color: #8CBE3F;
+            border-color: var(--color-accent);
             background: #f0f4e8;
         }
 
@@ -102,13 +120,13 @@
 
         .drop-zone-text {
             font-size: 1.1rem;
-            color: #555;
+            color: var(--color-subtle);
             margin-bottom: 10px;
         }
 
         .drop-zone-hint {
             font-size: 0.9rem;
-            color: #888;
+            color: var(--color-muted);
         }
 
         .image-preview-container {
@@ -132,8 +150,19 @@
         .image-preview-item img {
             max-width: 200px;
             max-height: 150px;
-            border-radius: 8px;
+            border-radius: var(--radius);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-danger {
+            background: var(--color-danger);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            background: var(--color-danger-hover);
         }
 
         .image-preview-item .remove-btn {
@@ -143,19 +172,11 @@
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            background: #dc3545;
-            color: white;
-            border: none;
-            cursor: pointer;
             font-size: 14px;
             line-height: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .image-preview-item .remove-btn:hover {
-            background: #c82333;
         }
 
         .image-count {
@@ -166,17 +187,9 @@
 
         .clear-image {
             margin-top: 10px;
-            background: #dc3545;
-            color: white;
-            border: none;
             padding: 8px 20px;
             border-radius: 6px;
-            cursor: pointer;
             font-size: 0.9rem;
-        }
-
-        .clear-image:hover {
-            background: #c82333;
         }
 
         /* Divider */
@@ -209,17 +222,17 @@
             width: 100%;
             min-height: 200px;
             padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius);
             font-family: 'Monaco', 'Courier New', monospace;
             font-size: 0.9rem;
             resize: vertical;
-            transition: border-color 0.3s ease;
+            transition: var(--transition);
         }
 
         textarea:focus {
             outline: none;
-            border-color: #1D2B51;
+            border-color: var(--color-primary);
         }
 
         /* Options */
@@ -233,24 +246,24 @@
         .option-group label {
             display: block;
             font-weight: 600;
-            color: #555;
+            color: var(--color-subtle);
             margin-bottom: 8px;
         }
 
         select {
             width: 100%;
             padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius);
             font-size: 1rem;
             background: white;
             cursor: pointer;
-            transition: border-color 0.3s ease;
+            transition: var(--transition);
         }
 
         select:focus {
             outline: none;
-            border-color: #1D2B51;
+            border-color: var(--color-primary);
         }
 
         /* Buttons */
@@ -264,22 +277,22 @@
         button {
             padding: 14px 30px;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius);
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .btn-primary {
-            background: #1F2937;
+            background: var(--color-text);
             color: white;
             flex: 1;
             min-width: 200px;
         }
 
         .btn-primary:hover:not(:disabled) {
-            background: #111827;
+            background: var(--color-text-dark);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(31, 41, 55, 0.3);
         }
@@ -299,16 +312,16 @@
         }
 
         .btn-example {
-            background: #f8f9fa;
+            background: var(--color-bg-light);
             color: #333;
-            border: 2px solid #ddd;
+            border: 2px solid var(--color-border);
             padding: 10px 20px;
             font-size: 0.9rem;
         }
 
         .btn-example:hover {
             background: #e9ecef;
-            border-color: #8CBE3F;
+            border-color: var(--color-accent);
         }
 
         /* Loading */
@@ -319,7 +332,7 @@
 
         .spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #1D2B51;
+            border-top: 4px solid var(--color-primary);
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -344,25 +357,42 @@
 
         .result-image img {
             max-width: 100%;
-            border-radius: 8px;
+            border-radius: var(--radius);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         }
 
         .result-insights {
-            background: #f8f9fa;
+            background: var(--color-bg-light);
             padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #8CBE3F;
+            border-radius: var(--radius);
+            border-left: 4px solid var(--color-accent);
         }
 
         .result-insights h3 {
-            color: #1D2B51;
+            color: var(--color-primary);
             margin-bottom: 10px;
         }
 
         .result-insights p {
-            color: #555;
+            color: var(--color-subtle);
             line-height: 1.6;
+        }
+
+        .collateral-link {
+            color: var(--color-link);
+            margin-right: 0.75rem;
+        }
+
+        .collateral-link--accent {
+            color: var(--color-accent);
+            font-weight: 600;
+        }
+
+        .char-counter {
+            text-align: right;
+            font-size: 0.8rem;
+            color: var(--color-muted);
+            margin-top: 4px;
         }
 
         /* Error */
@@ -370,8 +400,8 @@
             background: #f8d7da;
             color: #721c24;
             padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #dc3545;
+            border-radius: var(--radius);
+            border-left: 4px solid var(--color-danger);
             margin-top: 20px;
         }
 
@@ -490,17 +520,49 @@
                 <div class="option-group">
                     <label for="audienceSelect">Persona</label>
                     <select id="audienceSelect">
-                        <option value="av_director" selected>🎬 AV Director</option>
-                        <option value="ld_director">📚 L&D Director</option>
-                        <option value="sim_center_director">🏥 Sim Center Dir</option>
-                        <option value="court_admin">⚖️ Court Admin</option>
-                        <option value="corp_comms">📢 Corp Comms</option>
-                        <option value="ehs_manager">🦺 EHS Manager</option>
-                        <option value="law_firm_it">💼 Law Firm IT</option>
-                        <option value="provost">🎓 Provost</option>
-                        <option value="university_president">🏛️ Univ President</option>
-                        <option value="university_finance">📊 Univ Finance</option>
-                        <option value="technical_director">🔧 Technical Dir</option>
+                        <optgroup label="ATL — Decision Makers">
+                            <option value="av_director" selected>🎬 AV Director</option>
+                            <option value="ld_director">📚 L&D Director</option>
+                            <option value="sim_center_director">🏥 Sim Center Dir</option>
+                            <option value="court_admin">⚖️ Court Admin</option>
+                            <option value="corp_comms">📢 Corp Comms</option>
+                            <option value="ehs_manager">🦺 EHS Manager</option>
+                            <option value="law_firm_it">💼 Law Firm IT</option>
+                        </optgroup>
+                        <optgroup label="ATL — Higher Ed / Edtech">
+                            <option value="provost">🎓 Provost</option>
+                            <option value="university_president">🏛️ Univ President</option>
+                            <option value="university_finance">📊 Univ Finance</option>
+                            <option value="edtech_manager">💻 Edtech Manager</option>
+                        </optgroup>
+                        <optgroup label="ATL — Live Events">
+                            <option value="venue_manager">🏟️ Venue Manager</option>
+                            <option value="production_director">🎥 Production Dir</option>
+                        </optgroup>
+                        <optgroup label="BTL — Operators">
+                            <option value="technical_director">🔧 Technical Dir</option>
+                        </optgroup>
+                        <optgroup label="CHANNEL — Partners">
+                            <option value="dealer_dave">🤝 Dealer Dave</option>
+                            <option value="system_engineer">⚙️ System Engineer</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="option-group">
+                    <label for="verticalSelect">Vertical</label>
+                    <select id="verticalSelect">
+                        <option value="">Auto-detect</option>
+                        <option value="higher_ed">🎓 Higher Ed</option>
+                        <option value="corporate">🏢 Corporate</option>
+                        <option value="live_events">🎤 Live Events</option>
+                        <option value="government">🏛️ Government</option>
+                        <option value="houses_of_worship">⛪ Worship</option>
+                        <option value="healthcare">🏥 Healthcare</option>
+                        <option value="industrial">🏭 Industrial</option>
+                        <option value="legal">⚖️ Legal</option>
+                        <option value="ux_research">🔬 UX Research</option>
+                        <option value="k12">📚 K-12</option>
                     </select>
                 </div>
 
@@ -563,7 +625,7 @@
 
                 <div id="imagePreviewContainer" class="image-preview-container hidden">
                     <div id="imagePreviews" class="image-previews"></div>
-                    <button class="clear-image" onclick="clearAllImages()">Clear</button>
+                    <button class="btn-danger clear-image" onclick="clearAllImages()">Clear</button>
                 </div>
             </div>
 
@@ -583,7 +645,7 @@ Example:
 - Pain points from call
 - Feature code snippets
 - Meeting notes"></textarea>
-                <div id="charCount" style="text-align: right; font-size: 0.8rem; color: #888; margin-top: 4px;">0 / 50,000</div>
+                <div id="charCount" class="char-counter">0 / 50,000</div>
 
                 <!-- Quick Examples -->
                 <div id="examplesSection" class="hidden">
@@ -636,16 +698,25 @@ Example:
                     <h3>Understanding Insights</h3>
                     <p id="insightsText"></p>
                 </div>
+
+                <div id="collateralSection" class="result-insights hidden" style="margin-top: 1rem;">
+                    <h3>Share with Prospect</h3>
+                    <div id="collateralLinks"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Multi-image support - array of base64 strings
+        // State
         let imagesBase64 = [];
         const MAX_IMAGES = 3;
         let resultImageBase64 = null;
-        let examples = [];
+
+        // DOM utilities
+        const $ = (id) => document.getElementById(id);
+        const show = (id) => $(id).classList.remove('hidden');
+        const hide = (id) => $(id).classList.add('hidden');
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -657,13 +728,13 @@ Example:
 
         // Character counter for text input
         function setupCharCounter() {
-            const textarea = document.getElementById('codeInput');
-            const counter = document.getElementById('charCount');
+            const textarea = $('codeInput');
+            const counter = $('charCount');
             const MAX = 50000;
             textarea.addEventListener('input', () => {
                 const len = textarea.value.length;
                 counter.textContent = `${len.toLocaleString()} / 50,000`;
-                counter.style.color = len > MAX * 0.9 ? '#dc3545' : len > MAX * 0.7 ? '#f0ad4e' : '#888';
+                counter.style.color = len > MAX * 0.9 ? 'var(--color-danger)' : len > MAX * 0.7 ? '#f0ad4e' : 'var(--color-muted)';
             });
         }
 
@@ -676,17 +747,14 @@ Example:
                     return;
                 }
 
-                examples = await response.json();
+                const examples = await response.json();
 
                 if (examples.length > 0) {
-                    const examplesSection = document.getElementById('examplesSection');
-                    const examplesButtons = document.getElementById('examplesButtons');
-
+                    const examplesButtons = $('examplesButtons');
                     examplesButtons.innerHTML = examples.map(ex =>
                         `<button class="btn-example" onclick="loadExample('${ex.name}')">${ex.name}</button>`
                     ).join('');
-
-                    examplesSection.classList.remove('hidden');
+                    show('examplesSection');
                 }
             } catch (error) {
                 console.error('Failed to load examples:', error);
@@ -703,7 +771,7 @@ Example:
                 }
 
                 const data = await response.json();
-                document.getElementById('codeInput').value = data.code;
+                $('codeInput').value = data.code;
             } catch (error) {
                 showError(`Failed to load example: ${error.message}`);
             }
@@ -711,8 +779,8 @@ Example:
 
         // Setup drop zone for multiple files
         function setupDropZone() {
-            const dropZone = document.getElementById('dropZone');
-            const fileInput = document.getElementById('fileInput');
+            const dropZone = $('dropZone');
+            const fileInput = $('fileInput');
 
             dropZone.addEventListener('click', () => {
                 fileInput.click();
@@ -779,8 +847,8 @@ Example:
 
         // Update image previews display
         function updateImagePreviews() {
-            const container = document.getElementById('imagePreviewContainer');
-            const previews = document.getElementById('imagePreviews');
+            const container = $('imagePreviewContainer');
+            const previews = $('imagePreviews');
 
             if (imagesBase64.length === 0) {
                 container.classList.add('hidden');
@@ -792,7 +860,7 @@ Example:
             previews.innerHTML = imagesBase64.map((img, index) => `
                 <div class="image-preview-item">
                     <img src="${img}" alt="Image ${index + 1}">
-                    <button class="remove-btn" onclick="removeImage(${index})">×</button>
+                    <button class="btn-danger remove-btn" onclick="removeImage(${index})">×</button>
                 </div>
             `).join('');
 
@@ -811,62 +879,59 @@ Example:
         function clearAllImages() {
             imagesBase64 = [];
             updateImagePreviews();
-            document.getElementById('fileInput').value = '';
+            $('fileInput').value = '';
         }
 
-        // Legacy function for backward compatibility
-        function clearImage() {
-            clearAllImages();
+        // Extract error message from various formats
+        function extractErrorMessage(error) {
+            if (error instanceof Error) return error.message;
+            if (typeof error === 'string') return error;
+            return error?.detail || error?.error || JSON.stringify(error);
+        }
+
+        // Build request payload from form state
+        function buildPayload() {
+            const payload = {
+                stage: $('stageSelect').value,
+                audience: $('audienceSelect').value,
+                output_format: $('outputFormatSelect').value,
+                visual_style: $('visualStyleSelect').value,
+            };
+
+            const vertical = $('verticalSelect').value;
+            if (vertical) payload.vertical = vertical;
+
+            const artistStyle = $('artistStyleSelect').value;
+            if (artistStyle && artistStyle !== 'none') payload.artist_style = artistStyle;
+
+            if (imagesBase64.length === 1) {
+                payload.image_base64 = imagesBase64[0];
+            } else if (imagesBase64.length > 1) {
+                payload.images_base64 = imagesBase64;
+            }
+
+            const codeInput = $('codeInput').value.trim();
+            if (codeInput) payload.code = codeInput;
+
+            return payload;
         }
 
         // Generate storyboard - supports images, text, or BOTH (mixed input)
         async function generate() {
-            const codeInput = document.getElementById('codeInput').value.trim();
-            const stage = document.getElementById('stageSelect').value;
-            const audience = document.getElementById('audienceSelect').value;
-            const outputFormat = document.getElementById('outputFormatSelect').value;
-            const visualStyle = document.getElementById('visualStyleSelect').value;
-            const artistStyle = document.getElementById('artistStyleSelect').value;
+            const codeInput = $('codeInput').value.trim();
 
-            // Validate input - need at least images OR text
             if (imagesBase64.length === 0 && !codeInput) {
                 showError('Please provide images, text, or both');
                 return;
             }
 
-            // Show loading
-            document.getElementById('loadingSection').classList.remove('hidden');
-            document.getElementById('errorSection').classList.add('hidden');
-            document.getElementById('resultSection').classList.add('hidden');
-            document.getElementById('generateBtn').disabled = true;
+            show('loadingSection');
+            hide('errorSection');
+            hide('resultSection');
+            $('generateBtn').disabled = true;
 
             try {
-                const payload = {
-                    stage: stage,
-                    audience: audience,
-                    output_format: outputFormat,
-                    visual_style: visualStyle
-                };
-
-                // Add artist style if selected
-                if (artistStyle && artistStyle !== 'none') {
-                    payload.artist_style = artistStyle;
-                }
-
-                // Support mixed input: images + text together
-                if (imagesBase64.length > 0) {
-                    if (imagesBase64.length === 1) {
-                        payload.image_base64 = imagesBase64[0];
-                    } else {
-                        payload.images_base64 = imagesBase64;
-                    }
-                }
-
-                // Add text content if provided (works alongside images!)
-                if (codeInput) {
-                    payload.code = codeInput;
-                }
-
+                const payload = buildPayload();
                 const response = await fetch('/demo/generate', {
                     method: 'POST',
                     headers: {
@@ -890,49 +955,80 @@ Example:
                 displayResult(result);
 
             } catch (error) {
-                // Handle different error formats
-                let errorMsg = 'Unknown error';
-                if (error instanceof Error) {
-                    errorMsg = error.message;
-                } else if (typeof error === 'string') {
-                    errorMsg = error;
-                } else if (error && error.detail) {
-                    errorMsg = error.detail;
-                } else if (error && error.error) {
-                    errorMsg = error.error;
-                } else {
-                    errorMsg = JSON.stringify(error);
-                }
-                showError(`Generation failed: ${errorMsg}`);
+                showError(`Generation failed: ${extractErrorMessage(error)}`);
             } finally {
-                document.getElementById('loadingSection').classList.add('hidden');
-                document.getElementById('generateBtn').disabled = false;
+                hide('loadingSection');
+                $('generateBtn').disabled = false;
             }
+        }
+
+        // Build a row of links for collateral display
+        function addLinkRow(container, label, items, urlKey, textKey) {
+            if (!items || items.length === 0) return;
+            const row = document.createElement('div');
+            row.style.marginBottom = '0.5rem';
+            const strong = document.createElement('strong');
+            strong.textContent = label + ': ';
+            row.appendChild(strong);
+            items.forEach((item) => {
+                const a = document.createElement('a');
+                a.href = item[urlKey];
+                a.target = '_blank';
+                a.className = 'collateral-link';
+                a.textContent = item[textKey];
+                row.appendChild(a);
+            });
+            container.appendChild(row);
         }
 
         // Display result
         function displayResult(result) {
             resultImageBase64 = result.storyboard_png;
-
-            const resultImg = document.getElementById('resultImg');
-            resultImg.src = `data:image/png;base64,${resultImageBase64}`;
-
-            document.getElementById('resultSection').classList.remove('hidden');
+            $('resultImg').src = `data:image/png;base64,${resultImageBase64}`;
+            show('resultSection');
 
             // Show insights if available
             if (result.understanding) {
-                const insightsSection = document.getElementById('insightsSection');
-                const insightsText = document.getElementById('insightsText');
-
-                insightsText.textContent = result.understanding;
-                insightsSection.classList.remove('hidden');
+                $('insightsText').textContent = result.understanding;
+                show('insightsSection');
             }
 
-            // Scroll to result
-            document.getElementById('resultSection').scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+            // Show collateral links if available
+            if (result.collateral_links) {
+                const collateralLinks = $('collateralLinks');
+                const cl = result.collateral_links;
+                collateralLinks.textContent = '';
+
+                addLinkRow(collateralLinks, 'Products', cl.product_links, 'url', 'name');
+                addLinkRow(collateralLinks, 'Case Studies', cl.case_study_links, 'url', 'title');
+
+                if (cl.resource_links) {
+                    const row = document.createElement('div');
+                    const strong = document.createElement('strong');
+                    strong.textContent = 'Resources: ';
+                    row.appendChild(strong);
+                    const entries = Object.entries(cl.resource_links);
+                    entries.forEach(([key, url], i) => {
+                        if (!url) return;
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.target = '_blank';
+                        a.className = key === 'request_demo' ? 'collateral-link collateral-link--accent' : 'collateral-link';
+                        a.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                        row.appendChild(a);
+                        if (i < entries.length - 1) {
+                            row.appendChild(document.createTextNode(' \u00b7 '));
+                        }
+                    });
+                    collateralLinks.appendChild(row);
+                }
+
+                if (collateralLinks.childNodes.length > 0) {
+                    show('collateralSection');
+                }
+            }
+
+            $('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // Download image
@@ -962,15 +1058,10 @@ Example:
 
         // Show error
         function showError(message) {
-            const errorSection = document.getElementById('errorSection');
-            errorSection.textContent = message;
-            errorSection.classList.remove('hidden');
-
-            // Scroll to error
-            errorSection.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
+            const el = $('errorSection');
+            el.textContent = message;
+            el.classList.remove('hidden');
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     </script>
 </body>

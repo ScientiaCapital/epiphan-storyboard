@@ -16,6 +16,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
 
+from src.tools.storyboard.epiphan_presets import get_collateral_links
 from src.tools.storyboard.storage import get_storage
 from src.tools.storyboard.unified_storyboard import UnifiedStoryboardTool
 
@@ -118,10 +119,30 @@ class GenerateRequest(BaseModel):
         "provost",
         "university_president",
         "university_finance",
+        "edtech_manager",
+        "venue_manager",
+        "production_director",
         "technical_director",
+        "dealer_dave",
+        "system_engineer",
     ] = Field(
         "av_director",
         description="Target audience persona (Epiphan ICP)",
+    )
+    vertical: Literal[
+        "higher_ed",
+        "corporate",
+        "live_events",
+        "government",
+        "houses_of_worship",
+        "healthcare",
+        "industrial",
+        "legal",
+        "ux_research",
+        "k12",
+    ] | None = Field(
+        None,
+        description="Target vertical/industry. Auto-inferred from persona if not provided.",
     )
     output_format: Literal["infographic", "storyboard"] = Field(
         "infographic",
@@ -168,6 +189,10 @@ class GenerateResponse(BaseModel):
     audience: str
     icp_preset: str
     execution_time_ms: int
+    collateral_links: dict[str, Any] | None = Field(
+        None,
+        description="Curated links to product pages, case studies, and resources for BDR follow-up",
+    )
     error: str | None = None
 
 
@@ -389,6 +414,10 @@ async def generate_storyboard(
         "open_browser": False,  # Server-side - don't open browser
     }
 
+    # Add vertical if provided
+    if request.vertical:
+        tool_args["vertical"] = request.vertical
+
     # Add supplementary context if we have mixed input (image + text)
     if supplementary_context:
         tool_args["supplementary_context"] = supplementary_context
@@ -424,6 +453,18 @@ async def generate_storyboard(
                 logger.warning(f"Failed to save storyboard to storage: {e}")
                 # Continue without storage - don't fail the request
 
+        # Build collateral links for BDR follow-up
+        # Extract products mentioned in understanding if available
+        mentioned_products = None
+        if understanding and understanding.get("recommended_products"):
+            mentioned_products = understanding["recommended_products"]
+
+        collateral = get_collateral_links(
+            audience=request.audience,
+            vertical=request.vertical,
+            products=mentioned_products,
+        )
+
         return GenerateResponse(
             success=True,
             storyboard_png=storyboard_png,
@@ -438,6 +479,7 @@ async def generate_storyboard(
             audience=request.audience,
             icp_preset=request.icp_preset,
             execution_time_ms=result.execution_time_ms,
+            collateral_links=collateral,
         )
     else:
         return GenerateResponse(

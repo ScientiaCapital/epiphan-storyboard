@@ -139,10 +139,35 @@ class UnifiedStoryboardTool(BaseTool):
                             "corp_comms",
                             "ehs_manager",
                             "law_firm_it",
+                            "provost",
+                            "university_president",
+                            "university_finance",
+                            "edtech_manager",
+                            "venue_manager",
+                            "production_director",
                             "technical_director",
+                            "dealer_dave",
+                            "system_engineer",
                         ],
                         "description": "Target audience persona",
                         "default": "av_director",
+                    },
+                    "vertical": {
+                        "type": "string",
+                        "enum": [
+                            "higher_ed",
+                            "corporate",
+                            "live_events",
+                            "government",
+                            "houses_of_worship",
+                            "healthcare",
+                            "industrial",
+                            "legal",
+                            "ux_research",
+                            "k12",
+                        ],
+                        "description": "Target vertical/industry for context-aware generation",
+                        "default": None,
                     },
                     "open_browser": {
                         "type": "boolean",
@@ -384,6 +409,7 @@ class UnifiedStoryboardTool(BaseTool):
         icp_preset = arguments.get("icp_preset", "epiphan_av")
         stage = arguments.get("stage", "preview")
         audience = arguments.get("audience", "av_director")
+        vertical = arguments.get("vertical")  # Optional vertical for industry context
         output_format = arguments.get("output_format", "infographic")
         visual_style = arguments.get("visual_style", "polished")
         artist_style = arguments.get(
@@ -492,6 +518,7 @@ class UnifiedStoryboardTool(BaseTool):
                         images_data=content,
                         icp_preset=icp,
                         audience=audience,
+                        vertical=vertical,
                         supplementary_context=supplementary_context,
                     )
                 else:
@@ -499,7 +526,8 @@ class UnifiedStoryboardTool(BaseTool):
                     understanding = await self.gemini_client.understand_image(
                         image_data=content,
                         icp_preset=icp,
-                        audience=audience,  # Pass string, not persona dict
+                        audience=audience,
+                        vertical=vertical,
                         supplementary_context=supplementary_context,
                     )
             else:
@@ -513,6 +541,7 @@ class UnifiedStoryboardTool(BaseTool):
                         transcript=content,
                         icp_preset=icp,
                         audience=audience,
+                        vertical=vertical,
                     )
                 else:
                     logger.info("Detected CODE input - using code understanding")
@@ -522,6 +551,7 @@ class UnifiedStoryboardTool(BaseTool):
                         code_content=sanitized,
                         icp_preset=icp,
                         audience=audience,
+                        vertical=vertical,
                     )
 
             # Stage 2: Generate storyboard
@@ -534,6 +564,7 @@ class UnifiedStoryboardTool(BaseTool):
                 icp_preset=icp,
                 stage=stage,
                 audience=audience,
+                vertical=vertical,
                 output_format=output_format,
                 visual_style=visual_style,
                 artist_style=artist_style,
@@ -571,6 +602,7 @@ class UnifiedStoryboardTool(BaseTool):
                 "visual_style": visual_style,
                 "stage": stage,
                 "audience": audience,
+                "vertical": vertical,
                 "icp_preset": icp_preset,
             }
 

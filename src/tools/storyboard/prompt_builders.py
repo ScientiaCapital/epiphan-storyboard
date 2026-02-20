@@ -120,6 +120,7 @@ def build_extraction_prompt(
     content_type: str,
     *,
     audience: str = "av_director",
+    vertical: str | None = None,
     content: str | None = None,
     file_name: str | None = None,
     context: str | None = None,
@@ -132,6 +133,7 @@ def build_extraction_prompt(
     Args:
         content_type: "code", "transcript", "image", or "images"
         audience: Target audience persona
+        vertical: Optional vertical for industry-specific context
         content: Text content (code source or transcript text)
         file_name: Optional file name (code only)
         context: Optional context string (transcript only)
@@ -144,6 +146,7 @@ def build_extraction_prompt(
     knowledge_context = build_knowledge_context(audience)
     language_guidelines = build_language_guidelines_minimal(audience)
     value_angle_instruction = prompts.get_value_angle_instruction(audience)
+    vertical_context = prompts.get_vertical_generation_context(vertical)
     request_id = f"{datetime.now().isoformat()}-{uuid.uuid4().hex[:8]}"
 
     if content_type == "code":
@@ -155,6 +158,7 @@ def build_extraction_prompt(
             knowledge_context=knowledge_context,
             language_guidelines=language_guidelines,
             value_angle_instruction=value_angle_instruction,
+            vertical_context=vertical_context,
         )
     elif content_type == "transcript":
         return _build_transcript_prompt(
@@ -165,6 +169,7 @@ def build_extraction_prompt(
             knowledge_context=knowledge_context,
             language_guidelines=language_guidelines,
             value_angle_instruction=value_angle_instruction,
+            vertical_context=vertical_context,
         )
     elif content_type == "image":
         return _build_image_prompt(
@@ -174,6 +179,7 @@ def build_extraction_prompt(
             knowledge_context=knowledge_context,
             language_guidelines=language_guidelines,
             value_angle_instruction=value_angle_instruction,
+            vertical_context=vertical_context,
         )
     elif content_type == "images":
         return _build_multi_image_prompt(
@@ -184,6 +190,7 @@ def build_extraction_prompt(
             knowledge_context=knowledge_context,
             language_guidelines=language_guidelines,
             value_angle_instruction=value_angle_instruction,
+            vertical_context=vertical_context,
         )
     else:
         raise ValueError(f"Unknown content_type: {content_type}")
@@ -197,6 +204,7 @@ def _build_code_prompt(
     knowledge_context: str,
     language_guidelines: str,
     value_angle_instruction: str,
+    vertical_context: str = "",
 ) -> str:
     return f"""Analyze this code and extract business value.
 REQUEST_ID: {request_id}
@@ -209,6 +217,7 @@ CODE:
 ```
 
 TARGET AUDIENCE: {audience}
+{vertical_context}
 
 {knowledge_context if knowledge_context else ""}
 
@@ -250,6 +259,7 @@ def _build_transcript_prompt(
     knowledge_context: str,
     language_guidelines: str,
     value_angle_instruction: str,
+    vertical_context: str = "",
 ) -> str:
     return f"""Extract key insights from this content.
 REQUEST_ID: {request_id}
@@ -260,6 +270,7 @@ CONTENT:
 {content[:32000]}
 
 TARGET AUDIENCE: {audience}
+{vertical_context}
 
 {knowledge_context if knowledge_context else ""}
 
@@ -300,6 +311,7 @@ def _build_image_prompt(
     knowledge_context: str,
     language_guidelines: str,
     value_angle_instruction: str,
+    vertical_context: str = "",
 ) -> str:
     # Build text context section - TEXT IS A PRIMARY INPUT, NOT SECONDARY
     context_section = ""
@@ -326,6 +338,7 @@ REQUEST_ID: {request_id}
 Do NOT generate generic copy. Do NOT make things up.
 
 TARGET AUDIENCE: {audience}
+{vertical_context}
 
 {knowledge_context if knowledge_context else ""}
 
@@ -368,6 +381,7 @@ def _build_multi_image_prompt(
     knowledge_context: str,
     language_guidelines: str,
     value_angle_instruction: str,
+    vertical_context: str = "",
 ) -> str:
     # Build text context section - TEXT IS A PRIMARY INPUT, NOT SECONDARY
     context_section = ""
@@ -394,6 +408,7 @@ REQUEST_ID: {request_id}
 Do NOT generate generic copy. Do NOT make things up.
 
 TARGET AUDIENCE: {audience}
+{vertical_context}
 
 {knowledge_context if knowledge_context else ""}
 

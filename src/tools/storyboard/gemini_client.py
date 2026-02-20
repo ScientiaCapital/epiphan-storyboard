@@ -637,6 +637,7 @@ Return ONLY valid JSON matching this exact structure:
         image_data: bytes | None = None,
         images_data: list[bytes] | None = None,
         audience: str = "av_director",
+        vertical: str | None = None,
         file_name: str | None = None,
         context: str | None = None,
         supplementary_context: str | None = None,
@@ -656,6 +657,7 @@ Return ONLY valid JSON matching this exact structure:
             image_data: Single image bytes (for "image" type)
             images_data: Multiple image bytes (for "images" type)
             audience: Target audience persona
+            vertical: Optional vertical for industry-specific context
             file_name: Optional file name (code only)
             context: Optional context string (transcript only)
             supplementary_context: Optional text to combine with images
@@ -666,6 +668,7 @@ Return ONLY valid JSON matching this exact structure:
         prompt = prompt_builders.build_extraction_prompt(
             content_type,
             audience=audience,
+            vertical=vertical,
             content=content,
             file_name=file_name,
             context=context,
@@ -789,6 +792,7 @@ Return ONLY valid JSON matching this exact structure:
         code_content: str,
         icp_preset: dict[str, Any] | None = None,
         audience: str = "av_director",
+        vertical: str | None = None,
         file_name: str | None = None,
     ) -> StoryboardUnderstanding:
         """Stage 1: Analyze code and extract business value."""
@@ -796,6 +800,7 @@ Return ONLY valid JSON matching this exact structure:
             "code",
             content=code_content,
             audience=audience,
+            vertical=vertical,
             file_name=file_name,
         )
 
@@ -804,6 +809,7 @@ Return ONLY valid JSON matching this exact structure:
         transcript: str,
         icp_preset: dict[str, Any] | None = None,
         audience: str = "av_director",
+        vertical: str | None = None,
         context: str | None = None,
     ) -> StoryboardUnderstanding:
         """Stage 1: Extract insights from transcript."""
@@ -811,6 +817,7 @@ Return ONLY valid JSON matching this exact structure:
             "transcript",
             content=transcript,
             audience=audience,
+            vertical=vertical,
             context=context,
         )
 
@@ -819,6 +826,7 @@ Return ONLY valid JSON matching this exact structure:
         image_data: bytes | str,
         icp_preset: dict[str, Any] | None = None,
         audience: str = "av_director",
+        vertical: str | None = None,
         sanitize_ip: bool = True,
         supplementary_context: str | None = None,
     ) -> StoryboardUnderstanding:
@@ -835,6 +843,7 @@ Return ONLY valid JSON matching this exact structure:
             "image",
             image_data=image_bytes,
             audience=audience,
+            vertical=vertical,
             supplementary_context=supplementary_context,
         )
 
@@ -843,6 +852,7 @@ Return ONLY valid JSON matching this exact structure:
         images_data: list[bytes],
         icp_preset: dict[str, Any] | None = None,
         audience: str = "av_director",
+        vertical: str | None = None,
         sanitize_ip: bool = True,
         supplementary_context: str | None = None,
     ) -> StoryboardUnderstanding:
@@ -855,6 +865,7 @@ Return ONLY valid JSON matching this exact structure:
             "images",
             images_data=images_data,
             audience=audience,
+            vertical=vertical,
             supplementary_context=supplementary_context,
         )
 
@@ -917,6 +928,7 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
         understanding: StoryboardUnderstanding,
         stage: str = "preview",
         audience: str = "av_director",
+        vertical: str | None = None,
         output_format: str = "infographic",
         visual_style: str = "polished",
         artist_style: str | None = None,
@@ -932,7 +944,8 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
         Args:
             understanding: StoryboardUnderstanding from Stage 1
             stage: "preview", "demo", or "shipped" (affects visual style)
-            audience: Target audience persona (8 BDR Playbook personas)
+            audience: Target audience persona (16 personas)
+            vertical: Optional vertical for industry-specific context
             output_format: "infographic" (horizontal 16:9) or "storyboard" (vertical, detailed)
             visual_style: "clean", "polished", "photo_realistic", or "minimalist"
             icp_preset: Optional ICP preset for visual style
@@ -964,6 +977,9 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
             persona,
         )
 
+        # Build vertical context for generation
+        vertical_context = prompts.get_vertical_generation_context(vertical)
+
         # Use extracted tagline - NEVER fall back to canned brand tagline
         # If no tagline extracted, use the headline instead (which is always unique to input)
         dynamic_tagline = (
@@ -986,6 +1002,7 @@ GENERATION SEED: {unique_seed} (use this to create variation in layout and icons
 THEME: "{dynamic_tagline}"
 
 {content_section}
+{vertical_context}
 
 VISUAL REQUIREMENTS:
 - Style: {stage_template.get("visual_style", "Modern professional")}

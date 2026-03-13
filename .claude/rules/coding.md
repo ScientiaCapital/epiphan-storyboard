@@ -1,7 +1,7 @@
 # Coding Rules — epiphan-storyboard
 
 ## Stack
-Python 3.13+, FastAPI, Pydantic v2, async/await
+Python 3.11+, FastAPI, Pydantic v2, async/await
 
 ## Rules
 - No OpenAI — use Anthropic Claude or Google Gemini only

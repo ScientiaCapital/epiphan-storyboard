@@ -13,7 +13,7 @@
 - `ruff format src/` — Format
 
 ## Code Conventions
-- Python 3.13+, async/await throughout
+- Python 3.11+, async/await throughout
 - Pydantic v2 for all schemas
 - Type hints required on all functions
 - FastAPI routers in src/routers/
@@ -27,7 +27,7 @@
 - src/router/ — Agent router (classification + chain execution)
 - src/knowledge/ — Knowledge brain (learning pipeline)
 - src/connectors/ — Data connectors (Gong, Fireflies, Close, etc.)
-- src/billing/ — Stripe billing integration
+- src/storyboard/ — Storyboard state, schemas, router
 
 ## Epiphan Context
 - Products: Pearl Mini ($3,750), Pearl Nano ($1,999), Pearl Nexus ($3,299), Pearl-2 ($7,999), EC20 PTZ ($1,899), AV.io 4K ($579.95), AV.io HD+ ($449.95), AV.io SDI+ ($579.95)

@@ -51,18 +51,20 @@ EPIPHAN_PRODUCTS = {
     "pearl_mini": {
         "name": "Pearl Mini",
         "price": "$3,750",
-        "tagline": "All-in-one video encoder, recorder, and streamer",
+        "tagline": "All-in-one streaming, recording, switching, and multicasting in one box",
         "form_factor": "Half-rack, rack-mountable",
         "key_specs": [
             "6 video sources",
             "4K recording",
-            "dual streaming",
+            "dual streaming + multicasting",
             "hardware encoding",
+            "Direct CMS/LMS publish (brand agnostic)",
+            "Dante audio (firmware)",
         ],
         "best_for": [
             "Lecture capture",
             "Boardrooms",
-            "Hybrid meetings",
+            "Hybrid/HyFlex classrooms",
             "Multi-camera production",
         ],
         "verticals": ["higher_ed", "corporate", "healthcare", "government"],
@@ -70,63 +72,123 @@ EPIPHAN_PRODUCTS = {
     "pearl_nano": {
         "name": "Pearl Nano",
         "price": "$1,999",
-        "tagline": "Ultra-compact live production system",
+        "tagline": "Complete HyFlex room — stream, record, switch, AI-track — under $3,500 with EC20",
         "form_factor": "Ultra-compact, portable",
-        "key_specs": ["2 video sources", "1080p60", "SRT/RTMP", "NDI input"],
+        "key_specs": [
+            "2 video sources",
+            "1080p60",
+            "SRT/RTMP streaming",
+            "NDI input",
+            "Direct CMS/LMS publish (brand agnostic)",
+            "Dante audio (firmware)",
+        ],
         "best_for": [
+            "HyFlex classrooms (under $3,500 with EC20)",
             "Small classrooms",
             "Portable events",
             "Houses of worship",
-            "Simple setups",
         ],
-        "verticals": ["k12", "houses_of_worship", "corporate", "live_events"],
+        "verticals": ["k12", "houses_of_worship", "corporate", "live_events", "higher_ed"],
     },
     "pearl_nexus": {
         "name": "Pearl Nexus",
-        "price": "$3,299",
-        "tagline": "Cloud-managed video gateway for distributed teams",
+        "price": "$3,899",
+        "tagline": "Cloud-managed capture with zero-touch provisioning — stream, record, publish directly to your CMS/LMS",
         "form_factor": "Compact, network-first",
         "key_specs": [
-            "Cloud management",
-            "Multi-site",
-            "SRT gateway",
+            "Cloud-managed via Epiphan Edge",
             "Zero-touch provisioning",
+            "Multi-site fleet management",
+            "SRT gateway",
+            "Direct CMS/LMS publish (brand agnostic)",
+            "Dante audio (firmware)",
         ],
         "best_for": [
             "Distributed campuses",
             "Multi-site enterprise",
-            "Remote production",
             "IT-managed deployments",
+            "HyFlex classrooms at scale",
         ],
         "verticals": ["higher_ed", "corporate", "government", "healthcare"],
     },
     "pearl_2": {
         "name": "Pearl-2",
-        "price": "$7,999",
-        "tagline": "Flagship all-in-one video production system",
+        "price": "$8,999",
+        "tagline": "Flagship all-in-one production — 12+ sources, streaming, recording, switching, multicasting",
         "form_factor": "Full-rack, rack-mountable",
         "key_specs": [
             "12+ video sources",
             "4K recording",
             "6 encoding channels",
-            "custom layouts",
+            "Custom layouts + chroma keying",
+            "Direct CMS/LMS publish (brand agnostic)",
+            "Dante audio (firmware)",
         ],
         "best_for": [
             "Large lecture halls",
             "Simulation centers",
-            "Multi-camera production",
-            "Live events",
+            "Multi-camera live production",
+            "Live events + broadcast",
         ],
         "verticals": ["higher_ed", "healthcare", "live_events", "corporate"],
     },
+    # EC20 specs from: BR181-1 brochure (2025) + EC20_Panopto_Value_Proposition_v3.pptx (2026)
+    # Dante audio + direct CMS record: confirmed in Panopto Value Prop deck slide 3
+    # NDI|HX3: confirmed in brochure p2 spec table
+    # Note: public website (epiphan.com/products/ec20) may lag internal docs
     "ec20_ptz": {
-        "name": "Epiphan Connect (EC20 PTZ)",
+        "name": "Epiphan EC20 PTZ Camera",
         "price": "$1,899",
-        "tagline": "PoE-powered PTZ camera that integrates with any Pearl",
+        "tagline": "4K60 PTZ camera that records direct to your CMS/LMS — no encoder needed. One cable. $1,899.",
         "form_factor": "Ceiling/wall mount PTZ",
-        "key_specs": ["20x optical zoom", "PoE powered", "NDI|HX", "HDMI output"],
-        "best_for": ["Classrooms", "Boardrooms", "Houses of worship", "Courtrooms"],
-        "verticals": ["higher_ed", "corporate", "houses_of_worship", "legal"],
+        "key_specs": [
+            "Direct CMS/LMS record + upload — NO encoder required (brand agnostic)",
+            "4K60 HDMI + 1080p60 SDI output",
+            "NDI|HX3, SRT, RTMP(s), RTSP",
+            "20x optical + 16x digital zoom",
+            "AI-powered tracking (Presenter & Zone modes) with inclusion zones",
+            "PoE+ powered (single cable — power, video, Dante audio, CMS upload)",
+            "Dante audio over IP — room audio on the same Ethernet cable",
+            "VISCA/Pelco-D/Pelco-P, ONVIF control",
+            "255 presets, programmable RGB tally ring",
+            "1/1.8\" CMOS sensor, 8.42MP, 0.5 Lux low-light",
+            "LCD screen displays IP address — zero IT guesswork at install",
+            "Both ceiling AND wall mounts included in box",
+            "Fleet-managed via Epiphan Edge",
+        ],
+        "best_for": [
+            "Rooms that were always out of reach (seminar, breakout, collaborative)",
+            "HyFlex classrooms",
+            "Boardrooms",
+            "Houses of worship",
+            "Courtrooms",
+        ],
+        "verticals": ["higher_ed", "corporate", "houses_of_worship", "legal", "k12"],
+        "competitive_advantage": (
+            "EC20 at $1,899 vs traditional per-room setup at $5,700-$8,500+ "
+            "(PTZ ~$1,500 + encoder $3,500-$5,000 + audio interface $200-$500 + electrician $500-$1,500). "
+            "Save up to $6,600 per room. EC20 replaces ALL of that with one cable. "
+            "No encoder needed — records and uploads direct to your CMS/LMS. "
+            "Dante audio on the same Ethernet cable — no separate audio interface or cable runs. "
+            "PoE+ — no electrician, no dedicated power run. "
+            "Only PTZ camera fleet-managed out of the box via Epiphan Edge. "
+            "AI tracking with inclusion zones — no separate tracking appliance. "
+            "vs Panasonic/Sony PTZ at $7,000-$8,000 (and they still need an encoder)."
+        ),
+        # Two key deployment scenarios from the EC20 value proposition
+        "deployment_scenarios": {
+            "rooms_out_of_reach": (
+                "Seminar rooms, breakout spaces, collaborative areas that could never justify "
+                "$5,700-$8,500 per room. EC20 at $1,899 with one Ethernet cable makes them all "
+                "capturable and published directly to your CMS/LMS."
+            ),
+            "pc_already_in_room": (
+                "Where a PC already runs CMS/LMS software for slide capture, EC20 becomes the "
+                "Primary recorder handling presenter video + Dante audio. The PC becomes Secondary "
+                "for slides. Your CMS/LMS combines both automatically via linked recorders. "
+                "No capture card on PC, no NDI|HX CPU overhead, no reliance on Windows for audio."
+            ),
+        },
     },
     "avio_4k": {
         "name": "AV.io 4K",
@@ -160,6 +222,91 @@ EPIPHAN_PRODUCTS = {
         "best_for": ["Broadcast integration", "Professional cameras", "Live events"],
         "verticals": ["live_events", "corporate", "healthcare"],
     },
+    # ── Production Bundles (Pearl + EC20 camera bundles) ──────────────
+    # ~25% off MSRP on EC20 cameras — best value for fleet deployments
+    "bundle_nano_1cam": {
+        "name": "HyFlex Classroom / Event Streaming Bundle (Nano + 1 EC20)",
+        "price": "$3,419",
+        "tagline": "Complete HyFlex room under $3,500 — stream, record, switch, AI-track, publish to CMS/LMS",
+        "form_factor": "Bundle",
+        "key_specs": [
+            "Pearl Nano", "1x EC20 PTZ", "25% off EC20 MSRP",
+            "AI tracking", "Dante audio", "Direct CMS/LMS publish",
+        ],
+        "best_for": ["HyFlex classrooms", "Small events", "Houses of worship", "Budget-conscious deployments"],
+        "verticals": ["higher_ed", "k12", "live_events", "houses_of_worship", "corporate"],
+        "savings": "$479 vs buying separately",
+    },
+    "bundle_mini_1cam": {
+        "name": "Studio Essential (Mini + 1 EC20)",
+        "price": "$5,179",
+        "tagline": "Professional studio kit with PTZ camera",
+        "form_factor": "Bundle",
+        "key_specs": ["Pearl Mini", "1x EC20 PTZ", "25% off EC20 MSRP"],
+        "best_for": ["Classrooms", "Boardrooms", "Studio recording"],
+        "verticals": ["higher_ed", "corporate", "healthcare"],
+        "savings": "$470 vs buying separately",
+    },
+    "bundle_mini_2cam": {
+        "name": "Studio Plus (Mini + 2 EC20)",
+        "price": "$6,599",
+        "tagline": "Multi-camera studio kit",
+        "form_factor": "Bundle",
+        "key_specs": ["Pearl Mini", "2x EC20 PTZ", "25% off EC20 MSRP"],
+        "best_for": ["Multi-camera classrooms", "Lecture capture", "Simulation labs"],
+        "verticals": ["higher_ed", "corporate", "healthcare"],
+        "savings": "$949 vs buying separately",
+    },
+    "bundle_nexus_1cam": {
+        "name": "Lecture Capture Essential (Nexus + 1 EC20)",
+        "price": "$5,329",
+        "tagline": "Cloud-managed lecture capture kit",
+        "form_factor": "Bundle",
+        "key_specs": ["Pearl Nexus", "1x EC20 PTZ", "25% off EC20 MSRP", "zero-touch provisioning"],
+        "best_for": ["Campus-wide lecture capture", "IT-managed deployments"],
+        "verticals": ["higher_ed", "corporate"],
+        "savings": "$469 vs buying separately",
+    },
+    "bundle_nexus_2cam": {
+        "name": "Lecture Capture Plus (Nexus + 2 EC20)",
+        "price": "$6,749",
+        "tagline": "Dual-camera cloud-managed lecture capture",
+        "form_factor": "Bundle",
+        "key_specs": ["Pearl Nexus", "2x EC20 PTZ", "25% off EC20 MSRP", "zero-touch provisioning"],
+        "best_for": ["Multi-angle lecture capture", "Hybrid classrooms"],
+        "verticals": ["higher_ed", "corporate"],
+        "savings": "$948 vs buying separately",
+    },
+    "bundle_p2_1cam": {
+        "name": "Production Starter (Pearl-2 + 1 EC20)",
+        "price": "$10,429",
+        "tagline": "Flagship production kit with PTZ camera",
+        "form_factor": "Bundle",
+        "key_specs": ["Pearl-2", "1x EC20 PTZ", "25% off EC20 MSRP"],
+        "best_for": ["Large production", "Simulation centers", "Live events"],
+        "verticals": ["live_events", "healthcare", "higher_ed"],
+        "savings": "$469 vs buying separately",
+    },
+    "bundle_p2_2cam": {
+        "name": "Production Essential (Pearl-2 + 2 EC20)",
+        "price": "$11,849",
+        "tagline": "Multi-camera production kit",
+        "form_factor": "Bundle",
+        "key_specs": ["Pearl-2", "2x EC20 PTZ", "25% off EC20 MSRP"],
+        "best_for": ["Multi-camera production", "Courtrooms", "Large lecture halls"],
+        "verticals": ["live_events", "legal", "higher_ed"],
+        "savings": "$948 vs buying separately",
+    },
+    "bundle_p2_3cam": {
+        "name": "Production Plus (Pearl-2 + 3 EC20)",
+        "price": "$13,279",
+        "tagline": "Full 3-camera production system",
+        "form_factor": "Bundle",
+        "key_specs": ["Pearl-2", "3x EC20 PTZ", "25% off EC20 MSRP"],
+        "best_for": ["Full production", "Events", "Broadcast-quality recording"],
+        "verticals": ["live_events", "corporate", "higher_ed"],
+        "savings": "$1,417 vs buying separately",
+    },
 }
 
 
@@ -172,7 +319,7 @@ EPIPHAN_VERTICALS = {
         "name": "Higher Education",
         "atl_buyers": ["av_director", "ld_director", "provost", "university_president", "university_finance", "edtech_manager"],
         "btl_users": ["technical_director"],
-        "channel_partners": ["dealer_dave", "system_engineer"],
+        "channel_partners": ["dealer_dave", "system_engineer", "av_integrator"],
         "use_cases": [
             "Lecture capture",
             "Hybrid classrooms",
@@ -182,7 +329,7 @@ EPIPHAN_VERTICALS = {
         "reference_stories": [
             "NC State — 300+ Pearl units across campus",
             "UNLV — 215 rooms with automated lecture capture",
-            "MTSU — 428 rooms centrally managed via Epiphan Cloud",
+            "MTSU — 428 rooms centrally managed via Epiphan Edge",
         ],
         "pain_points": [
             "Faculty won't use complex AV — needs to be one-button",
@@ -218,7 +365,7 @@ EPIPHAN_VERTICALS = {
         "name": "Live Events / Production",
         "atl_buyers": ["av_director", "venue_manager", "production_director"],
         "btl_users": ["technical_director"],
-        "channel_partners": ["dealer_dave", "system_engineer"],
+        "channel_partners": ["dealer_dave", "system_engineer", "av_integrator"],
         "use_cases": [
             "Multi-camera production",
             "Live streaming",
@@ -228,7 +375,7 @@ EPIPHAN_VERTICALS = {
         "reference_stories": [
             "Freeman — Pearl fleet for world's largest events",
             "MSAVi — Disney, Imagine Dragons — 'Haven't failed us once'",
-            "Talon AV — 30+ unstaffed rooms via Epiphan Cloud",
+            "Talon AV — 30+ unstaffed rooms via Epiphan Edge",
             "Oslo Opera — 300+ shows/year, minimal staff",
             "The Volume — Shannon Sharpe show production",
         ],
@@ -369,7 +516,7 @@ EPIPHAN_VERTICALS = {
         "name": "K-12 Education",
         "atl_buyers": ["av_director", "ld_director", "edtech_manager"],
         "btl_users": ["technical_director"],
-        "channel_partners": ["dealer_dave", "system_engineer"],
+        "channel_partners": ["dealer_dave", "system_engineer", "av_integrator"],
         "use_cases": [
             "Classroom recording",
             "Board meetings",
@@ -423,9 +570,10 @@ class AudiencePersona(str, Enum):
     # BTL — Operators (1 from study app)
     TECHNICAL_DIRECTOR = "technical_director"
 
-    # CHANNEL — Sales Intermediaries (2 new from PDF research)
+    # CHANNEL — Sales Intermediaries (3 from PDF research + integrator ICP)
     DEALER_DAVE = "dealer_dave"
     SYSTEM_ENGINEER = "system_engineer"
+    AV_INTEGRATOR = "av_integrator"
 
 
 class StoryboardStage(str, Enum):
@@ -451,7 +599,7 @@ COMPETITIVE_INTEL = {
         "name": "Extron",
         "position": "AV signal management and distribution",
         "weakness": "Hardware-heavy approach, limited cloud management, complex configuration",
-        "epiphan_advantage": "Cloud-managed via Epiphan Cloud, zero-touch provisioning, simpler deployment",
+        "epiphan_advantage": "Cloud-managed via Epiphan Edge, zero-touch provisioning, simpler deployment",
     },
     "vaddio": {
         "name": "Vaddio (Legrand AV)",
@@ -491,7 +639,7 @@ PRODUCT_COMPARISONS = {
         "vs_mediasite": {
             "competitor": "Mediasite Recorders",
             "key_diff": "Hardware encoding vs software, fleet management",
-            "epiphan_wins": "No PC dependency, Epiphan Cloud fleet management",
+            "epiphan_wins": "No PC dependency, Epiphan Edge fleet management",
         },
     },
     "pearl_nexus": {
@@ -553,7 +701,7 @@ REFERENCE_STORIES = {
         "vertical": "higher_ed",
         "products": ["pearl_mini"],
         "quote": "Do more with less — 2-person team, 400+ rooms",
-        "quote_theme": "One AV team manages 428 rooms via Epiphan Cloud",
+        "quote_theme": "One AV team manages 428 rooms via Epiphan Edge",
     },
     "nc_state": {
         "customer": "NC State University",
@@ -677,7 +825,7 @@ REFERENCE_STORIES = {
         "vertical": "live_events",
         "products": ["pearl_nano"],
         "quote": "Swiss Army knife",
-        "quote_theme": "30+ unstaffed rooms managed remotely via Epiphan Cloud",
+        "quote_theme": "30+ unstaffed rooms managed remotely via Epiphan Edge",
     },
     "oslo_opera": {
         "customer": "Oslo Opera House",
@@ -720,7 +868,7 @@ REFERENCE_STORIES = {
 # =============================================
 
 SALES_COLLATERAL = {
-    # Product pages — direct links for each Pearl model
+    # Product pages — direct links for each Pearl model (validated 2026-05-05)
     "product_pages": {
         "pearl_2": {
             "name": "Pearl-2",
@@ -748,107 +896,114 @@ SALES_COLLATERAL = {
             "tagline": "PoE PTZ camera designed for Pearl integration",
         },
         "epiphan_cloud": {
-            "name": "Epiphan Cloud",
-            "url": "https://www.epiphan.com/products/epiphan-cloud/",
-            "tagline": "Fleet management — manage all your Pearls from one dashboard",
+            "name": "Epiphan Edge",
+            "url": "https://www.epiphan.com/cloud/",
+            "tagline": "Fleet management — batch firmware, batch start/stop, alerts, remote config, team collaboration",
         },
     },
-    # Case studies with URLs — curated proof points by vertical
+    # Case studies with URLs — curated proof points by vertical (validated 2026-05-05)
+    # URL pattern: /case-study/<slug>/ (old /customers/ pattern is dead)
     "case_studies": {
-        "ntnu": {
-            "title": "NTNU — 100+ Rooms with Panopto Integration",
-            "url": "https://www.epiphan.com/customers/ntnu/",
-            "vertical": "higher_ed",
-            "products": ["pearl_mini"],
-        },
         "mtsu": {
             "title": "MTSU — 428 Classrooms, 2-Person Team",
-            "url": "https://www.epiphan.com/customers/mtsu/",
-            "vertical": "higher_ed",
-            "products": ["pearl_mini"],
-        },
-        "nc_state": {
-            "title": "NC State — 300+ Pearl Units Campus-Wide",
-            "url": "https://www.epiphan.com/customers/nc-state/",
+            "url": "https://www.epiphan.com/case-study/mtsu/",
             "vertical": "higher_ed",
             "products": ["pearl_mini"],
         },
         "unlv": {
             "title": "UNLV — 200+ Rooms with Pearl Nexus",
-            "url": "https://www.epiphan.com/customers/unlv/",
+            "url": "https://www.epiphan.com/case-study/unlv-sets-the-standard-for-classroom-capture-with-pearl-nexus/",
             "vertical": "higher_ed",
             "products": ["pearl_nexus"],
         },
+        "ub": {
+            "title": "University at Buffalo — Redefining Classroom Capture",
+            "url": "https://www.epiphan.com/case-study/how-ub-is-redefining-classroom-capture-for-the-next-decade/",
+            "vertical": "higher_ed",
+            "products": ["pearl_mini", "pearl_nexus"],
+        },
+        "uri": {
+            "title": "University of Rhode Island — User-Friendly Automated Video",
+            "url": "https://www.epiphan.com/case-study/university-of-rhode-island-standardizes-user-friendly-automated-video-spaces/",
+            "vertical": "higher_ed",
+            "products": ["pearl_mini"],
+        },
+        "liege": {
+            "title": "Liège University — Streaming and Recording with Pearl Mini",
+            "url": "https://www.epiphan.com/case-study/liege-university-simplifies-streaming-and-recording-with-pearl-mini/",
+            "vertical": "higher_ed",
+            "products": ["pearl_mini"],
+        },
         "freeman": {
-            "title": "Freeman — World's Largest Events on Pearl",
-            "url": "https://www.epiphan.com/customers/freeman/",
+            "title": "Freeman — Raises the Bar for Live Event Production",
+            "url": "https://www.epiphan.com/case-study/freeman-raises-bar-for-live-event-production/",
             "vertical": "live_events",
             "products": ["pearl_2", "pearl_mini"],
         },
-        "msavi": {
-            "title": "MSAVi — Disney and Imagine Dragons Events",
-            "url": "https://www.epiphan.com/customers/msavi/",
-            "vertical": "live_events",
-            "products": ["pearl_2"],
-        },
         "openai": {
-            "title": "OpenAI — 12 Days Livestream Production",
-            "url": "https://www.epiphan.com/customers/openai/",
+            "title": "OpenAI — Relies on Pearl for Live Streaming",
+            "url": "https://www.epiphan.com/case-study/openai-relies-on-pearl-for-live-streaming/",
             "vertical": "corporate",
             "products": ["pearl_2"],
         },
-        "hawaii_senate": {
-            "title": "Hawaii Senate — 6 NDI-Enabled Units",
-            "url": "https://www.epiphan.com/customers/hawaii-state-senate/",
+        "redfish": {
+            "title": "Redfish — Government Streaming and Recording Standard",
+            "url": "https://www.epiphan.com/case-study/redfish-sets-a-new-standard-for-government-streaming-and-recording-with-epiphan-pearl/",
             "vertical": "government",
-            "products": ["pearl_2"],
-        },
-        "ucla_law": {
-            "title": "UCLA Law — Classrooms and Courtrooms",
-            "url": "https://www.epiphan.com/customers/ucla-law/",
-            "vertical": "legal",
-            "products": ["pearl_2", "pearl_nexus"],
-        },
-        "babyflix": {
-            "title": "BabyFlix — Multi-Clinic Ultrasound Streaming",
-            "url": "https://www.epiphan.com/customers/babyflix/",
-            "vertical": "healthcare",
-            "products": ["pearl_nano", "avio_4k"],
+            "products": ["pearl_2", "pearl_mini"],
         },
         "oslo_opera": {
-            "title": "Oslo Opera House — 300+ Shows/Year",
-            "url": "https://www.epiphan.com/customers/oslo-opera/",
+            "title": "Oslo Opera House — Makes Magic with Pearl",
+            "url": "https://www.epiphan.com/case-study/just-push-the-button-oslo-opera-house-makes-magic-with-pearl/",
             "vertical": "live_events",
             "products": ["pearl_nano", "pearl_2"],
         },
         "the_volume": {
-            "title": "The Volume — Shannon Sharpe Show Production",
-            "url": "https://www.epiphan.com/customers/the-volume/",
+            "title": "The Volume — Content Production with Epiphan Connect",
+            "url": "https://www.epiphan.com/case-study/the-volume-video-podcasts/",
             "vertical": "live_events",
             "products": ["pearl_2"],
         },
+        "charles_sturt": {
+            "title": "Charles Sturt University — Simulation Labs with Pearl-2",
+            "url": "https://www.epiphan.com/case-study/pearl-2-makes-simulation-labs-simple-at-charles-sturt-university/",
+            "vertical": "healthcare",
+            "products": ["pearl_2"],
+        },
+        "anchor_point": {
+            "title": "Anchor Point — Simplifies Mock Trial Capture",
+            "url": "https://www.epiphan.com/case-study/anchor-point-simplifies-mock-trial-capture-with-pearl-2/",
+            "vertical": "legal",
+            "products": ["pearl_2"],
+        },
+        "benchmark_legal": {
+            "title": "Benchmark Legal Media — Mock Trial Setups with Pearl-2",
+            "url": "https://www.epiphan.com/case-study/benchmark-legal-media-solves-mock-trial-setups-with-pearl-2/",
+            "vertical": "legal",
+            "products": ["pearl_2"],
+        },
     },
-    # Webinars
+    # Webinars (validated 2026-05-05)
     "webinars": [
         {
             "title": "Lecture Capture at Scale",
             "vertical": "higher_ed",
             "products": ["pearl_mini", "pearl_nexus"],
-            "url": "https://www.epiphan.com/resources/webinars/",
+            "url": "https://www.epiphan.com/webinars/",
             "description": "How universities deploy 100+ rooms with 2-person AV teams",
         },
         {
             "title": "Live Event Production with Pearl",
             "vertical": "live_events",
             "products": ["pearl_2", "pearl_mini"],
-            "url": "https://www.epiphan.com/resources/webinars/",
+            "url": "https://www.epiphan.com/webinars/",
             "description": "Multi-camera production for concerts, conferences, and broadcasts",
         },
         {
             "title": "Courtroom & Government Recording",
             "vertical": "government",
             "products": ["pearl_2", "pearl_mini"],
-            "url": "https://www.epiphan.com/resources/webinars/",
+            "url": "https://www.epiphan.com/webinars/",
             "description": "Reliable recording for transparency mandates and public access",
         },
     ],
@@ -870,14 +1025,16 @@ SALES_COLLATERAL = {
             "vs_newtek": "Pearl-2 vs NewTek CaptureCast — all-in-one vs switcher-only",
         },
     },
-    # Key resource pages
+    # Key resource pages (validated 2026-05-05)
     "resources": {
-        "all_customers": "https://www.epiphan.com/customers/",
+        "all_case_studies": "https://www.epiphan.com/case-study/",
         "all_products": "https://www.epiphan.com/products/",
         "support": "https://www.epiphan.com/support/",
-        "contact_sales": "https://www.epiphan.com/contact/",
+        "contact_sales": "https://www.epiphan.com/company/contact-us/",
         "partner_program": "https://www.epiphan.com/partners/",
-        "request_demo": "https://www.epiphan.com/request-demo/",
+        "request_demo": "https://www.epiphan.com/request-a-demo/",
+        "webinars": "https://www.epiphan.com/webinars/",
+        "blog": "https://www.epiphan.com/blog/",
     },
 }
 
@@ -900,7 +1057,39 @@ EPIPHAN_ICP = {
             "Integrating hardware with platforms like Zoom, Teams, and LMS",
             "Volunteer or non-technical operators need one-button simplicity",
             "Compliance requirements (HIPAA, FERPA, chain of custody)",
+            "Budget pressure — need all-in-one streaming, recording, switching, multicasting in one box",
         ],
+        # Key firmware features (current as of 2026-05)
+        "firmware_features": [
+            "Dante audio support — drop into any Dante network",
+            "Direct CMS/LMS publish — record and publish without middleware",
+            "NDI|HX3 on EC20 — eliminate video cabling",
+            "AI tracking with user-defined inclusion zones on EC20",
+            "SRT streaming for reliable contribution over public internet",
+        ],
+        # CRITICAL: Epiphan is CMS/LMS BRAND AGNOSTIC
+        "cms_lms_policy": (
+            "Epiphan publishes directly to ANY CMS/LMS — Panopto, Kaltura, YuJa, "
+            "EchoVideo (Echo360), Brightcove, Mediasite, Canvas, Blackboard, Moodle, and more. "
+            "NEVER show favoritism to any single CMS/LMS platform. "
+            "Always say 'your CMS/LMS' or list multiple options. "
+            "The message is: Epiphan works with YOUR platform, whatever it is. "
+            "This plug-into-any-CMS/LMS capability is a major differentiator across ALL verticals — "
+            "not just higher ed. Corporate, healthcare, legal, government all need this flexibility."
+        ),
+        # CMS/LMS partner ecosystem mapping (for meeting recap context)
+        # ec20_direct: True = EC20 can record/upload directly without encoder (confirmed)
+        # ec20_direct: False = requires Pearl encoder as intermediary
+        # ec20_direct: "tbd" = capability expected but not yet confirmed
+        "cms_lms_partners": {
+            "panopto": {"pearl_mapping": "Pearl as Remote Recorder", "ec20_direct": True},
+            "echovideo": {"pearl_mapping": "Pearl Nexus=PRO, Pearl Mini=POD, Pearl-2=flagship", "ec20_direct": "tbd", "ga_date": "July 2026"},
+            "kaltura": {"pearl_mapping": "Pearl + Kaltura CMS integration", "ec20_direct": "tbd"},
+            "yuja": {"pearl_mapping": "Pearl + YuJa integration", "ec20_direct": "tbd"},
+            "opencast": {"pearl_mapping": "Pearl + Opencast integration", "ec20_direct": False},
+            "brightcove": {"pearl_mapping": "Pearl + Brightcove", "ec20_direct": False},
+            "mediasite": {"pearl_mapping": "Pearl + Mediasite", "ec20_direct": False},
+        },
     },
     "audience_personas": {
         # ── ATL: Decision Makers ──────────────────────────────────
@@ -1490,6 +1679,67 @@ EPIPHAN_ICP = {
             "fears": ["specifying a product that doesn't integrate cleanly", "having to support it post-install"],
             "bdr_tip": "Show case studies, connect him with product champions, highlight partner ecosystem (Q-SYS, Kaltura, Panopto)",
         },
+        AudiencePersona.AV_INTEGRATOR: {
+            "title": "AV Integrator / Solutions Architect",
+            "persona_type": "CHANNEL",
+            "verticals": [
+                "higher_ed", "corporate", "live_events", "government",
+                "houses_of_worship", "healthcare", "industrial", "legal",
+                "ux_research", "k12",
+            ],
+            "cares_about": [
+                "install simplicity and rack-mount form factor",
+                "fleet management across client sites",
+                "API/control system integration (Crestron, Q-SYS, AMX)",
+                "margin and deal registration",
+                "post-sale support volume (lower = better)",
+                "reference stories from peer integrators",
+                "RFP response and spec sheet quality",
+            ],
+            "tone": "Peer-to-peer technical sales. Speak to their business: margin, install efficiency, client satisfaction.",
+            "value_angle": "PARTNERSHIP",
+            "value_framing": "Epiphan installs clean, manages remotely, and generates zero support calls. Your margin stays on the project, not the service desk.",
+            "hooks": [
+                "Your field techs install Pearl in 20 minutes — try that with the other guys",
+                "Fleet management across 50 client sites from one Epiphan Edge dashboard",
+                "Open API means your Crestron/Q-SYS programmer isn't fighting the hardware",
+                "Zero post-install support calls — your margin stays intact",
+            ],
+            "voice_tone": "Technical peer with business acumen. Integrators think in projects, not products. Speak to install efficiency, margin protection, and client outcomes.",
+            "vocabulary": [
+                "rack-mount", "install base", "field tech", "commissioning",
+                "Crestron", "Q-SYS", "AMX", "Dante", "NDI", "AV-over-IP",
+                "deal registration", "margin", "RFP", "spec sheet",
+                "fleet management", "Epiphan Edge", "remote monitoring",
+                "truck roll", "as-built", "PoE budget", "VLAN",
+            ],
+            "forbidden_phrases": [
+                "game-changing",
+                "revolutionary",
+                "paradigm shift",
+                "disruptive",
+                "synergize",
+                "cutting-edge",
+            ],
+            "default_visual_style": "polished",
+            "pdf_source": "AV Integrator ICP",
+            "org_size": "50-5000 employees (AVI-SPL, Diversified, Whitlock, Ford AV, AVI Systems)",
+            "titles": [
+                "Solutions Architect", "AV Design Engineer", "Project Manager",
+                "VP Engineering", "Director of Technology", "Integration Manager",
+            ],
+            "buys_based_on": [
+                "install ease", "support burden", "margin", "fleet management",
+                "peer validation", "control system integration", "RFP compliance",
+            ],
+            "fears": [
+                "specifying gear that fails on-site and erodes client trust",
+                "being replaced by direct-to-customer vendor sales",
+                "margin erosion from post-install support calls and truck rolls",
+                "training field techs on yet another platform",
+            ],
+            "bdr_tip": "Lead with peer integrator stories (MSAVi, Freeman). Show Epiphan Edge fleet management. Emphasize zero truck rolls and 20-minute install.",
+        },
         # ── ATL: Edtech & Live Events (from PDF research) ───────────
         AudiencePersona.EDTECH_MANAGER: {
             "title": "Educational Technology Manager",
@@ -1586,7 +1836,7 @@ EPIPHAN_ICP = {
             "hooks": [
                 "Freeman trusts Pearl for the world's largest events",
                 "MSAVi runs Disney events — 'Haven't failed us once'",
-                "Epiphan Cloud manages your entire fleet from one dashboard",
+                "Epiphan Edge manages your entire fleet from one dashboard",
             ],
             "voice_tone": "Enterprise production executive. You think in fleets, not individual boxes. Values reliability, low-risk solutions that ensure uptime.",
             "vocabulary": [
@@ -1688,13 +1938,13 @@ EPIPHAN_ICP = {
     },
     "value_props": {
         "core": [
-            "Pearl-2 ($7,999) — flagship 12+ source production system",
+            "Pearl-2 ($8,999) — flagship 12+ source production system",
             "Pearl Mini ($3,750) — all-in-one capture, record, and stream",
-            "Pearl Nexus ($3,299) — cloud-managed gateway for distributed sites",
+            "Pearl Nexus ($3,899) — cloud-managed gateway for distributed sites",
             "Pearl Nano ($1,999) — ultra-compact for tight spaces and portability",
             "EC20 PTZ ($1,899) — PoE camera that integrates with any Pearl",
             "AV.io 4K ($579.95) — grab-and-go 4K capture card",
-            "Epiphan Cloud — manage your entire fleet remotely",
+            "Epiphan Edge — manage your entire fleet remotely",
         ],
         "integrations": [
             "Microsoft Teams Rooms — certified integration",
@@ -1705,7 +1955,7 @@ EPIPHAN_ICP = {
         ],
         "outcomes": [
             "Reliable uptime — no more failed recordings or dropped streams",
-            "Simplified management — control everything from Epiphan Cloud",
+            "Simplified management — control everything from Epiphan Edge",
             "Future-proof — firmware updates extend hardware life for years",
             "Support you can count on — real engineers, not a ticketing system",
             "Works with what you have — any camera, any source, any platform",
@@ -2048,7 +2298,7 @@ def get_collateral_links(
     for pid in product_ids:
         if pid in product_pages:
             result["product_links"].append(product_pages[pid])
-    # Always include Epiphan Cloud
+    # Always include Epiphan Edge
     if "epiphan_cloud" in product_pages:
         result["product_links"].append(product_pages["epiphan_cloud"])
 
@@ -2077,7 +2327,7 @@ def get_collateral_links(
     result["resource_links"] = {
         "request_demo": resources.get("request_demo", ""),
         "contact_sales": resources.get("contact_sales", ""),
-        "all_customers": resources.get("all_customers", ""),
+        "all_case_studies": resources.get("all_case_studies", ""),
     }
     if persona_config and persona_config.get("persona_type") == "CHANNEL":
         result["resource_links"]["partner_program"] = resources.get("partner_program", "")

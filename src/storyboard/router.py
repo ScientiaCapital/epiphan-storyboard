@@ -5,6 +5,7 @@ Endpoints:
 - POST /storyboard/code - Generate storyboard from code
 - POST /storyboard/roadmap - Generate storyboard from roadmap screenshot
 - POST /storyboard/transcript - Generate deployment scenario storyboards from call transcript
+- POST /storyboard/meeting-recap - Generate JTBD+Challenger+NSTTD meeting recap from transcript
 - GET /storyboard/jobs/{job_id} - Get job status and results
 """
 
@@ -23,6 +24,8 @@ from src.storyboard.schemas import (
     CodeStoryboardRequest,
     JobStatus,
     JobType,
+    MeetingRecapRequest,
+    MeetingRecapResponse,
     RoadmapStoryboardRequest,
     StoryboardJobResponse,
     StoryboardJobStatusResponse,
@@ -494,4 +497,73 @@ async def get_job_status(
         execution_time_ms=job.execution_time_ms,
         created_at=job.created_at,
         completed_at=job.completed_at,
+    )
+
+
+@router.post(
+    "/meeting-recap",
+    response_model=MeetingRecapResponse,
+    summary="Generate structured meeting recap from call transcript",
+    description=(
+        "Drop a Clari, Gong, or Fireflies call transcript and get a JTBD-structured "
+        "recap with Challenger reframe, product recommendations, and NSTTD-style "
+        "follow-up email draft. Synchronous — returns immediately with results."
+    ),
+)
+async def generate_meeting_recap(
+    request: MeetingRecapRequest,
+) -> MeetingRecapResponse:
+    """
+    Generate a structured meeting recap from a call transcript.
+
+    Analyzes the transcript using three sales frameworks:
+    - JTBD: Job statement, Forces of Progress, frankenstack detection
+    - Challenger: Reframe, rational drowning, emotional impact
+    - NSTTD: Accusation audit email, calibrated questions, "That's right" summary
+
+    Returns product recommendations with validated links and deployment scenario matches.
+    """
+    from src.tools.storyboard.meeting_recap import process_meeting_recap
+
+    start = perf_counter()
+
+    try:
+        result = await process_meeting_recap(
+            transcript=request.transcript,
+            audience=request.audience,
+            vertical=request.vertical,
+            include_product_recs=request.include_product_recs,
+            include_follow_up=request.include_follow_up,
+        )
+    except Exception as e:
+        logger.error("Meeting recap failed: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Meeting recap generation failed: {e}",
+        ) from e
+
+    elapsed_ms = int((perf_counter() - start) * 1000)
+    logger.info("Meeting recap completed in %d ms", elapsed_ms)
+
+    # Map raw dict result to Pydantic response model
+    return MeetingRecapResponse(
+        job_statement=result.get("job_statement", ""),
+        forces_of_progress=result.get("forces_of_progress", {}),
+        hiring_firing=result.get("hiring_firing", {}),
+        summary=result.get("summary", ""),
+        key_topics=result.get("key_topics", []),
+        participants=result.get("participants", []),
+        frankenstack_description=result.get("frankenstack_description"),
+        buyer_signals=result.get("buyer_signals", {}),
+        challenger_reframe=result.get("challenger_reframe", ""),
+        rational_drowning=result.get("rational_drowning", ""),
+        emotional_impact=result.get("emotional_impact", ""),
+        product_recommendations=result.get("product_recommendations", []),
+        scenario_matches=result.get("scenario_matches", []),
+        follow_up_email=result.get("follow_up_email", ""),
+        calibrated_questions=result.get("calibrated_questions", []),
+        thats_right_summary=result.get("thats_right_summary", ""),
+        detected_vertical=result.get("detected_vertical"),
+        detected_persona=result.get("detected_persona"),
+        odi_opportunity_score=result.get("odi_opportunity_score"),
     )

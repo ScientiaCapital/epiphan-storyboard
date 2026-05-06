@@ -338,3 +338,179 @@ class TranscriptStoryboardResponse(BaseModel):
         default=0.0,
         description="Confidence score for transcript extraction (0-1)",
     )
+
+
+# ── Meeting Recap Schemas ────────────────────────────────────────────────────
+
+
+class ForcesOfProgress(BaseModel):
+    """JTBD Forces of Progress extracted from a call transcript."""
+
+    push: str = Field(default="", description="Current pain driving change")
+    pull: str = Field(default="", description="New solution attraction")
+    anxiety: str = Field(default="", description="Fear of switching")
+    habit: str = Field(default="", description="Comfort of current state")
+
+
+class HiringFiring(BaseModel):
+    """JTBD Hiring/Firing analysis — what they currently 'hire' and why they'd 'fire' it."""
+
+    currently_hired: str = Field(
+        default="", description="Current solution (the frankenstack)"
+    )
+    fired_for: str = Field(default="", description="Why it fails")
+    workarounds: str = Field(default="", description="Hacks they've assembled")
+
+
+class BuyerSignals(BaseModel):
+    """Structured buyer signal extraction from call transcript."""
+
+    pain: str = Field(default="", description="Frustrations/problems described")
+    need: str = Field(default="", description="Capabilities they're looking for")
+    timeline: str = Field(default="", description="Budget cycle, event date, mandate")
+    authority: str = Field(default="", description="Who else weighs in on the decision")
+    proof: str = Field(
+        default="", description="Competitors, reference checks, current vendor"
+    )
+
+
+class ProductRecommendation(BaseModel):
+    """Product recommendation with rationale and validated link."""
+
+    product_id: str = Field(..., description="Product ID from EPIPHAN_PRODUCTS")
+    product_name: str = Field(..., description="Human-readable product name")
+    reason: str = Field(..., description="Why this product fits their job")
+    url: str = Field(default="", description="Validated product page URL")
+    bundle_option: str | None = Field(None, description="Relevant bundle with savings")
+
+
+class MeetingRecapRequest(BaseModel):
+    """Request model for POST /storyboard/meeting-recap."""
+
+    transcript: str = Field(
+        ...,
+        description="Raw call transcript (Clari, Gong, Fireflies, or pasted text)",
+        min_length=50,
+        max_length=100_000,
+    )
+    audience: str = Field(
+        "av_integrator",
+        description="Target audience persona (defaults to av_integrator for meetings)",
+    )
+    vertical: str | None = Field(
+        None,
+        description="Optional vertical hint (auto-detected from transcript if not provided)",
+    )
+    include_product_recs: bool = Field(
+        True,
+        description="Include Epiphan product recommendations based on discussed needs",
+    )
+    include_follow_up: bool = Field(
+        True,
+        description="Include NSTTD-style follow-up email draft",
+    )
+
+    @field_validator("transcript")
+    @classmethod
+    def validate_transcript_not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("transcript must not be empty")
+        return v
+
+
+class MeetingRecapResponse(BaseModel):
+    """Response model for POST /storyboard/meeting-recap.
+
+    Synthesizes JTBD + Challenger + NSTTD frameworks into a structured
+    meeting recap with product recommendations and follow-up actions.
+    """
+
+    # ── JTBD Analysis ────────────────────────────────────────────
+    job_statement: str = Field(
+        default="",
+        description="JTBD: When [X], I want to [Y], so I can [Z]",
+    )
+    forces_of_progress: ForcesOfProgress = Field(
+        default_factory=ForcesOfProgress,
+        description="Forces driving/resisting change",
+    )
+    hiring_firing: HiringFiring = Field(
+        default_factory=HiringFiring,
+        description="What they currently hire/fire and workarounds",
+    )
+
+    # ── Call Summary ─────────────────────────────────────────────
+    summary: str = Field(
+        default="",
+        description="3-5 bullet executive summary of the call",
+    )
+    key_topics: list[str] = Field(
+        default_factory=list,
+        description="Main topics discussed",
+    )
+    participants: list[dict] = Field(
+        default_factory=list,
+        description="Participant roles (no names) — e.g., [{role: 'AV Director'}]",
+    )
+    frankenstack_description: str | None = Field(
+        None,
+        description="Their current messy AV setup (mismatched vendors, workarounds)",
+    )
+
+    # ── Buyer Signals ────────────────────────────────────────────
+    buyer_signals: BuyerSignals = Field(
+        default_factory=BuyerSignals,
+        description="Structured buyer signals (pain, need, timeline, authority, proof)",
+    )
+
+    # ── Challenger Reframe ───────────────────────────────────────
+    challenger_reframe: str = Field(
+        default="",
+        description="The insight: Most [persona]s believe X, but Y shows Z",
+    )
+    rational_drowning: str = Field(
+        default="",
+        description="Quantified impact — numbers from the call",
+    )
+    emotional_impact: str = Field(
+        default="",
+        description="Personal consequence for their role",
+    )
+
+    # ── Product Recommendations ──────────────────────────────────
+    product_recommendations: list[ProductRecommendation] = Field(
+        default_factory=list,
+        description="Epiphan products that match discussed needs",
+    )
+    scenario_matches: list[str] = Field(
+        default_factory=list,
+        description="Matched deployment scenario IDs from scenario library",
+    )
+
+    # ── NSTTD Follow-up ──────────────────────────────────────────
+    follow_up_email: str = Field(
+        default="",
+        description="Tactical empathy email: accusation audit + label + no-oriented CTA",
+    )
+    calibrated_questions: list[str] = Field(
+        default_factory=list,
+        description="How/What questions for the next call (never Why)",
+    )
+    thats_right_summary: str = Field(
+        default="",
+        description="Summary designed to get 'That\\'s right' (not 'You\\'re right')",
+    )
+
+    # ── Metadata ─────────────────────────────────────────────────
+    detected_vertical: str | None = Field(
+        None,
+        description="AI-detected vertical from transcript",
+    )
+    detected_persona: str | None = Field(
+        None,
+        description="AI-detected buyer persona from transcript",
+    )
+    odi_opportunity_score: float | None = Field(
+        None,
+        description="JTBD Opportunity Index (0-100) — how underserved is this prospect?",
+    )

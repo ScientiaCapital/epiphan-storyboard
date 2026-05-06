@@ -324,7 +324,7 @@ class TestMatchAndCustomize:
         assert len(matched) >= 1
         products = matched[0]["products"]
         assert "Pearl Nano" in products
-        assert "Epiphan Connect (EC20 PTZ)" in products
+        assert "Epiphan EC20 PTZ Camera" in products
 
     @pytest.mark.asyncio
     async def test_match_handles_custom_scenarios(self):

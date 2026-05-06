@@ -17,9 +17,9 @@ from src.tools.storyboard.scenario_library import (
 class TestScenarioLibraryCompleteness:
     """Tests that the library has all 20 scenarios with required data."""
 
-    def test_library_has_20_scenarios(self):
-        """Library should contain exactly 20 deployment scenarios."""
-        assert len(SCENARIO_LIBRARY) == 20
+    def test_library_has_24_scenarios(self):
+        """Library should contain exactly 24 deployment scenarios (20 vertical + 3 integrator + 1 EC20 rooms)."""
+        assert len(SCENARIO_LIBRARY) == 24
 
     def test_all_scenarios_have_unique_ids(self):
         """Every scenario must have a unique ID."""
@@ -122,8 +122,9 @@ class TestScenarioVerticalCoverage:
         missing = primary_verticals - covered_verticals
         assert not missing, f"Missing scenarios for verticals: {missing}"
 
-    def test_higher_ed_has_3_scenarios(self):
-        assert len(get_scenarios_for_vertical("higher_ed")) == 3
+    def test_higher_ed_has_5_scenarios(self):
+        """Higher ed has 3 original + 1 integrator (university RFP) + 1 EC20 rooms out of reach."""
+        assert len(get_scenarios_for_vertical("higher_ed")) == 5
 
     def test_k12_has_3_scenarios(self):
         assert len(get_scenarios_for_vertical("k12")) == 3
@@ -134,8 +135,9 @@ class TestScenarioVerticalCoverage:
     def test_legal_has_3_scenarios(self):
         assert len(get_scenarios_for_vertical("legal")) == 3
 
-    def test_corporate_has_3_scenarios(self):
-        assert len(get_scenarios_for_vertical("corporate")) == 3
+    def test_corporate_has_5_scenarios(self):
+        """Corporate has 3 original + 2 integrator (fleet standardization + corporate refresh)."""
+        assert len(get_scenarios_for_vertical("corporate")) == 5
 
     def test_live_events_has_3_scenarios(self):
         assert len(get_scenarios_for_vertical("live_events")) == 3
@@ -248,7 +250,7 @@ class TestLookupFunctions:
 
     def test_get_scenarios_for_valid_vertical(self):
         scenarios = get_scenarios_for_vertical("higher_ed")
-        assert len(scenarios) == 3
+        assert len(scenarios) == 5  # 3 original + 1 integrator (university RFP) + 1 EC20 rooms
         assert all(s.vertical == "higher_ed" for s in scenarios)
 
     def test_get_scenarios_for_invalid_vertical(self):
@@ -261,27 +263,31 @@ class TestScenarioDataQuality:
 
     @pytest.mark.parametrize("scenario", SCENARIO_LIBRARY, ids=lambda s: s.id)
     def test_id_matches_vertical_prefix(self, scenario):
-        """Scenario IDs should start with a recognizable prefix related to their vertical."""
+        """Scenario IDs should start with a recognizable prefix related to their vertical or type."""
         vertical_prefixes = {
-            "higher_ed": "higher_ed_",
-            "k12": "k12_",
-            "houses_of_worship": "how_",
-            "legal": "legal_",
-            "corporate": "corp_",
-            "live_events": "events_",
-            "healthcare": "healthcare_",
-            "industrial": "industrial_",
+            "higher_ed": ("higher_ed_", "integrator_"),
+            "k12": ("k12_",),
+            "houses_of_worship": ("how_",),
+            "legal": ("legal_",),
+            "corporate": ("corp_", "integrator_"),
+            "live_events": ("events_",),
+            "healthcare": ("healthcare_",),
+            "industrial": ("industrial_",),
         }
-        expected_prefix = vertical_prefixes.get(scenario.vertical)
-        if expected_prefix:
-            assert scenario.id.startswith(expected_prefix), (
-                f"{scenario.id} should start with '{expected_prefix}' for vertical {scenario.vertical}"
+        expected_prefixes = vertical_prefixes.get(scenario.vertical)
+        if expected_prefixes:
+            assert any(scenario.id.startswith(p) for p in expected_prefixes), (
+                f"{scenario.id} should start with one of {expected_prefixes} for vertical {scenario.vertical}"
             )
 
     @pytest.mark.parametrize("scenario", SCENARIO_LIBRARY, ids=lambda s: s.id)
     def test_trigger_phrases_are_lowercase_or_proper_nouns(self, scenario):
         """Trigger phrases should be lowercase (proper nouns like NFHS, OSHA, HIPAA allowed)."""
-        allowed_upper = {"NFHS", "OSHA", "HIPAA", "SOP", "IMAG", "ISO", "HyFlex"}
+        allowed_upper = {
+            "NFHS", "OSHA", "HIPAA", "SOP", "IMAG", "ISO", "HyFlex",
+            "AVI-SPL", "Diversified", "Whitlock", "Ford AV",  # Integrator firm names
+            "RFP", "Panopto", "Kaltura", "Extron", "Crestron",  # Brand/acronym names
+        }
         for phrase in scenario.trigger_phrases:
             if phrase in allowed_upper:
                 continue
@@ -297,8 +303,8 @@ class TestScenarioDataQuality:
         epiphan_prices = [
             "$3,750",
             "$1,999",
-            "$3,299",
-            "$7,999",
+            "$3,899",
+            "$8,999",
             "$1,899",
             "$579.95",
             "$449.95",

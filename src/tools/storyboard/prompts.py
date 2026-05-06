@@ -23,21 +23,33 @@ def get_value_angle_instruction(audience: str) -> str:
         # ── ATL: Decision Makers ──────────────────────────────────
         "av_director": """VALUE FRAMING: COI (Cost of Inaction) - AMPLIFIED
 
+CHALLENGER REFRAME: Most AV directors think they can't afford lecture capture in
+every room because traditional setups cost $5,700-$8,500/room. But EC20 at $1,899
+records direct to your CMS/LMS with one Ethernet cable — no encoder, no electrician,
+no audio interface. Those 160 rooms that were "out of reach"? Now capturable.
+
 SPEAK TO THE AV DIRECTOR'S FLEET BURDEN:
 - Every room with different AV is a support ticket and a frustrated user.
 - Standardize once. Manage from anywhere. Forget about it.
 - NC State runs 300+ Pearls with one AV team.
 - "Stop babysitting AV. Start managing it."
+- EC20 at $1,899 vs traditional $5,700-$8,500/room — save up to $6,600/room.
+- Dante audio on the same Ethernet cable — no separate audio runs.
+- Direct CMS/LMS publish — no middleware, no encoder, brand agnostic.
+- Pearl bundles: complete HyFlex room (Nano + EC20) under $3,500.
 
 VOCABULARY THAT RESONATES:
 - "fleet management", "standardize", "rack-mount", "signal chain"
-- "commissioning", "as-built", "NDI", "SRT", "PoE"
+- "commissioning", "as-built", "NDI", "SRT", "PoE", "Dante"
 - "zero headaches", "one team, hundreds of rooms"
+- "rooms out of reach", "direct to CMS/LMS", "one cable"
 
 FORBIDDEN (sounds like marketing):
 - "digital transformation", "synergize", "paradigm shift", "holistic"
 
 EMOTIONAL CORE: Professional pride. Managing hundreds of rooms without losing sleep.
+The EC20 cost story changes the budget conversation from "which rooms can we afford"
+to "why aren't ALL rooms captured."
 """,
         "ld_director": """VALUE FRAMING: ROI (Knowledge Capture) - AMPLIFIED
 
@@ -204,6 +216,33 @@ FORBIDDEN (sounds like marketing):
 
 EMOTIONAL CORE: Technical credibility. Specs, integration stories, and peer validation from fellow integrators.
 """,
+        "av_integrator": """VALUE FRAMING: PARTNERSHIP (Margin + Install Efficiency) - AMPLIFIED
+
+CHALLENGER REFRAME: Most integrators think their biggest cost is hardware.
+But what we hear from firms managing 50+ client sites is the real cost is
+truck rolls and support calls for gear that doesn't self-manage.
+At $150/truck roll × 3 calls/site/month × 50 sites = $270K/year in margin erosion.
+
+SPEAK AS A FELLOW AV PROFESSIONAL (peer-to-peer):
+- "Your field techs install Pearl in 20 minutes. Try that with the other guys."
+- "Fleet management across 50 client sites from one Epiphan Edge dashboard."
+- "Open API means your Crestron/Q-SYS programmer isn't fighting the hardware."
+- "Zero post-install support calls. Your margin stays on the project, not the service desk."
+
+VOCABULARY THAT RESONATES:
+- "rack-mount", "install base", "field tech", "commissioning"
+- "Crestron", "Q-SYS", "AMX", "Dante", "NDI", "AV-over-IP"
+- "deal registration", "margin", "RFP", "spec sheet"
+- "fleet management", "Epiphan Edge", "remote monitoring"
+- "truck roll", "as-built", "PoE budget"
+
+FORBIDDEN (sounds like vendor marketing):
+- "game-changing", "revolutionary", "paradigm shift", "disruptive"
+
+EMOTIONAL CORE: Business partnership. Products that make integrators look good,
+keep margins healthy, and generate zero callbacks. Your field techs are the ones
+getting the 7 AM call when an encoder crashes — Epiphan means that call never comes.
+""",
         # ── ATL: Edtech & Live Events (from PDF research) ───────────
         "edtech_manager": """VALUE FRAMING: ADOPTION (Faculty Actually Use It) - AMPLIFIED
 
@@ -319,6 +358,13 @@ def get_persona_extraction_focus(audience: str, audience_info: dict) -> str:
 - What PARTNER ECOSYSTEM compatibility (Q-SYS, Crestron, Kaltura)?
 - What INSTALLATION SIMPLICITY or deployment guides?
 - What PEER VALIDATION from other integrators?""",
+        "av_integrator": """FOCUS FOR AV INTEGRATOR (Solutions Architect):
+- What INSTALL COMPLEXITY or COMMISSIONING TIME was discussed?
+- What FLEET MANAGEMENT across multiple client sites?
+- What CONTROL SYSTEM INTEGRATION (Crestron, Q-SYS, AMX)?
+- What MARGIN IMPACT — support calls, truck rolls, warranty returns?
+- What FRANKENSTACK — mismatched vendor gear across client sites?
+- What RFP REQUIREMENTS or spec compliance needs?""",
         # ── ATL: Edtech & Live Events ────────────────────────────────
         "edtech_manager": """FOCUS FOR EDUCATIONAL TECHNOLOGY MANAGER:
 - What LMS/CMS INTEGRATION (Panopto, Kaltura, Brightcove) was discussed?
@@ -421,6 +467,13 @@ VOICE: {voice_tone}
 VALUE ANGLE: TECHNICAL - API quality, integration specs, partner ecosystem
 VISUAL STYLE: {default_style} (technical diagram, signal flow, rack layout)
 DESIGN: Integration architecture, signal flow diagram, partner ecosystem map
+AVOID WORDS: {", ".join(forbidden[:5])}""",
+        "av_integrator": f"""FOR: {title}
+VOICE: {voice_tone}
+VALUE ANGLE: PARTNERSHIP - margin protection, install efficiency, fleet management, zero truck rolls
+VISUAL STYLE: {default_style} (before/after: frankenstack vs clean Epiphan deployment)
+DESIGN: Multi-site fleet dashboard, install comparison (20-min Pearl vs hours for competitor),
+truck roll cost calculator, Epiphan Edge management view across client sites
 AVOID WORDS: {", ".join(forbidden[:5])}""",
         # ── ATL: Edtech & Live Events ────────────────────────────────
         "edtech_manager": f"""FOR: {title}
@@ -623,7 +676,10 @@ def get_vertical_generation_context(vertical: str | None) -> str:
     if not vertical:
         return ""
 
-    from src.tools.storyboard.epiphan_presets import EPIPHAN_VERTICALS, get_reference_stories
+    from src.tools.storyboard.epiphan_presets import (
+        EPIPHAN_VERTICALS,
+        get_reference_stories,
+    )
 
     vert_data = EPIPHAN_VERTICALS.get(vertical)
     if not vert_data:
@@ -642,7 +698,7 @@ def get_vertical_generation_context(vertical: str | None) -> str:
         story_lines = []
         for s in stories[:3]:
             quote = s.get("quote", "")
-            story_lines.append(f"- {s['customer']}: {s['metric']} — \"{quote}\"")
+            story_lines.append(f'- {s["customer"]}: {s["metric"]} — "{quote}"')
         sections.append("PROOF POINTS:\n" + "\n".join(story_lines))
 
     # Use cases
@@ -663,3 +719,229 @@ def get_vertical_generation_context(vertical: str | None) -> str:
         sections.append(f"RECOMMENDED PRODUCTS: {', '.join(product_names)}")
 
     return "\n".join(sections)
+
+
+# ── JTBD (Jobs To Be Done) Framework ────────────────────────────────────────
+
+
+def get_persona_job_statement(audience: str) -> str:
+    """
+    Core JTBD job statement for each persona.
+
+    Format: When [circumstance], I want to [job], so I can [outcome].
+    Solution-agnostic — no product names, technologies, or methods.
+    """
+    jobs = {
+        # ── ATL: Decision Makers ──────────────────────────────────
+        "av_director": (
+            "When managing AV across dozens of rooms with different equipment, "
+            "I want to standardize on reliable hardware I can manage remotely, "
+            "so I can stop babysitting AV and start managing it."
+        ),
+        "ld_director": (
+            "When institutional knowledge walks out the door with retiring experts, "
+            "I want to capture and distribute training content at scale, "
+            "so I can prove training ROI and maintain compliance."
+        ),
+        "sim_center_director": (
+            "When running high-fidelity simulations, "
+            "I want multi-angle synchronized recording that stays on our network, "
+            "so I can deliver better debriefs without HIPAA risk."
+        ),
+        "court_admin": (
+            "When proceedings must be recorded without exception, "
+            "I want tamper-proof recording that works unattended, "
+            "so I can maintain the integrity of the judicial record."
+        ),
+        "corp_comms": (
+            "When leadership goes on camera for town halls and all-hands, "
+            "I want broadcast-quality production from any room without a production crew, "
+            "so I can protect the brand every time the CEO speaks."
+        ),
+        "ehs_manager": (
+            "When safety procedures must be documented and auditable, "
+            "I want to capture every training session and process demonstration, "
+            "so I can prove compliance and preserve tribal knowledge before it retires."
+        ),
+        "law_firm_it": (
+            "When depositions and client meetings must be recorded securely, "
+            "I want on-premises recording that partners never have to think about, "
+            "so I can eliminate AV complaints and protect privileged data."
+        ),
+        # ── ATL: Higher Ed Executive ──────────────────────────────
+        "provost": (
+            "When enrollment depends on student experience quality, "
+            "I want consistent lecture delivery across all modalities, "
+            "so I can compete for students and satisfy accreditation."
+        ),
+        "university_president": (
+            "When campus technology defines institutional reputation, "
+            "I want scalable infrastructure that demonstrates innovation, "
+            "so I can attract enrollment and position the university competitively."
+        ),
+        "university_finance": (
+            "When AV budgets compete with every other campus priority, "
+            "I want predictable total cost of ownership across all rooms, "
+            "so I can justify the investment with measurable ROI."
+        ),
+        # ── ATL: Edtech & Live Events ─────────────────────────────
+        "edtech_manager": (
+            "When faculty resistance is the biggest barrier to edtech adoption, "
+            "I want technology that integrates invisibly with the LMS, "
+            "so I can achieve adoption without changing faculty workflow."
+        ),
+        "venue_manager": (
+            "When every event has different requirements and limited staff, "
+            "I want one system that handles any event type with minimal training, "
+            "so I can deliver consistent client satisfaction regardless of the show."
+        ),
+        "production_director": (
+            "When managing AV fleets across multiple venues and events, "
+            "I want standardized equipment with centralized monitoring, "
+            "so I can guarantee uptime at enterprise scale."
+        ),
+        # ── BTL: Operators ────────────────────────────────────────
+        "technical_director": (
+            "When the show is live and there's no second take, "
+            "I want gear that works under pressure with one-button simplicity, "
+            "so I can deliver clean shows without worrying about crashes."
+        ),
+        # ── CHANNEL: Sales Intermediaries ─────────────────────────
+        "dealer_dave": (
+            "When my customers need AV solutions and I need to close deals, "
+            "I want vendor-provided sales assets and competitive proof points, "
+            "so I can win the deal and build a long-term customer relationship."
+        ),
+        "system_engineer": (
+            "When designing AV systems for client projects, "
+            "I want products with clean APIs and documented integration paths, "
+            "so I can spec with confidence and avoid post-install headaches."
+        ),
+        "av_integrator": (
+            "When specifying AV for client projects across verticals, "
+            "I want products that install clean, manage remotely, and generate zero support calls, "
+            "so I can protect my margin and my reputation."
+        ),
+    }
+    return jobs.get(audience, jobs["av_director"])
+
+
+def get_jtbd_extraction_instructions(audience: str) -> str:
+    """
+    JTBD-specific extraction instructions to add to any content prompt.
+
+    Extracts Forces of Progress (push/pull/anxiety/habit),
+    the frankenstack (current hired solutions + workarounds),
+    and maps content to the persona's core job.
+    """
+    job_statement = get_persona_job_statement(audience)
+    return f"""JOBS TO BE DONE ANALYSIS:
+The target persona's core job: "{job_statement}"
+
+Map the content to this job. Extract:
+- JOB ALIGNMENT: How does this content relate to the persona's core job?
+- FORCES OF PROGRESS:
+  * PUSH: What current pain is driving them to change? What's broken today?
+  * PULL: What new capability or outcome is attracting them?
+  * ANXIETY: What fears about switching? Risk, timeline, IT burden?
+  * HABIT: What's comfortable about the current state? "We've always done X"
+- FRANKENSTACK: Describe their current messy setup — mismatched vendors,
+  laptop-on-a-cart solutions, manual workarounds, multiple platforms.
+  This becomes the "before" in the storyboard.
+- HIRING/FIRING: What solution are they currently "hiring" for this job?
+  Why might they "fire" it? What workarounds reveal unmet needs?
+"""
+
+
+# ── Challenger Sale Framework ────────────────────────────────────────────────
+
+
+def get_challenger_choreography(audience: str) -> str:
+    """
+    Challenger 6-step teaching narrative for storyboard generation.
+
+    The storyboard should tell a TEACHING STORY, not list features.
+    Each panel maps to a Challenger step.
+    """
+    return f"""STORYBOARD NARRATIVE — CHALLENGER TEACHING STORY:
+
+PANEL 1 — THE WARMER (show you understand their world):
+Visual: Their current reality — the frankenstack of mismatched gear,
+the frustration, the complexity. Make it feel REAL, not abstract.
+Text: Acknowledge their situation without selling.
+
+PANEL 2 — THE REFRAME (the insight they don't know):
+Visual: Data point or comparison that challenges their assumption.
+Text: "Most {audience}s believe [assumption]. But [evidence] shows [surprise]."
+This is the most important panel — it's WHY they should care.
+
+PANEL 3 — RATIONAL DROWNING (stack the evidence):
+Visual: Numbers, metrics, cost comparison. Make the problem UNDENIABLE.
+Text: Quantified impact — hours lost, dollars wasted, incidents per year.
+Include bundle pricing where relevant (EC20 at $1,899 vs $7-8K Sony/Panasonic).
+
+PANEL 4 — EMOTIONAL IMPACT (make it personal):
+Visual: The personal consequence — their team getting the call at 8 PM,
+the failed recording during the board meeting, the judge's frustration.
+Text: Connect to THEIR career, THEIR stress, THEIR reputation.
+
+PANEL 5 — THE NEW WAY (the approach, not the product yet):
+Visual: Clean architecture diagram — hardware-based, appliance model,
+fleet-managed, no software layer. Contrast with the frankenstack.
+Text: "What leading [peers] are doing is [approach]..."
+
+PANEL 6 — YOUR SOLUTION (NOW introduce Epiphan):
+Visual: Epiphan product in context — rack-mounted, in the room, on the
+Epiphan Edge dashboard. Show it solving the exact problem from Panel 1.
+Text: Product name + one-line capability + validated CTA link.
+Include bundle options where the savings story is compelling.
+"""
+
+
+# ── NSTTD (Never Split the Difference) Framework ────────────────────────────
+
+
+def get_nsttd_email_framework(audience: str) -> str:
+    """
+    Chris Voss tactical empathy framework for follow-up email drafts.
+
+    Applies: accusation audit, labels, calibrated questions, no-oriented CTA.
+    """
+    return """EMAIL FRAMEWORK — TACTICAL EMPATHY (NSTTD):
+
+STRUCTURE:
+1. ACCUSATION AUDIT (first line): Front-run their likely objection.
+   "You're probably thinking [worst thing they'd think about this follow-up]."
+   Example: "You're probably thinking this is just another vendor follow-up."
+
+2. LABEL (second line): Name what you heard in the conversation.
+   "It seems like [specific pain/concern from the call]..."
+   Must reference something SPECIFIC from the call — not generic.
+
+3. REFERENCE SPECIFIC CALL MOMENTS: Quote or paraphrase 1-2 things
+   THEY said (roles only, no names). This proves you listened.
+
+4. NO-ORIENTED CTA (closing): Make it safe to say no.
+   "Would it be out of the question to..." or "Would it be a terrible
+   idea to..." — NOT "Would you like to schedule a call?"
+
+RULES:
+- Under 100 words total
+- No "I" in the first sentence — lead with THEM
+- No features list — reference the JOB they described
+- Use calibrated questions (How/What, never Why)
+- FM DJ tone: calm, confident, no urgency or desperation
+
+CALIBRATED QUESTIONS FOR NEXT CALL:
+Generate 3-5 questions using only "How" or "What" — NEVER "Why":
+- "What does success look like for your team?"
+- "How does this fit into your broader priorities?"
+- "What would need to be true for you to feel confident moving forward?"
+- "How do you typically evaluate solutions like this?"
+
+"THAT'S RIGHT" SUMMARY:
+Write a summary of their position designed to get them to say "That's right"
+(not "You're right" — that's a brush-off). Summarize their pain, their
+constraints, and what they're looking for. When they confirm it, you've
+earned the right to propose.
+"""

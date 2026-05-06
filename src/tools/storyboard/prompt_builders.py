@@ -149,6 +149,15 @@ def build_extraction_prompt(
     vertical_context = prompts.get_vertical_generation_context(vertical)
     request_id = f"{datetime.now().isoformat()}-{uuid.uuid4().hex[:8]}"
 
+    # Get persona-specific extraction focus (was unused — now wired in)
+    from src.tools.storyboard.epiphan_presets import get_audience_persona
+
+    audience_info = get_audience_persona(audience)
+    persona_focus = prompts.get_persona_extraction_focus(audience, audience_info)
+
+    # JTBD extraction instructions for Forces of Progress + frankenstack detection
+    jtbd_instructions = prompts.get_jtbd_extraction_instructions(audience)
+
     if content_type == "code":
         return _build_code_prompt(
             content=content or "",
@@ -159,6 +168,8 @@ def build_extraction_prompt(
             language_guidelines=language_guidelines,
             value_angle_instruction=value_angle_instruction,
             vertical_context=vertical_context,
+            persona_focus=persona_focus,
+            jtbd_instructions=jtbd_instructions,
         )
     elif content_type == "transcript":
         return _build_transcript_prompt(
@@ -170,6 +181,8 @@ def build_extraction_prompt(
             language_guidelines=language_guidelines,
             value_angle_instruction=value_angle_instruction,
             vertical_context=vertical_context,
+            persona_focus=persona_focus,
+            jtbd_instructions=jtbd_instructions,
         )
     elif content_type == "image":
         return _build_image_prompt(
@@ -180,6 +193,8 @@ def build_extraction_prompt(
             language_guidelines=language_guidelines,
             value_angle_instruction=value_angle_instruction,
             vertical_context=vertical_context,
+            persona_focus=persona_focus,
+            jtbd_instructions=jtbd_instructions,
         )
     elif content_type == "images":
         return _build_multi_image_prompt(
@@ -191,6 +206,8 @@ def build_extraction_prompt(
             language_guidelines=language_guidelines,
             value_angle_instruction=value_angle_instruction,
             vertical_context=vertical_context,
+            persona_focus=persona_focus,
+            jtbd_instructions=jtbd_instructions,
         )
     else:
         raise ValueError(f"Unknown content_type: {content_type}")
@@ -205,6 +222,8 @@ def _build_code_prompt(
     language_guidelines: str,
     value_angle_instruction: str,
     vertical_context: str = "",
+    persona_focus: str = "",
+    jtbd_instructions: str = "",
 ) -> str:
     return f"""Analyze this code and extract business value.
 REQUEST_ID: {request_id}
@@ -223,6 +242,10 @@ TARGET AUDIENCE: {audience}
 
 {language_guidelines if language_guidelines else ""}
 
+{persona_focus}
+
+{jtbd_instructions}
+
 EXTRACT:
 - What does this code do (plain English)?
 - Who benefits from this?
@@ -235,19 +258,32 @@ CRITICAL RULES:
 - NEVER include personal names - use roles/personas (e.g., "Operations Team" not "John")
 - ALWAYS derive business value - infer from the problem being solved
 - If value isn't explicit, INFER it
+- CMS/LMS BRAND AGNOSTIC: Never favor one platform. Say "your CMS/LMS" or list multiple (Panopto, Kaltura, YuJa, etc.)
+- Highlight: All-in-one streaming, recording, switching, multicasting in one box
+- Highlight when relevant: Dante audio, direct CMS/LMS publish, EC20 at $1,899 vs $7-8K competitors
 
 Return JSON:
 {{
     "raw_extracted_text": "Key technical elements: classes, functions, logic",
     "extraction_confidence": 0.0-1.0,
-    "headline": "Benefit-focused headline (8 words max)",
+    "headline": "Reframe headline — the insight, not the feature (8 words max)",
     "tagline": "Unique to THIS code (10 words max)",
-    "what_it_does": "Plain English (2 sentences max)",
-    "business_value": "ALWAYS provide value - quantified if possible, inferred if not",
+    "what_it_does": "Plain English — the NEW WAY, not features (2 sentences max)",
+    "business_value": "Quantified impact — rational drowning numbers",
     "who_benefits": "Role/persona titles ONLY - NO personal names",
-    "differentiator": "What makes it special",
-    "pain_point_addressed": "Problem solved",
-    "suggested_icon": "Simple icon name"
+    "differentiator": "What makes Epiphan the ONLY solution for this job",
+    "pain_point_addressed": "The PUSH force — current pain driving change",
+    "suggested_icon": "Simple icon name",
+    "job_to_be_done": "JTBD: When [circumstance], I want to [job], so I can [outcome]",
+    "forces_of_progress": {{
+        "push": "Current pain driving change",
+        "pull": "New solution attraction",
+        "anxiety": "Fear of switching",
+        "habit": "Comfort of current state"
+    }},
+    "frankenstack": "Description of current messy setup (if detectable from code)",
+    "recommended_products": ["product_id_1", "product_id_2"],
+    "challenger_reframe": "The insight: Most [audience]s believe X, but Y shows Z"
 }}"""
 
 
@@ -260,6 +296,8 @@ def _build_transcript_prompt(
     language_guidelines: str,
     value_angle_instruction: str,
     vertical_context: str = "",
+    persona_focus: str = "",
+    jtbd_instructions: str = "",
 ) -> str:
     return f"""Extract key insights from this content.
 REQUEST_ID: {request_id}
@@ -276,11 +314,23 @@ TARGET AUDIENCE: {audience}
 
 {language_guidelines if language_guidelines else ""}
 
+{persona_focus}
+
 EXTRACTION PRIORITIES:
 - Preserve EXACT quotes and specific numbers
 - Note speaker ROLES (not personal names - generalize to "Field Tech", "Project Manager", "Operations Team")
-- Find what would resonate with {audience}
 - ALWAYS derive business value - infer it from context if not explicitly stated
+
+EXTRACT BUYER SIGNALS:
+- PUSH (pain driving change): What frustrations did they describe? What's broken?
+- PULL (new solution attraction): What capabilities are they looking for?
+- ANXIETY (switching fear): What concerns about changing? Risk? Timeline?
+- HABIT (current comfort): What are they used to? "We've always done it this way"?
+- TIMELINE: Budget cycle? Event date? Mandate? Fiscal year end?
+- AUTHORITY: Who else weighs in? Economic buyer vs champion vs user?
+- FRANKENSTACK: What mismatched gear/software/workarounds do they have today?
+
+{jtbd_instructions}
 
 {value_angle_instruction}
 
@@ -293,14 +343,29 @@ Return JSON:
 {{
     "raw_extracted_text": "Key quotes, numbers, specifics from content",
     "extraction_confidence": 0.0-1.0,
-    "headline": "Punchy headline from content (8 words max)",
+    "headline": "Reframe headline — the insight, not the feature (8 words max)",
     "tagline": "Unique to this content (10 words max)",
-    "what_it_does": "Plain English (2 sentences max)",
-    "business_value": "ALWAYS provide value - quantified if possible, inferred if not",
-    "who_benefits": "Role/persona titles ONLY (e.g., 'Field Crews', 'Operations Teams') - NO personal names",
-    "differentiator": "What stands out",
-    "pain_point_addressed": "Problem solved",
-    "suggested_icon": "Simple icon name"
+    "what_it_does": "The NEW WAY — not features (2 sentences max)",
+    "business_value": "Quantified impact — rational drowning numbers",
+    "who_benefits": "Role/persona titles ONLY - NO personal names",
+    "differentiator": "What makes Epiphan the ONLY solution for this job",
+    "pain_point_addressed": "The PUSH force — current pain driving change",
+    "suggested_icon": "Simple icon name",
+    "job_to_be_done": "JTBD: When [circumstance], I want to [job], so I can [outcome]",
+    "forces_of_progress": {{
+        "push": "Current pain from transcript",
+        "pull": "New capability they're attracted to",
+        "anxiety": "Switching fears mentioned",
+        "habit": "Current comfort / status quo"
+    }},
+    "frankenstack": "Their current messy setup from transcript",
+    "recommended_products": ["product_id_1", "product_id_2"],
+    "challenger_reframe": "The insight: Most [audience]s believe X, but Y shows Z",
+    "buyer_signals": {{
+        "timeline": "Budget cycle, event date, mandate",
+        "authority": "Who else weighs in",
+        "proof": "Competitors mentioned, reference checks"
+    }}
 }}"""
 
 
@@ -312,6 +377,8 @@ def _build_image_prompt(
     language_guidelines: str,
     value_angle_instruction: str,
     vertical_context: str = "",
+    persona_focus: str = "",
+    jtbd_instructions: str = "",
 ) -> str:
     # Build text context section - TEXT IS A PRIMARY INPUT, NOT SECONDARY
     context_section = ""
@@ -344,6 +411,10 @@ TARGET AUDIENCE: {audience}
 
 {language_guidelines if language_guidelines else ""}
 
+{persona_focus}
+
+{jtbd_instructions}
+
 EXTRACT:
 - Every label, feature name, number visible
 - Hierarchy/structure if present
@@ -362,14 +433,24 @@ Return JSON:
 {{
     "raw_extracted_text": "Everything visible: labels, names, numbers",
     "extraction_confidence": 0.0-1.0,
-    "headline": "Main theme from image (8 words max)",
+    "headline": "Reframe headline — the insight (8 words max)",
     "tagline": "Unique to THIS content (10 words max)",
-    "what_it_does": "Specific features/areas shown",
-    "business_value": "INFER value from what this enables - never say 'not mentioned'",
+    "what_it_does": "The NEW WAY — not features (2 sentences max)",
+    "business_value": "Quantified impact — infer from what this enables",
     "who_benefits": "Role/persona titles ONLY - NO personal names",
-    "differentiator": "What makes this special",
-    "pain_point_addressed": "INFER the problem this solves - never say 'not mentioned'",
-    "suggested_icon": "Icon representing content"
+    "differentiator": "What makes Epiphan the ONLY solution for this job",
+    "pain_point_addressed": "The PUSH force — INFER the problem this solves",
+    "suggested_icon": "Icon representing content",
+    "job_to_be_done": "JTBD: When [circumstance], I want to [job], so I can [outcome]",
+    "forces_of_progress": {{
+        "push": "Current pain",
+        "pull": "New solution attraction",
+        "anxiety": "Switching fear",
+        "habit": "Current comfort"
+    }},
+    "frankenstack": "Current messy setup visible in image (if applicable)",
+    "recommended_products": ["product_id_1", "product_id_2"],
+    "challenger_reframe": "The insight: Most [audience]s believe X, but Y shows Z"
 }}"""
 
 
@@ -382,6 +463,8 @@ def _build_multi_image_prompt(
     language_guidelines: str,
     value_angle_instruction: str,
     vertical_context: str = "",
+    persona_focus: str = "",
+    jtbd_instructions: str = "",
 ) -> str:
     # Build text context section - TEXT IS A PRIMARY INPUT, NOT SECONDARY
     context_section = ""
@@ -414,6 +497,10 @@ TARGET AUDIENCE: {audience}
 
 {language_guidelines if language_guidelines else ""}
 
+{persona_focus}
+
+{jtbd_instructions}
+
 EXTRACT FROM EACH IMAGE:
 - Every label, feature name, number visible
 - Hierarchy/structure if present
@@ -433,12 +520,22 @@ Return JSON:
 {{
     "raw_extracted_text": "IMAGE 1: [content]... IMAGE 2: [content]...",
     "extraction_confidence": 0.0-1.0,
-    "headline": "Synthesized theme (8 words max)",
+    "headline": "Reframe headline — the insight (8 words max)",
     "tagline": "Unique to THIS content (10 words max)",
-    "what_it_does": "Specific features across images",
-    "business_value": "Numbers from images if present",
-    "who_benefits": "Who would use this",
-    "differentiator": "What makes this special",
-    "pain_point_addressed": "Problem solved",
-    "suggested_icon": "Icon representing theme"
+    "what_it_does": "The NEW WAY — synthesized across images",
+    "business_value": "Quantified impact from images",
+    "who_benefits": "Role/persona titles ONLY",
+    "differentiator": "What makes Epiphan the ONLY solution for this job",
+    "pain_point_addressed": "The PUSH force — problem solved",
+    "suggested_icon": "Icon representing theme",
+    "job_to_be_done": "JTBD: When [circumstance], I want to [job], so I can [outcome]",
+    "forces_of_progress": {{
+        "push": "Current pain",
+        "pull": "New solution attraction",
+        "anxiety": "Switching fear",
+        "habit": "Current comfort"
+    }},
+    "frankenstack": "Current messy setup visible across images",
+    "recommended_products": ["product_id_1", "product_id_2"],
+    "challenger_reframe": "The insight: Most [audience]s believe X, but Y shows Z"
 }}"""

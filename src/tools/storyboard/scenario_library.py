@@ -58,12 +58,12 @@ HIGHER_ED_CAMPUS_CAPTURE = DeploymentScenario(
     bundle_name="Campus Capture Fleet",
     setup_description=(
         "Deploy Pearl Mini or Pearl Nexus in every classroom with an EC20 PTZ camera. "
-        "Faculty press one button to record — Epiphan Cloud manages the entire fleet remotely. "
+        "Faculty press one button to record — Epiphan Edge manages the entire fleet remotely. "
         "Recordings auto-publish to your LMS (Panopto, Kaltura, Brightcove) with zero faculty effort."
     ),
     reference_story="NC State — 300+ Pearl units campus-wide; MTSU — 428 rooms centrally managed",
     persona_match=["av_director", "provost", "university_finance"],
-    edge_value="Epiphan Cloud provides centralized management, monitoring, and scheduling for every room from a single dashboard.",
+    edge_value="Epiphan Edge provides centralized management, monitoring, and scheduling for every room from a single dashboard.",
     creative_hook=(
         "NC State didn't start with 300 rooms. They started with 10, proved the model, "
         "and scaled because Pearl just works — no IT tickets, no faculty complaints."
@@ -94,7 +94,7 @@ HIGHER_ED_ONE_BUTTON_STUDIO = DeploymentScenario(
     ),
     reference_story="UNLV — 215 rooms with 10-minute deploy per room using Pearl Nexus",
     persona_match=["av_director", "ld_director", "provost"],
-    edge_value="Epiphan Cloud lets faculty schedule recordings in advance and auto-publish to the LMS.",
+    edge_value="Epiphan Edge lets faculty schedule recordings in advance and auto-publish to the LMS.",
     creative_hook=(
         "Your faculty aren't video producers — and they shouldn't have to be. "
         "The best studios are the ones where the technology disappears."
@@ -125,10 +125,58 @@ HIGHER_ED_HYBRID_CLASSROOM = DeploymentScenario(
     ),
     reference_story="NTNU (Norway) — 700+ rooms with Pearl Mini + Panopto integration",
     persona_match=["av_director", "provost", "university_president"],
-    edge_value="Epiphan Cloud enables zero-touch provisioning — IT deploys rooms without visiting each one.",
+    edge_value="Epiphan Edge enables zero-touch provisioning — IT deploys rooms without visiting each one.",
     creative_hook=(
         "The hybrid classroom isn't a pandemic compromise — it's how every modern university "
         "competes for enrollment. Students choose schools that invest in their experience."
+    ),
+)
+
+HIGHER_ED_ROOMS_OUT_OF_REACH = DeploymentScenario(
+    id="higher_ed_rooms_out_of_reach",
+    name="EC20: Capture Every Room That Was Always Out of Reach",
+    vertical="higher_ed",
+    trigger_phrases=[
+        "seminar room",
+        "breakout",
+        "collaborative",
+        "small room",
+        "budget",
+        "can't afford",
+        "too expensive",
+        "every room",
+        "out of reach",
+        "no encoder",
+        "single cable",
+        "one cable",
+        "simple",
+        "direct",
+        "dante",
+        "per-room cost",
+    ],
+    products=["ec20_ptz"],
+    bundle_name=None,
+    setup_description=(
+        "EC20 PTZ camera records and uploads direct to your CMS/LMS — no encoder needed. "
+        "One Ethernet cable delivers PoE+ power, 4K60 video, and Dante audio. "
+        "Traditional per-room cost is 3-4x higher with separate camera, encoder, audio, "
+        "and electrician. EC20 replaces all of that with a single device and one cable. "
+        "Seminar rooms, breakout spaces, collaborative areas, and overflow halls that "
+        "could never justify the cost — now capturable. AI tracking keeps the presenter "
+        "centered. LCD shows IP at install. Both ceiling and wall mounts in the box."
+    ),
+    reference_story=None,
+    persona_match=["av_director", "provost", "university_finance", "av_integrator"],
+    edge_value=(
+        "Epiphan Edge fleet-manages every EC20 from one dashboard. "
+        "Schedule recordings, monitor health, batch firmware updates — "
+        "across every seminar room, breakout space, and classroom on campus."
+    ),
+    creative_hook=(
+        "Your campus has 200 teaching spaces. Lecture capture covers 40 of them because "
+        "the other 160 couldn't justify $8K/room. At $1,899 per room with one cable and "
+        "no encoder, those 160 rooms just became capturable. "
+        "That's the conversation that changes the provost's budget meeting."
     ),
 )
 
@@ -163,7 +211,7 @@ K12_SPORTS_BROADCAST = DeploymentScenario(
     ),
     reference_story=None,
     persona_match=["av_director", "ld_director"],
-    edge_value="Epiphan Cloud lets the AD schedule games and monitor streams from their phone.",
+    edge_value="Epiphan Edge lets the AD schedule games and monitor streams from their phone.",
     creative_hook=(
         "Every parent in the stands is already streaming on their phone. "
         "Give them a reason to share YOUR professional stream instead."
@@ -223,7 +271,7 @@ K12_CLASSROOM_RECORDING = DeploymentScenario(
     ),
     reference_story=None,
     persona_match=["av_director", "ld_director"],
-    edge_value="Epiphan Cloud enables district-wide fleet management from the central office.",
+    edge_value="Epiphan Edge enables district-wide fleet management from the central office.",
     creative_hook=(
         "The best teachers already repeat themselves 5 times a day across sections. "
         "Record it once — every student gets the best version."
@@ -291,7 +339,7 @@ HOW_MULTI_CAMPUS = DeploymentScenario(
     ),
     reference_story=None,
     persona_match=["av_director"],
-    edge_value="Epiphan Cloud synchronizes scheduling and monitoring across all campus locations from one dashboard.",
+    edge_value="Epiphan Edge synchronizes scheduling and monitoring across all campus locations from one dashboard.",
     creative_hook=(
         "When you open a second campus, the lead pastor can't be in two places. "
         "But their message can — in broadcast quality, not laptop-on-a-tripod quality."
@@ -359,7 +407,7 @@ LEGAL_COURTROOM_RECORDING = DeploymentScenario(
     ),
     reference_story="Redfish Technologies — 60+ Pearl systems across Washington state courts and councils",
     persona_match=["court_admin", "law_firm_it"],
-    edge_value="Epiphan Cloud provides remote monitoring and health alerts — IT knows if a courtroom camera goes offline before the hearing starts.",
+    edge_value="Epiphan Edge provides remote monitoring and health alerts — IT knows if a courtroom camera goes offline before the hearing starts.",
     creative_hook=(
         "A failed court recording isn't an inconvenience — it's a mistrial risk. "
         "Redfish deployed 60+ Pearl systems across WA courts because hardware reliability "
@@ -457,7 +505,7 @@ CORP_TOWN_HALL = DeploymentScenario(
     ),
     reference_story="OpenAI — Pearl-2 for '12 Days of OpenAI' livestream production",
     persona_match=["corp_comms", "av_director"],
-    edge_value="Epiphan Cloud enables IT to pre-configure layouts and schedules so the comms team just presses start.",
+    edge_value="Epiphan Edge enables IT to pre-configure layouts and schedules so the comms team just presses start.",
     creative_hook=(
         "OpenAI used Pearl-2 for their '12 Days of OpenAI' livestream — the world's leading "
         "AI company trusts hardware encoding when reliability matters most."
@@ -485,11 +533,11 @@ CORP_BOARDROOM_FLEET = DeploymentScenario(
     setup_description=(
         "Deploy Pearl Mini or Pearl Nexus in every boardroom across all offices. Same setup, "
         "same experience, same one-button operation everywhere. IT manages the entire fleet from "
-        "Epiphan Cloud — firmware updates, monitoring, and troubleshooting without leaving the desk."
+        "Epiphan Edge — firmware updates, monitoring, and troubleshooting without leaving the desk."
     ),
     reference_story="Fortune 500 boardrooms — standardized on Pearl Mini",
     persona_match=["av_director", "corp_comms"],
-    edge_value="Epiphan Cloud zero-touch provisioning means new offices get AV that works out of the box.",
+    edge_value="Epiphan Edge zero-touch provisioning means new offices get AV that works out of the box.",
     creative_hook=(
         "Every office has different AV because every office was set up by a different integrator "
         "in a different year. Standardize once — IT support tickets for 'the video doesn't work' "
@@ -557,7 +605,7 @@ EVENTS_BREAKOUT_FACTORY = DeploymentScenario(
     ),
     reference_story="Markey's Rental — 13 concurrent rooms, Pearl per room; Source of Knowledge — 1,000+ conferences, 99.4% capture success",
     persona_match=["av_director", "technical_director"],
-    edge_value="Epiphan Cloud monitors all rooms in real-time — one operator oversees 13+ simultaneous captures from a single laptop.",
+    edge_value="Epiphan Edge monitors all rooms in real-time — one operator oversees 13+ simultaneous captures from a single laptop.",
     creative_hook=(
         "Source of Knowledge captured 1,000+ conferences with 99.4% success rate. "
         "One Pearl per room, one operator for the whole venue — that's the math "
@@ -620,7 +668,7 @@ EVENTS_RENTAL_STANDARD = DeploymentScenario(
     ),
     reference_story="Markey's Rental — standardized on Pearl for all live event production",
     persona_match=["av_director", "technical_director"],
-    edge_value="Epiphan Cloud lets the rental house monitor every deployed kit in real-time across multiple venues.",
+    edge_value="Epiphan Edge lets the rental house monitor every deployed kit in real-time across multiple venues.",
     creative_hook=(
         "Your freelancer arrives at the venue 2 hours before the show. "
         "They've never seen this kit before. With Pearl, that doesn't matter — "
@@ -698,7 +746,7 @@ INDUSTRIAL_SAFETY_CAPTURE = DeploymentScenario(
     ),
     reference_story=None,
     persona_match=["ehs_manager", "ld_director"],
-    edge_value="Epiphan Cloud enables centralized training content distribution across all plant locations.",
+    edge_value="Epiphan Edge enables centralized training content distribution across all plant locations.",
     creative_hook=(
         "Your most experienced operator knows every safety procedure by heart. "
         "They retire in 18 months. OSHA doesn't accept 'we lost the training material' "
@@ -727,6 +775,158 @@ INDUSTRIAL_SAFETY_CAPTURE = DeploymentScenario(
 
 
 # ============================================================================
+# AV Integrator — Cross-Vertical (3)
+# ============================================================================
+
+INTEGRATOR_FLEET_STANDARDIZATION = DeploymentScenario(
+    id="integrator_fleet_standardization",
+    name="Multi-Client Fleet Standardization",
+    vertical="corporate",  # Cross-vertical, corporate as default
+    trigger_phrases=[
+        "integrator",
+        "multiple clients",
+        "fleet",
+        "standardize",
+        "manage",
+        "support calls",
+        "truck roll",
+        "margin",
+        "remote monitoring",
+        "epiphan cloud",
+        "AVI-SPL",
+        "Diversified",
+        "Whitlock",
+        "Ford AV",
+        "client sites",
+        "install base",
+    ],
+    products=["pearl_mini", "pearl_nexus", "ec20_ptz"],
+    bundle_name="Integrator Fleet Standard",
+    setup_description=(
+        "Standardize all client sites on Pearl Mini or Pearl Nexus with EC20 PTZ cameras. "
+        "One product line across universities, corporate HQs, courts, and hospitals — your "
+        "field techs learn it once and deploy it everywhere. Epiphan Edge gives you a single "
+        "dashboard across 50+ client sites: firmware updates, health monitoring, and remote "
+        "troubleshooting without dispatching a truck."
+    ),
+    reference_story=(
+        "MSAVi — manages Disney and Imagine Dragons events on Pearl; "
+        "Redfish Technologies — 60+ Pearl systems across WA state courts; "
+        "Freeman — world's largest events standardized on Pearl"
+    ),
+    persona_match=["av_integrator", "dealer_dave", "system_engineer"],
+    edge_value=(
+        "Epiphan Edge fleet management eliminates per-site monitoring. "
+        "One integrator managed 60+ court systems across Washington state from a single dashboard — "
+        "zero truck rolls for firmware updates, zero missed recordings from offline devices."
+    ),
+    creative_hook=(
+        "Most integrators manage 5 different product lines across their client base. "
+        "That's 5 sets of firmware, 5 support portals, 5 training programs. "
+        "Standardize on Pearl and your field techs install in 20 minutes, "
+        "your NOC monitors everything from one screen, and your margin stays intact."
+    ),
+)
+
+INTEGRATOR_UNIVERSITY_RFP = DeploymentScenario(
+    id="integrator_university_rfp",
+    name="University RFP: 100+ Classroom Lecture Capture",
+    vertical="higher_ed",
+    trigger_phrases=[
+        "RFP",
+        "bid",
+        "proposal",
+        "spec",
+        "university",
+        "100 rooms",
+        "campus",
+        "lecture capture",
+        "Panopto",
+        "Kaltura",
+        "installation",
+        "commissioning",
+        "timeline",
+        "rollout",
+        "deployment plan",
+    ],
+    products=["pearl_mini", "pearl_nexus", "ec20_ptz"],
+    bundle_name="Campus Capture RFP Response Kit",
+    setup_description=(
+        "Respond to the university's lecture capture RFP with a turnkey Pearl deployment. "
+        "Pearl Mini + EC20 PTZ per classroom, Epiphan Edge for fleet management, native "
+        "Panopto/Kaltura integration for the LMS. 20-minute install per room means your crew "
+        "deploys 10 rooms/day. The university gets one-button operation for faculty and "
+        "centralized management for IT — you get a clean install and zero callbacks."
+    ),
+    reference_story=(
+        "NC State — 300+ Pearl units, single AV team managing all rooms; "
+        "MTSU — 428 classrooms, 2-person team; "
+        "UNLV — 215 rooms deployed with Pearl Nexus"
+    ),
+    persona_match=["av_integrator", "system_engineer", "dealer_dave"],
+    edge_value=(
+        "20-minute install per room (vs 2+ hours for software-based competitors). "
+        "Native LMS integration means no middleware layer to configure or maintain. "
+        "Epiphan Edge zero-touch provisioning lets you pre-configure rooms before the truck arrives."
+    ),
+    creative_hook=(
+        "NC State didn't spec 300 rooms on day one. They started with a 10-room pilot, "
+        "proved zero faculty complaints and zero IT tickets, and the university funded "
+        "the full rollout themselves. Your RFP response writes itself when the pilot speaks."
+    ),
+)
+
+INTEGRATOR_CORPORATE_REFRESH = DeploymentScenario(
+    id="integrator_corporate_refresh",
+    name="Corporate Campus AV Refresh — Legacy to Pearl",
+    vertical="corporate",
+    trigger_phrases=[
+        "refresh",
+        "upgrade",
+        "replace",
+        "legacy",
+        "Extron",
+        "Crestron",
+        "old system",
+        "end of life",
+        "frankenstack",
+        "mismatched",
+        "different vendors",
+        "boardroom",
+        "meeting room",
+        "50 rooms",
+        "hybrid",
+    ],
+    products=["pearl_mini", "pearl_nexus", "ec20_ptz"],
+    bundle_name="Corporate AV Refresh Package",
+    setup_description=(
+        "Replace the frankenstack — 5 different encoder brands across 50 meeting rooms — with "
+        "a standardized Pearl deployment. Pearl Mini for small rooms, Pearl Nexus for large "
+        "boardrooms, EC20 PTZ for camera. Same control interface everywhere, same Epiphan Edge "
+        "management, same Crestron/Q-SYS integration. IT gets a single pane of glass instead of "
+        "5 vendor portals. Your team installs in half the time because every room is the same kit."
+    ),
+    reference_story=(
+        "OpenAI — Pearl-2 for corporate livestream production; "
+        "Fortune 500 boardrooms standardized on Pearl Mini"
+    ),
+    persona_match=["av_integrator", "dealer_dave", "av_director"],
+    edge_value=(
+        "Crestron and Q-SYS control integration out of the box — no custom programming. "
+        "Open API for any control system. Your programmer writes the module once and "
+        "deploys it to every room. Compared to the current frankenstack, that's a 10x "
+        "reduction in programming hours."
+    ),
+    creative_hook=(
+        "Every corporate campus has the same story: Building A has Extron, Building B has "
+        "Crestron capture, Building C has a laptop on a cart. IT supports all of them and "
+        "none of them well. The refresh isn't about new hardware — it's about one system, "
+        "one dashboard, one support number. That's the project your client will thank you for."
+    ),
+)
+
+
+# ============================================================================
 # Master Library
 # ============================================================================
 
@@ -735,6 +935,7 @@ SCENARIO_LIBRARY: list[DeploymentScenario] = [
     HIGHER_ED_CAMPUS_CAPTURE,
     HIGHER_ED_ONE_BUTTON_STUDIO,
     HIGHER_ED_HYBRID_CLASSROOM,
+    HIGHER_ED_ROOMS_OUT_OF_REACH,
     # K-12 (3)
     K12_SPORTS_BROADCAST,
     K12_LIBRARY_STUDIO,
@@ -759,6 +960,10 @@ SCENARIO_LIBRARY: list[DeploymentScenario] = [
     HEALTHCARE_SIM_DEBRIEF,
     # Industrial (1)
     INDUSTRIAL_SAFETY_CAPTURE,
+    # AV Integrator — Cross-Vertical (3)
+    INTEGRATOR_FLEET_STANDARDIZATION,
+    INTEGRATOR_UNIVERSITY_RFP,
+    INTEGRATOR_CORPORATE_REFRESH,
 ]
 
 # Index by ID for fast lookup

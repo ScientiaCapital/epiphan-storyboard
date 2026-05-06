@@ -39,7 +39,7 @@ class TestEpiphanICPStructure:
         assert "pain_points" in chars
 
     def test_icp_has_audience_personas(self):
-        """ICP should have all 16 personas (8 original + 3 Higher Ed exec + 3 vertical + 2 channel)."""
+        """ICP should have all 17 personas (8 original + 3 Higher Ed exec + 3 vertical + 3 channel)."""
         assert "audience_personas" in EPIPHAN_ICP
         personas = EPIPHAN_ICP["audience_personas"]
         # ATL personas (7 from BDR Playbook)
@@ -62,7 +62,9 @@ class TestEpiphanICPStructure:
         assert AudiencePersona.PRODUCTION_DIRECTOR in personas
         assert AudiencePersona.DEALER_DAVE in personas
         assert AudiencePersona.SYSTEM_ENGINEER in personas
-        assert len(personas) == 16
+        # AV Integrator (added for channel partner ICP)
+        assert AudiencePersona.AV_INTEGRATOR in personas
+        assert len(personas) == 17
 
     def test_icp_has_language_style(self):
         """ICP should have language style guidelines."""
@@ -411,9 +413,9 @@ class TestAudiencePersonaEnum:
         """AV director enum value (primary ATL)."""
         assert AudiencePersona.AV_DIRECTOR.value == "av_director"
 
-    def test_all_16_personas_exist(self):
-        """All 16 personas should be present in the enum."""
-        assert len(AudiencePersona) == 16
+    def test_all_17_personas_exist(self):
+        """All 17 personas should be present in the enum."""
+        assert len(AudiencePersona) == 17
         expected = [
             "av_director", "ld_director", "sim_center_director", "court_admin",
             "corp_comms", "ehs_manager", "law_firm_it",
@@ -422,6 +424,8 @@ class TestAudiencePersonaEnum:
             # Phase 17 additions
             "edtech_manager", "venue_manager", "production_director",
             "dealer_dave", "system_engineer",
+            # AV Integrator ICP
+            "av_integrator",
         ]
         actual = [p.value for p in AudiencePersona]
         for val in expected:

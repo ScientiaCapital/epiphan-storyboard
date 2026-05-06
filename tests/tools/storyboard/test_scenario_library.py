@@ -17,9 +17,9 @@ from src.tools.storyboard.scenario_library import (
 class TestScenarioLibraryCompleteness:
     """Tests that the library has all 20 scenarios with required data."""
 
-    def test_library_has_24_scenarios(self):
-        """Library should contain exactly 24 deployment scenarios (20 vertical + 3 integrator + 1 EC20 rooms)."""
-        assert len(SCENARIO_LIBRARY) == 24
+    def test_library_has_26_scenarios(self):
+        """Library should contain 26 deployment scenarios (20 vertical + 3 integrator + 1 EC20 rooms + 2 broadcasting)."""
+        assert len(SCENARIO_LIBRARY) == 26
 
     def test_all_scenarios_have_unique_ids(self):
         """Every scenario must have a unique ID."""
@@ -118,6 +118,7 @@ class TestScenarioVerticalCoverage:
             "live_events",
             "healthcare",
             "industrial",
+            "broadcasting",
         }
         missing = primary_verticals - covered_verticals
         assert not missing, f"Missing scenarios for verticals: {missing}"
@@ -273,6 +274,7 @@ class TestScenarioDataQuality:
             "live_events": ("events_",),
             "healthcare": ("healthcare_",),
             "industrial": ("industrial_",),
+            "broadcasting": ("broadcasting_",),
         }
         expected_prefixes = vertical_prefixes.get(scenario.vertical)
         if expected_prefixes:
@@ -287,6 +289,7 @@ class TestScenarioDataQuality:
             "NFHS", "OSHA", "HIPAA", "SOP", "IMAG", "ISO", "HyFlex",
             "AVI-SPL", "Diversified", "Whitlock", "Ford AV",  # Integrator firm names
             "RFP", "Panopto", "Kaltura", "Extron", "Crestron",  # Brand/acronym names
+            "MAM", "SRT", "CDN",  # Broadcasting acronyms
         }
         for phrase in scenario.trigger_phrases:
             if phrase in allowed_upper:

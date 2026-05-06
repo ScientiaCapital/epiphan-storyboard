@@ -561,6 +561,15 @@ def get_visual_style_instructions(visual_style: str) -> str:
 - Geometric patterns and forms
 - Memorable, stand-out aesthetic
 - Think: Pitch deck slide that demands attention""",
+        "blueprint": """VISUAL STYLE: BLUEPRINT / TECHNICAL DRAWING
+- Dark navy background (#1a2744) with white or light green line drawings
+- Architectural drawing aesthetic — clean lines, precise geometry
+- Signal flow diagrams, rack elevations, cable routing paths
+- Technical callouts with dotted leader lines and measurements
+- Subtle grid overlay for engineering precision
+- Equipment labels in clean sans-serif, wire-frame style icons
+- Think: AV system design drawing, control room layout blueprint
+- Perfect for integrators, system engineers, and technical directors""",
     }
     return styles.get(visual_style, styles["polished"])
 
@@ -622,6 +631,25 @@ def get_artist_style_instructions(artist_style: str | None) -> str:
 - Haunting, otherworldly atmosphere
 - Bold choice for disruption/transformation messaging
 - Think: Alien movie meets tech transformation story""",
+        # MX/LATAM ARTIST STYLES
+        "frida_kahlo": """ARTIST STYLE: FRIDA KAHLO
+- Vibrant, saturated colors — deep reds, warm yellows, lush greens
+- Folk art elements merged with surrealist symbolism
+- Floral crowns, botanical elements, Mexican textile patterns
+- Intimate, personal, emotionally direct
+- Bold composition with cultural identity at center
+- Rich textures and decorative borders
+- Warm earth tones grounded with vivid accents
+- Think: The Two Fridas meets professional infographic""",
+        "siqueiros": """ARTIST STYLE: DAVID ALFARO SIQUEIROS
+- Dynamic, angular muralist style with dramatic perspective
+- Industrial and technological themes — machines, progress, labor
+- Strong diagonal composition with foreshortening
+- Bold, almost aggressive colors — deep blues, fiery oranges, steel grays
+- Sculptural volume and movement (unlike Rivera's flat mural blocks)
+- Forward-looking energy channeled into visuals of transformation
+- Dramatic lighting with deep shadows
+- Think: March of Humanity meets technology transformation story""",
     }
     return artists.get(artist_style, "")
 

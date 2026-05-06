@@ -678,6 +678,102 @@ EVENTS_RENTAL_STANDARD = DeploymentScenario(
 
 
 # ============================================================================
+# Broadcasting / Media Production (2)
+# ============================================================================
+
+BROADCASTING_FLEET_MOBILIZATION = DeploymentScenario(
+    id="broadcasting_fleet_mobilization",
+    name="Fleet Mobilization — Deploy Capture Kits Anywhere",
+    vertical="broadcasting",
+    trigger_phrases=[
+        "broadcast",
+        "mobilize",
+        "fleet",
+        "deploy",
+        "field",
+        "remote",
+        "truck",
+        "studio",
+        "grab and go",
+        "kit",
+        "automation",
+        "workflow",
+        "edge",
+        "unify",
+        "connect",
+    ],
+    products=["pearl_mini", "ec20_ptz"],
+    bundle_name="Broadcast Field Kit (Mini + EC20)",
+    setup_description=(
+        "Standardize on Pearl Mini + EC20 grab-and-go kits that any crew member deploys "
+        "in minutes. Epiphan Edge manages the entire fleet — schedule recordings, monitor "
+        "health, push firmware updates, and automate upload workflows across studios, trucks, "
+        "and field locations. SRT contribution from remote sites over public internet. "
+        "Workflow automation means capture starts on schedule, uploads to your MAM automatically, "
+        "and your operations team monitors everything from one dashboard."
+    ),
+    reference_story=(
+        "The Volume — Shannon Sharpe show production standardized on Pearl; "
+        "Oslo Opera — 300+ shows/year with minimal staff using automated workflows"
+    ),
+    persona_match=["production_director", "technical_director", "av_director"],
+    edge_value=(
+        "Epiphan Edge turns fleet management into workflow automation. "
+        "Schedule → capture → upload → done. No manual intervention. "
+        "Monitor every device across every location from one dashboard."
+    ),
+    creative_hook=(
+        "Your broadcast fleet shouldn't need a babysitter at every location. "
+        "Pearl Mini + EC20 kits deploy in minutes, capture on schedule, "
+        "and upload automatically. Your ops team manages 50 kits from one screen."
+    ),
+)
+
+BROADCASTING_WORKFLOW_AUTOMATION = DeploymentScenario(
+    id="broadcasting_workflow_automation",
+    name="Automated Capture-to-Publish Pipeline",
+    vertical="broadcasting",
+    trigger_phrases=[
+        "automate",
+        "workflow",
+        "schedule",
+        "upload",
+        "publish",
+        "mam",
+        "cms",
+        "ingest",
+        "unattended",
+        "overnight",
+        "24/7",
+        "contribution",
+    ],
+    products=["pearl_2", "pearl_mini", "ec20_ptz"],
+    bundle_name=None,
+    setup_description=(
+        "Pearl-2 or Pearl Mini captures on schedule — no operator needed. Recordings "
+        "automatically upload to your MAM, CMS, or cloud storage. SRT contribution "
+        "feeds from remote locations arrive reliably over public internet. Epiphan Edge "
+        "orchestrates the entire pipeline: scheduling, health monitoring, firmware updates, "
+        "and alerting. Connect extracts individual feeds from Teams/Zoom via SRT "
+        "for remote contribution workflows."
+    ),
+    reference_story="OpenAI — 12 Days of OpenAI livestream production relied on Pearl hardware",
+    persona_match=["production_director", "technical_director", "av_integrator"],
+    edge_value=(
+        "Epiphan Edge = end-to-end workflow automation. "
+        "Schedule capture, automate upload, monitor fleet health, "
+        "alert on failures — all without manual intervention. "
+        "Connect adds SRT extraction from Teams/Zoom for remote contribution."
+    ),
+    creative_hook=(
+        "Manual start/stop/upload doesn't scale past 5 locations. "
+        "At 50 locations, you need automation. Pearl + Epiphan Edge "
+        "turns your broadcast fleet into a self-operating pipeline."
+    ),
+)
+
+
+# ============================================================================
 # Healthcare (1)
 # ============================================================================
 
@@ -956,6 +1052,9 @@ SCENARIO_LIBRARY: list[DeploymentScenario] = [
     EVENTS_BREAKOUT_FACTORY,
     EVENTS_PRODUCTION_RIG,
     EVENTS_RENTAL_STANDARD,
+    # Broadcasting (2)
+    BROADCASTING_FLEET_MOBILIZATION,
+    BROADCASTING_WORKFLOW_AUTOMATION,
     # Healthcare (1)
     HEALTHCARE_SIM_DEBRIEF,
     # Industrial (1)

@@ -470,11 +470,37 @@ Example:
             $('fileInput').value = '';
         }
 
-        // Extract error message from various formats
+        // Extract error message from various formats.
+        // FastAPI 422 puts an array of validation objects under `detail`,
+        // which used to render as literal "[object Object]" via toString().
         function extractErrorMessage(error) {
-            if (error instanceof Error) return error.message;
             if (typeof error === 'string') return error;
-            return error?.detail || error?.error || JSON.stringify(error);
+            // Drill into Error objects whose .message is itself a stringified array/object.
+            if (error instanceof Error) {
+                const msg = error.message;
+                // If the underlying body got attached, prefer it.
+                if (error.detail !== undefined) return formatDetail(error.detail);
+                return msg && msg !== '[object Object]' ? msg : 'Unknown error';
+            }
+            if (error && error.detail !== undefined) return formatDetail(error.detail);
+            return error?.error || JSON.stringify(error);
+        }
+
+        // Render FastAPI's `detail` field whether it's a string, array of
+        // validation errors, or arbitrary object.
+        function formatDetail(detail) {
+            if (typeof detail === 'string') return detail;
+            if (Array.isArray(detail)) {
+                return detail
+                    .map(d => {
+                        if (typeof d === 'string') return d;
+                        const loc = Array.isArray(d?.loc) ? d.loc.join('.') : '';
+                        const msg = d?.msg || JSON.stringify(d);
+                        return loc ? `${loc}: ${msg}` : msg;
+                    })
+                    .join('; ');
+            }
+            return JSON.stringify(detail);
         }
 
         // Build request payload from form state
@@ -527,8 +553,13 @@ Example:
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Generation failed');
+                    const errorData = await response.json().catch(() => ({}));
+                    // Attach raw detail so extractErrorMessage can render
+                    // FastAPI 422 validation arrays (otherwise the Error
+                    // constructor stringifies them to "[object Object]").
+                    const err = new Error(`HTTP ${response.status}`);
+                    err.detail = errorData.detail;
+                    throw err;
                 }
 
                 const result = await response.json();

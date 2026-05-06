@@ -140,6 +140,7 @@ class GenerateRequest(BaseModel):
         "legal",
         "ux_research",
         "k12",
+        "broadcasting",
     ] | None = Field(
         None,
         description="Target vertical/industry. Auto-inferred from persona if not provided.",
@@ -157,13 +158,14 @@ class GenerateRequest(BaseModel):
         "sketch",
         "data_viz",
         "bold",
+        "blueprint",
     ] = Field(
         "polished",
-        description="Visual style: 'clean', 'polished', 'photo_realistic', 'minimalist', 'isometric' (3D Stripe/Linear), 'sketch' (whiteboard), 'data_viz' (charts), 'bold' (Bauhaus)",
+        description="Visual style: 'clean', 'polished', 'photo_realistic', 'minimalist', 'isometric' (3D Stripe/Linear), 'sketch' (whiteboard), 'data_viz' (charts), 'bold' (Bauhaus), 'blueprint' (technical drawing)",
     )
     artist_style: str | None = Field(
         None,
-        description="Optional artist style: 'salvador_dali', 'monet', 'diego_rivera', 'warhol', 'van_gogh', 'picasso', 'giger' (biomechanical)",
+        description="Optional artist style: 'salvador_dali', 'monet', 'diego_rivera', 'warhol', 'van_gogh', 'picasso', 'giger' (biomechanical), 'frida_kahlo', 'siqueiros'",
     )
 
 

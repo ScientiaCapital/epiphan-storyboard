@@ -348,6 +348,111 @@ def test_generate_passes_open_browser_false(client):
 
 
 # ============================================================================
+# Schema Regression Tests (commit 9930fad — Broadcasting + Blueprint + artists)
+# ============================================================================
+
+
+def _mock_tool_success():
+    """Build a successful ToolResult fixture for /demo/generate mocks."""
+    return ToolResult(
+        tool_name="unified_storyboard",
+        success=True,
+        result={
+            "storyboard_png": "fake_base64_png",
+            "understanding": {},
+            "input_type": "code",
+        },
+        execution_time_ms=100,
+    )
+
+
+def test_generate_accepts_blueprint_visual_style(client):
+    """Regression for 9930fad: visual_style='blueprint' must not 422.
+
+    The frontend dropdown in static/demo.html offers 'blueprint' but the
+    Pydantic Literal in src/demo/router.py was not updated, producing a
+    422 Unprocessable Entity that the demo UI rendered as
+    'Generation failed: [object Object]'.
+    """
+    with patch("src.demo.router.UnifiedStoryboardTool") as MockTool:
+        mock_instance = AsyncMock()
+        mock_instance.run.return_value = _mock_tool_success()
+        MockTool.return_value = mock_instance
+
+        response = client.post(
+            "/demo/generate",
+            json={
+                "input_type": "code",
+                "code": "def foo(): pass",
+                "stage": "demo",
+                "audience": "av_director",
+                "vertical": "higher_ed",
+                "output_format": "storyboard",
+                "visual_style": "blueprint",
+                "artist_style": "frida_kahlo",
+            },
+        )
+
+        assert response.status_code != 422, (
+            f"Pydantic rejected payload — schema out of sync with demo.html. "
+            f"Body: {response.text}"
+        )
+        assert response.status_code == 200
+        assert response.json()["visual_style"] == "blueprint"
+
+
+def test_generate_accepts_broadcasting_vertical(client):
+    """Regression for 9930fad: vertical='broadcasting' must not 422."""
+    with patch("src.demo.router.UnifiedStoryboardTool") as MockTool:
+        mock_instance = AsyncMock()
+        mock_instance.run.return_value = _mock_tool_success()
+        MockTool.return_value = mock_instance
+
+        response = client.post(
+            "/demo/generate",
+            json={
+                "input_type": "code",
+                "code": "def foo(): pass",
+                "audience": "av_director",
+                "vertical": "broadcasting",
+            },
+        )
+
+        assert response.status_code != 422, (
+            f"Pydantic rejected vertical='broadcasting'. Body: {response.text}"
+        )
+        assert response.status_code == 200
+
+
+def test_generate_accepts_new_artist_styles(client):
+    """Regression for 9930fad: frida_kahlo + siqueiros artists pass validation.
+
+    artist_style is typed `str | None` so this should already pass — the test
+    locks the contract in case someone tightens the type later.
+    """
+    for artist in ("frida_kahlo", "siqueiros"):
+        with patch("src.demo.router.UnifiedStoryboardTool") as MockTool:
+            mock_instance = AsyncMock()
+            mock_instance.run.return_value = _mock_tool_success()
+            MockTool.return_value = mock_instance
+
+            response = client.post(
+                "/demo/generate",
+                json={
+                    "input_type": "code",
+                    "code": "def foo(): pass",
+                    "audience": "av_director",
+                    "artist_style": artist,
+                },
+            )
+
+            assert response.status_code != 422, (
+                f"Pydantic rejected artist_style={artist!r}. Body: {response.text}"
+            )
+            assert response.status_code == 200
+
+
+# ============================================================================
 # Integration Tests (require files to exist)
 # ============================================================================
 

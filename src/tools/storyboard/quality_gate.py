@@ -357,3 +357,206 @@ def _check_links(collateral_links: dict, report: QualityReport) -> None:
                     message=f"Non-Epiphan URL in product links: {url}",
                 )
             )
+
+
+# ============================================================================
+# Phase 1.7 polish — three new checks for the BDR Brief output
+# ============================================================================
+
+
+# Stop-words excluded from problem-statement resonance scoring. Same set as
+# the transcript matcher in problem_statements.py so behavior is consistent.
+_RESONANCE_STOPWORDS: frozenset[str] = frozenset(
+    """
+    a an and are as at be been being by for from has have had he her him his
+    i in is it its me my no not of on or our she so than that the their them
+    they this to was we were what when where which who will with you your
+    yeah okay just like really kind of sort um uh got going get team teams
+    week month year day need needs needed
+    """.split()
+)
+
+
+def _resonance_tokens(text: str) -> set[str]:
+    """Lowercase, strip punctuation, drop stop-words and short tokens."""
+    tokens = re.findall(r"[A-Za-z][A-Za-z0-9'-]+", text.lower())
+    return {t for t in tokens if len(t) > 2 and t not in _RESONANCE_STOPWORDS}
+
+
+def _check_problem_statement_resonance(
+    understanding: dict[str, Any],
+    vertical: str | None,
+    persona: str | None,
+    report: QualityReport,
+) -> None:
+    """Warn when ``pain_point_addressed`` doesn't share vocabulary with the
+    BDR-validated problem statements for the (vertical, persona) combo.
+
+    The grounding contract from Phase 1.3 is: the LLM should adopt the
+    verbatim phrasing from the Problem Statements library unless the
+    transcript clearly contradicts it. If pain_point shares zero non-stop
+    tokens with any of the persona's verbatim statements, the LLM has
+    drifted into generic AI fluff and we surface it as a warning.
+    """
+    if not vertical or not persona:
+        return  # No grounding library to compare against — skip
+
+    pain = (understanding or {}).get("pain_point_addressed") or ""
+    if not pain.strip():
+        return  # Already covered by other checks
+
+    try:
+        from src.tools.storyboard.problem_statements import get_problem_statements
+    except ImportError:
+        return  # Library not available — skip rather than crash
+
+    statements = get_problem_statements(vertical=vertical, persona=persona, limit=5)
+    if not statements:
+        return  # No verbatim grounding to compare against
+
+    pain_tokens = _resonance_tokens(pain)
+    if not pain_tokens:
+        return  # Empty after tokenization
+
+    best_overlap = max(
+        len(pain_tokens & _resonance_tokens(ps.statement)) for ps in statements
+    )
+    if best_overlap == 0:
+        report.add_issue(
+            QualityIssue(
+                category="grounding",
+                severity="warning",
+                message=(
+                    "pain_point_addressed shares zero verbatim vocabulary "
+                    "with the Problem Statements library for "
+                    f"{vertical}/{persona}. The LLM drifted from "
+                    "BDR-validated phrasing into generic language — "
+                    "review for resonance before sending."
+                ),
+            )
+        )
+
+
+def _check_calibrated_question_form(
+    questions: list[str], report: QualityReport
+) -> None:
+    """Enforce NSTTD discipline on calibrated questions.
+
+    Rules (Chris Voss):
+      * Must start with What or How — never Why (triggers defensiveness)
+      * Must not be yes/no (Did/Have/Do/Is/Are/Can/Could/Would as opener)
+      * Must end with "?"
+
+    One warning per offending question — caller decides whether to drop
+    or rewrite.
+    """
+    if not questions:
+        return
+    yes_no_openers = {
+        "did",
+        "have",
+        "had",
+        "do",
+        "does",
+        "is",
+        "are",
+        "can",
+        "could",
+        "would",
+        "will",
+        "should",
+        "was",
+        "were",
+    }
+    for q in questions:
+        q_clean = q.strip()
+        if not q_clean:
+            continue
+        first = q_clean.split()[0].rstrip(".,;:?").lower()
+        contains_why = bool(re.search(r"\bwhy\b", q_clean.lower()))
+        if first not in ("what", "how") or contains_why or first in yes_no_openers:
+            report.add_issue(
+                QualityIssue(
+                    category="calibrated",
+                    severity="warning",
+                    message=(
+                        f"Calibrated question violates NSTTD discipline: "
+                        f"{q_clean!r}. Must start with What/How, must not "
+                        f"contain 'Why', and must not be yes/no."
+                    ),
+                )
+            )
+
+
+# Heuristic phrases that signal an accusation audit OR a no-oriented CTA.
+# Sourced from Chris Voss's templates (NSTTD email patterns).
+_ACCUSATION_AUDIT_MARKERS: tuple[str, ...] = (
+    "you probably",
+    "you might",
+    "you're probably",
+    "you might be",
+    "i imagine",
+    "i'm sure",
+    "the last thing you need",
+    "fair enough",
+    "you might be wondering",
+    "i know this might",
+)
+
+_NO_ORIENTED_CTA_MARKERS: tuple[str, ...] = (
+    "would it be ridiculous",
+    "would it be out of the question",
+    "would it be a terrible idea",
+    "have you given up",
+    "is now a bad time",
+    "either way, no worries",
+    "either way no worries",
+)
+
+
+def _check_brief_completeness(
+    next_best_action: str,
+    nsttd_email: str,
+    report: QualityReport,
+) -> None:
+    """When NBA is ``send_problem_email``, the email must include both an
+    accusation audit AND a no-oriented CTA. Otherwise it's a vanilla
+    pitch dressed up — exactly the thing NSTTD says doesn't work.
+
+    No-op when NBA is anything else (schedule_15min, route_to_ae, disqualify).
+    """
+    if next_best_action != "send_problem_email":
+        return
+
+    body = (nsttd_email or "").lower()
+    has_audit = any(marker in body for marker in _ACCUSATION_AUDIT_MARKERS)
+    has_no_cta = any(marker in body for marker in _NO_ORIENTED_CTA_MARKERS)
+
+    if not has_audit:
+        report.add_issue(
+            QualityIssue(
+                category="nsttd",
+                severity="warning",
+                message=(
+                    "next_best_action is 'send_problem_email' but the "
+                    "email body lacks an accusation-audit phrase. NSTTD "
+                    "discipline: front-run the prospect's likely negative "
+                    "reaction (e.g., 'You probably get pitched every "
+                    "week. Fair enough.') before pitching."
+                ),
+            )
+        )
+    if not has_no_cta:
+        report.add_issue(
+            QualityIssue(
+                category="nsttd",
+                severity="warning",
+                message=(
+                    "next_best_action is 'send_problem_email' but the "
+                    "email body lacks a no-oriented CTA. NSTTD: end with "
+                    "phrasing that invites a 'No' response (e.g., 'Would "
+                    "it be ridiculous to...?' or 'Have you given up "
+                    "on...?')."
+                ),
+            )
+        )

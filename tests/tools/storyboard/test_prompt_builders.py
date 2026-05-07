@@ -59,9 +59,9 @@ class TestBuildExtractionPromptCode:
             )
             prompt_lower = prompt.lower()
             assert "mep" not in prompt_lower, f"MEP found in {audience} code prompt"
-            assert (
-                "contractor" not in prompt_lower
-            ), f"contractor found in {audience} code prompt"
+            assert "contractor" not in prompt_lower, (
+                f"contractor found in {audience} code prompt"
+            )
 
 
 class TestBuildExtractionPromptTranscript:
@@ -176,3 +176,173 @@ class TestBuildLanguageGuidelinesMinimal:
         """Should not raise even if knowledge cache is unavailable."""
         result = prompt_builders.build_language_guidelines_minimal("nonexistent")
         assert isinstance(result, str)
+
+
+# =============================================================================
+# Phase 1.3 — Prompt Builder polish
+# =============================================================================
+
+
+class TestBuildProblemStatementAnchor:
+    """Fix #3 — verbatim BDR pain language injected as ground truth."""
+
+    def test_returns_empty_when_vertical_or_persona_missing(self):
+        """Without both vertical+persona resolved, no anchor block is emitted."""
+        assert prompt_builders.build_problem_statement_anchor(None, None) == ""
+        assert prompt_builders.build_problem_statement_anchor(None, "av_director") == ""
+        assert prompt_builders.build_problem_statement_anchor("higher_ed", None) == ""
+
+    def test_returns_block_for_known_combo(self):
+        """A known (vertical, persona) yields a labeled VERBATIM PAIN LANGUAGE block."""
+        block = prompt_builders.build_problem_statement_anchor(
+            "higher_ed", "av_director"
+        )
+        assert "VERBATIM PAIN LANGUAGE" in block.upper()
+        # Should include verbatim text from the seeded library
+        assert "AV directors" in block or "rooms going unrecorded" in block
+
+    def test_block_caps_at_three_statements(self):
+        """The anchor block contains at most 3 verbatim statements (per plan)."""
+        block = prompt_builders.build_problem_statement_anchor(
+            "higher_ed", "av_director"
+        )
+        # Count bullet markers — implementation must use a stable bullet ("- ")
+        # and should never emit more than 3 of them.
+        assert block.count("\n- ") <= 3
+
+    def test_returns_empty_for_unknown_combo(self):
+        """No matches → empty string (silently degrade, never raise)."""
+        block = prompt_builders.build_problem_statement_anchor(
+            "bogus_vertical", "av_director"
+        )
+        assert block == ""
+
+    def test_anchor_appears_in_transcript_prompt(self):
+        """When vertical+persona are passed, the anchor block lands in the prompt."""
+        prompt = prompt_builders.build_extraction_prompt(
+            "transcript",
+            audience="av_director",
+            vertical="higher_ed",
+            content="Sample transcript content for testing.",
+        )
+        assert "VERBATIM PAIN LANGUAGE" in prompt.upper()
+
+
+class TestTranscriptCompactorWired:
+    """Fix #1 — transcript truncation replaced by compact_transcript()."""
+
+    def test_long_transcript_does_not_blindly_slice_at_32k(self):
+        """A 60K transcript with high-signal content at the END must not lose it."""
+        # Build a transcript where the high-signal turn is at position ~50K
+        # (well past the old 32K hard cut). After polish, that turn must
+        # survive compaction and appear in the prompt. Brand-agnostic
+        # phrasing — the prospect describes the workaround layer, not any
+        # partner platform.
+        filler = "Speaker 1: " + ("uh yeah okay so " * 80) + "\n"
+        late_signal = (
+            "Speaker 2: Honestly the biggest pain is that our software encoder "
+            "fails about 30 percent of the time and it's burning our team's "
+            "entire week troubleshooting it.\n"
+        )
+        text = filler * 40 + late_signal + filler * 5  # late_signal at ~50K
+
+        prompt = prompt_builders.build_extraction_prompt(
+            "transcript",
+            audience="av_director",
+            vertical="higher_ed",
+            content=text,
+        )
+        assert "software encoder" in prompt, (
+            "Compactor must preserve high-signal turns past the old 32K cut"
+        )
+
+    def test_short_transcript_passes_through_unchanged_in_prompt(self):
+        """A short transcript should appear in the prompt as-is."""
+        text = "Speaker 1: Quick question about lecture capture."
+        prompt = prompt_builders.build_extraction_prompt(
+            "transcript",
+            audience="av_director",
+            content=text,
+        )
+        assert "lecture capture" in prompt
+
+
+class TestImplicitFrankenstackPatterns:
+    """Fix #4 — implicit-workaround patterns surface in the prompt's signal list."""
+
+    def test_implicit_workaround_phrases_listed_in_prompt(self):
+        """The transcript prompt instructs the LLM to look for implicit workarounds."""
+        prompt = prompt_builders.build_extraction_prompt(
+            "transcript",
+            audience="av_director",
+            content="Sample transcript.",
+        )
+        # The polish adds explicit instruction to detect workaround patterns
+        # like 'we had to', 'work around', 'in addition to'. The exact phrasing
+        # is implementation-specific but must include the WORKAROUND concept.
+        assert "workaround" in prompt.lower() or "work around" in prompt.lower()
+
+    def test_known_workaround_combos_documented(self):
+        """The prompt mentions at least one classic Frankenstack pattern.
+
+        We frame combos in terms of the *broken capture/encoder layer* — never
+        in terms of a partner LMS / CMS / conferencing platform. Partners are
+        partners; the workaround is the duct-tape underneath.
+        """
+        prompt = prompt_builders.build_extraction_prompt(
+            "transcript",
+            audience="av_director",
+            content="Sample transcript.",
+        )
+        lower = prompt.lower()
+        # The Frankenstack block calls out the classroom-PC + software-encoder
+        # pattern, multi-box switcher rigs, and bonded cellular orchestration.
+        assert any(
+            combo in lower
+            for combo in (
+                "classroom pc",
+                "software encoder",
+                "vmix",
+                "separate recorder",
+                "control without capture",
+            )
+        )
+
+
+class TestTwoPassNarrativeExtraction:
+    """Fix #2 — narrative+schema two-pass Forces extraction is exposed."""
+
+    def test_narrative_extraction_prompt_function_exists(self):
+        """The two-pass narrative extractor is a public function callable from
+        gemini_client. It should accept a transcript and return a prompt that
+        asks for free-text Forces of Progress narrative (no JSON schema)."""
+        prompt = prompt_builders.build_narrative_extraction_prompt(
+            transcript="Sample transcript",
+            audience="av_director",
+            vertical="higher_ed",
+        )
+        assert isinstance(prompt, str)
+        # Free-text pass should NOT ask for JSON
+        assert "Return JSON" not in prompt
+        # But should still ask about Forces of Progress
+        lower = prompt.lower()
+        assert "push" in lower
+        assert "pull" in lower
+        assert "anxiety" in lower
+        assert "habit" in lower
+
+    def test_schema_mapping_prompt_takes_narrative(self):
+        """Pass-2 prompt accepts pass-1 narrative text and asks for strict JSON.
+
+        Brand-agnostic narrative — describes the failure layer (the software
+        encoder / classroom PC) without naming any LMS / CMS / conferencing
+        partner.
+        """
+        narrative_marker = "their software encoder layer crashes mid-lecture"
+        prompt = prompt_builders.build_schema_mapping_prompt(
+            narrative=f"The team is frustrated with how often {narrative_marker}.",
+            audience="av_director",
+        )
+        assert "Return JSON" in prompt or "return json" in prompt.lower()
+        assert narrative_marker in prompt  # narrative must be embedded verbatim
+        assert "forces_of_progress" in prompt

@@ -45,18 +45,24 @@ def test_long_transcript_is_reduced_to_target() -> None:
 
 
 def test_high_signal_turns_are_preserved() -> None:
-    """JTBD-signal turns (pain phrases, vendor mentions) survive compaction."""
+    """JTBD-signal turns (pain phrases, vendor mentions) survive compaction.
+
+    Brand-agnostic test fixtures — we describe the failure layer (the
+    software encoder running on a classroom PC) without naming any LMS,
+    CMS, or conferencing partner. Partner platforms are partners; the
+    workaround is the duct-tape underneath them.
+    """
     from src.tools.storyboard.transcript_compactor import compact_transcript
 
     filler_turn = "Speaker 1: " + ("uh yeah okay so " * 80)  # ~1.3 K of filler
     pain_turn = (
-        "Speaker 2: Honestly the biggest pain is that our Panopto upload "
+        "Speaker 2: Honestly the biggest pain is that our software encoder "
         "fails about 30 percent of the time and it's burning our team's "
         "entire week troubleshooting it."
     )
     vendor_turn = (
-        "Speaker 1: We've also been hacking around it with OBS and a "
-        "classroom PC, but the workaround crashes mid-lecture."
+        "Speaker 1: We've also been hacking around it with a software "
+        "switcher and a classroom PC, but the workaround crashes mid-lecture."
     )
 
     # 80 filler turns wrapping the 2 high-signal turns
@@ -66,7 +72,7 @@ def test_high_signal_turns_are_preserved() -> None:
     result = compact_transcript(text, target_chars=15_000)
 
     # The high-signal lines must survive into key_moments.
-    assert "Panopto upload" in result.key_moments
+    assert "software encoder" in result.key_moments
     assert "workaround" in result.key_moments
 
 
@@ -93,9 +99,10 @@ def test_compaction_falls_back_when_savings_below_threshold() -> None:
 
     # All-high-signal transcript: every turn is pain language. Compactor
     # cannot drop turns without losing relevance, so it must fall back.
+    # Brand-agnostic — describes the failure layer, not any partner platform.
     high_signal_turn = (
-        "Speaker 1: The Panopto upload fails, the encoder crashes, the "
-        "recording is lost mid-lecture, our team is burning hours on "
+        "Speaker 1: The software encoder upload fails, the encoder crashes, "
+        "the recording is lost mid-lecture, our team is burning hours on "
         "workarounds — it is awful and we need help yesterday."
     )
     text = "\n".join([high_signal_turn] * 200)

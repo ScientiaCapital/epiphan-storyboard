@@ -136,10 +136,12 @@ def test_match_statements_to_transcript_returns_ranked_pairs() -> None:
         match_statements_to_transcript,
     )
 
+    # Brand-agnostic transcript — describes the failure layer (encoder,
+    # classroom PC) rather than naming any LMS / CMS partner.
     transcript = (
         "We've got 200 classrooms and our IT team is spending half the week "
-        "troubleshooting recordings that fail to publish into Kaltura. "
-        "Faculty stop recording when the LMS upload breaks."
+        "troubleshooting recordings where the encoder feeding our LMS drops "
+        "files. Faculty stop recording when the LMS upload breaks."
     )
 
     ranked = match_statements_to_transcript(
@@ -151,11 +153,12 @@ def test_match_statements_to_transcript_returns_ranked_pairs() -> None:
     # Sorted descending by score
     scores = [score for _ps, score in ranked]
     assert scores == sorted(scores, reverse=True)
-    # Top match should mention LMS publish failures (the obvious topic)
+    # Top match should be related to LMS / encoder / faculty / recording —
+    # general pain themes, not a specific partner brand.
     top_ps, _top_score = ranked[0]
     assert any(
         kw in top_ps.statement.lower()
-        for kw in ("lms", "panopto", "kaltura", "publish")
+        for kw in ("lms", "encoder", "faculty", "recording", "publish")
     )
 
 

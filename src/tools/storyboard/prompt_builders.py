@@ -14,6 +14,8 @@ from datetime import datetime
 from typing import Any
 
 from src.tools.storyboard import prompts
+from src.tools.storyboard.problem_statements import get_problem_statements
+from src.tools.storyboard.transcript_compactor import compact_transcript
 
 # ── Knowledge-enriched builders ──────────────────────────────────────────────
 
@@ -113,6 +115,180 @@ def build_language_guidelines_minimal(audience: str) -> str:
         return ""  # Graceful degradation
 
 
+# ── Phase 1.3 polish: ground-truth anchors + Frankenstack patterns ──────────
+
+
+def build_problem_statement_anchor(
+    vertical: str | None, persona: str | None, *, limit: int = 3
+) -> str:
+    """Return a `VERBATIM PAIN LANGUAGE` block to ground the LLM in real BDR text.
+
+    The model is told to copy this phrasing into ``pain_point`` unless the
+    transcript clearly contradicts it. This stops it drifting into generic AI
+    fluff and routes it toward language the BDR team has validated reads in
+    one breath.
+
+    Returns an empty string when either ``vertical`` or ``persona`` is missing,
+    or when no records match the combo. Never raises.
+    """
+    if not vertical or not persona:
+        return ""
+    try:
+        statements = get_problem_statements(
+            vertical=vertical, persona=persona, limit=limit
+        )
+    except Exception:
+        return ""
+    if not statements:
+        return ""
+
+    bullets = "\n".join(f'- "{ps.statement}"' for ps in statements)
+    return (
+        "VERBATIM PAIN LANGUAGE FROM PEERS — use this exact phrasing for the "
+        "pain_point field unless the transcript clearly contradicts it. These "
+        "are sales-validated openers proven to read in one breath:\n"
+        f"{bullets}"
+    )
+
+
+# Frankenstack patterns — implicit workaround language we want the LLM to
+# detect. The current jtbd_instructions only lists explicit competitor names;
+# this block adds the linguistic patterns that signal a workaround even when
+# no vendor is named outright.
+#
+# IMPORTANT: We never frame an LMS / CMS / video-platform partner (Panopto,
+# Kaltura, YuJa, Echo360, Canvas, Zoom, etc.) as "the broken thing." Those
+# are partners. The Frankenstack is the **classroom-PC + software-encoder
+# layer underneath** that fails to deliver into the LMS reliably. The fix
+# is replacing the PC layer with a hardware encoder, not replacing the LMS.
+_FRANKENSTACK_PATTERN_BLOCK: str = """\
+FRANKENSTACK DETECTION (look for IMPLICIT workarounds, not just vendor names):
+- Linguistic markers: "we had to", "we ended up", "we wound up using", "work
+  around", "in addition to", "not designed for", "not built for", "instead
+  of"
+- Classic Frankenstack combos in the wild (the broken layer is the encoder
+  / capture layer, NOT the LMS or conferencing partner):
+    * A software encoder running on a classroom PC feeding the LMS — the PC
+      crashes, the OS pushes an update, antivirus quarantines the agent;
+      the LMS partner is fine, the PC layer is the failure point
+    * vMix + ATEM + separate recorder — 3 boxes that should be 1
+    * Bonded cellular + an external recorder + a software switcher — the
+      transport works, the orchestration is duct-taped
+    * A control system (Crestron / Extron / Q-SYS) wired to capture gear
+      that doesn't expose a clean API — control without capture
+- LMS / CMS / conferencing platforms (Panopto, Kaltura, YuJa, Echo360,
+  Canvas, Blackboard, Moodle, Zoom, Teams, WebEx) are PARTNERS. Pearl is
+  designed to feed them cleanly. Frame the workaround as "the encoder /
+  capture layer ahead of the LMS," not as the LMS itself.
+- When you spot any of these, populate the ``frankenstack`` field with a
+  concrete description of the workaround the prospect described, including
+  the cost they're paying for it (time, headcount, reliability)."""
+
+
+# ── Two-pass Forces extraction (Fix #2) ──────────────────────────────────────
+
+
+def build_narrative_extraction_prompt(
+    transcript: str,
+    audience: str = "av_director",
+    vertical: str | None = None,
+) -> str:
+    """Pass-1 prompt: free-text narrative for each Force of Progress.
+
+    No JSON schema. The LLM is asked to describe each Force in 2-3 sentences
+    of natural language. Pass-2 (``build_schema_mapping_prompt``) takes that
+    narrative and re-prompts the LLM to map it onto the strict
+    ``ForcesOfProgress`` Pydantic shape. Two cheap calls beat one rigid call
+    because the rigid schema strips contextual nuance during extraction.
+
+    Reuses ``compact_transcript`` so long calls don't blow the context window.
+    """
+    compacted = compact_transcript(transcript, target_chars=24_000)
+    knowledge_context = build_knowledge_context(audience)
+    anchor = build_problem_statement_anchor(vertical, audience)
+
+    return f"""You are an expert sales discovery analyst. Read this call \
+transcript and write a SHORT NARRATIVE describing each Force of Progress \
+(JTBD framework) in plain prose. Do NOT return JSON. Do NOT use bullet \
+points. Use 2-3 sentences per Force, written in natural conversational \
+English, in the prospect's voice as much as possible.
+
+TARGET AUDIENCE: {audience}
+
+{anchor}
+
+{knowledge_context}
+
+{_FRANKENSTACK_PATTERN_BLOCK}
+
+TRANSCRIPT (compacted, key moments first):
+=== KEY MOMENTS ===
+{compacted.key_moments}
+
+=== FULL CONTEXT ===
+{compacted.full_context}
+
+WRITE THE NARRATIVE in this exact order, with these exact section headers:
+
+PUSH (current pain driving change):
+[2-3 sentences in the prospect's voice — what's broken today, what they hate]
+
+PULL (new solution attraction):
+[2-3 sentences — what they're being drawn toward, the new way they're considering]
+
+ANXIETY (fear of switching):
+[2-3 sentences — what scares them about changing vendors/systems/process]
+
+HABIT (current comfort):
+[2-3 sentences — what's familiar, what they'd lose, who'd need retraining]
+
+FRANKENSTACK (current workarounds):
+[2-3 sentences — the duct-tape stack they've assembled, including the
+human cost (time, headcount, reliability)]
+"""
+
+
+def build_schema_mapping_prompt(narrative: str, audience: str = "av_director") -> str:
+    """Pass-2 prompt: take pass-1 narrative and emit strict JSON.
+
+    The narrative carries all the contextual nuance the rigid JSON pass would
+    have stripped; this pass just normalizes it to the schema the rest of the
+    pipeline expects.
+    """
+    return f"""You will receive a free-text narrative describing a sales \
+prospect's Forces of Progress (JTBD framework). Your job is to map it to a \
+strict JSON schema, preserving every quantified detail and named vendor.
+
+TARGET AUDIENCE: {audience}
+
+NARRATIVE:
+\"\"\"
+{narrative}
+\"\"\"
+
+Return JSON with this exact shape — do not invent fields, do not omit fields:
+
+{{
+    "forces_of_progress": {{
+        "push": "1-2 sentences from the PUSH section",
+        "pull": "1-2 sentences from the PULL section",
+        "anxiety": "1-2 sentences from the ANXIETY section",
+        "habit": "1-2 sentences from the HABIT section"
+    }},
+    "frankenstack": "1-2 sentences from the FRANKENSTACK section",
+    "extraction_confidence": 0.0-1.0
+}}
+
+CRITICAL RULES:
+- Preserve every named vendor, product, and number from the narrative
+- NEVER include personal names — use roles only
+- If a section in the narrative is genuinely empty, return an empty string
+  for that field but DO NOT omit it
+- ``extraction_confidence`` should reflect how confident the original
+  extractor was — high if the narrative is rich and specific, low if it
+  was thin and generic"""
+
+
 # ── Extraction prompt templates ──────────────────────────────────────────────
 
 
@@ -158,6 +334,13 @@ def build_extraction_prompt(
     # JTBD extraction instructions for Forces of Progress + frankenstack detection
     jtbd_instructions = prompts.get_jtbd_extraction_instructions(audience)
 
+    # Phase 1.3 polish:
+    #   * problem_statement_anchor — verbatim BDR pain language for grounding
+    #   * frankenstack_patterns — implicit-workaround detection prompt block
+    # Both degrade gracefully (empty string when inputs are unknown).
+    problem_statement_anchor = build_problem_statement_anchor(vertical, audience)
+    frankenstack_patterns = _FRANKENSTACK_PATTERN_BLOCK
+
     if content_type == "code":
         return _build_code_prompt(
             content=content or "",
@@ -183,6 +366,8 @@ def build_extraction_prompt(
             vertical_context=vertical_context,
             persona_focus=persona_focus,
             jtbd_instructions=jtbd_instructions,
+            problem_statement_anchor=problem_statement_anchor,
+            frankenstack_patterns=frankenstack_patterns,
         )
     elif content_type == "image":
         return _build_image_prompt(
@@ -298,23 +483,41 @@ def _build_transcript_prompt(
     vertical_context: str = "",
     persona_focus: str = "",
     jtbd_instructions: str = "",
+    problem_statement_anchor: str = "",
+    frankenstack_patterns: str = "",
 ) -> str:
+    # Phase 1.3 Fix #1: extractive compaction in place of [:32000] slice.
+    # Long calls preserve their tail (where decisions live) and high-signal
+    # turns get a dedicated key_moments slot so the model sees them first.
+    compacted = compact_transcript(content, target_chars=24_000)
+    content_block = (
+        f"=== KEY MOMENTS (highest-signal turns first) ===\n"
+        f"{compacted.key_moments}\n\n"
+        f"=== FULL CONTEXT (compaction_ratio={compacted.compaction_ratio:.2f}"
+        f"{', fallback_used' if compacted.fallback_used else ''}) ===\n"
+        f"{compacted.full_context}"
+    )
+
     return f"""Extract key insights from this content.
 REQUEST_ID: {request_id}
 
 {f"CONTEXT: {context}" if context else ""}
 
 CONTENT:
-{content[:32000]}
+{content_block}
 
 TARGET AUDIENCE: {audience}
 {vertical_context}
+
+{problem_statement_anchor}
 
 {knowledge_context if knowledge_context else ""}
 
 {language_guidelines if language_guidelines else ""}
 
 {persona_focus}
+
+{frankenstack_patterns}
 
 EXTRACTION PRIORITIES:
 - Preserve EXACT quotes and specific numbers

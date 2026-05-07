@@ -249,8 +249,8 @@ PROBLEM_STATEMENTS: list[ProblemStatement] = [
         vertical="higher_ed",
         persona="edtech_manager",
         statement=(
-            "The LMS integration is make-or-break. If recordings don't "
-            "auto-publish into Panopto or Kaltura, faculty stop recording and "
+            "The LMS integration is make-or-break. When the encoder layer "
+            "feeding your LMS drops files, faculty stop recording and "
             "students lose access to material they're entitled to."
         ),
         pain_anchor="lms_autopublish_break",

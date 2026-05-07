@@ -174,8 +174,8 @@ FRANKENSTACK DETECTION (look for IMPLICIT workarounds, not just vendor names):
     * vMix + ATEM + separate recorder — 3 boxes that should be 1
     * Bonded cellular + an external recorder + a software switcher — the
       transport works, the orchestration is duct-taped
-    * A control system (Crestron / Extron / Q-SYS) wired to capture gear
-      that doesn't expose a clean API — control without capture
+    * A control system wired to capture gear that doesn't expose a clean
+      API — control without capture (the integration gap, not the brand)
 - LMS / CMS / conferencing platforms (Panopto, Kaltura, YuJa, Echo360,
   Canvas, Blackboard, Moodle, Zoom, Teams, WebEx) are PARTNERS. Pearl is
   designed to feed them cleanly. Frame the workaround as "the encoder /

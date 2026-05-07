@@ -618,3 +618,60 @@ class BuyerProfile(BaseModel):
         default_factory=list,
         description="Verbatim problem statements that resonate with this profile.",
     )
+
+
+# ── BDR Call Brief — the structured artifact a BDR consumes ──────────────────
+
+
+class BDRCallBrief(BaseModel):
+    """One pre-call / post-call brief a BDR can scan in 60 seconds.
+
+    Generated from any combination of: pasted transcript, submitted survey
+    response, or both. Phase 1 ships the deterministic core (persona,
+    problem statements, forces, NBA); LLM-augmented Challenger reframe and
+    calibrated-questions generation can layer on top.
+    """
+
+    detected_persona: str = Field(..., description="AudiencePersona enum value.")
+    detected_vertical: str = Field(..., description="Vertical key.")
+    icp_score: int = Field(..., ge=0, le=100, description="ICP score for the vertical.")
+    job_statement: str = Field(
+        ...,
+        description=(
+            "JTBD job statement: 'When [trigger], I want to [job], so I can [outcome]'."
+        ),
+    )
+    forces_of_progress: ForcesOfProgress = Field(
+        default_factory=ForcesOfProgress,
+        description="Reuses the existing schema — populated from transcript or survey.",
+    )
+    top_problem_statements: list[str] = Field(
+        default_factory=list,
+        description="Up to 3 verbatim BDR-validated statements the BDR can read aloud.",
+    )
+    challenger_reframe: str = Field(
+        default="",
+        description="6-step Challenger pitch in <120 words.",
+    )
+    calibrated_questions: list[str] = Field(
+        default_factory=list,
+        description="5 NSTTD-style discovery questions — must start What/How, no Why.",
+    )
+    nsttd_email: str = Field(
+        default="",
+        description=(
+            "Cold outreach email ≤100 words: accusation audit + no-oriented CTA."
+        ),
+    )
+    next_best_action: Literal[
+        "send_problem_email",
+        "schedule_15min",
+        "route_to_ae",
+        "disqualify",
+    ] = Field(
+        ...,
+        description="Recommended next move based on Forces strength + ICP.",
+    )
+    confidence: float = Field(
+        ..., ge=0.0, le=1.0, description="Brief-generator confidence 0-1."
+    )

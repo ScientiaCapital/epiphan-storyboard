@@ -19,9 +19,13 @@ from functools import lru_cache
 from time import perf_counter
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException
+from pydantic import BaseModel
 
 from src.storyboard.schemas import (
+    BDRCallBrief,
+    BuyerProfile,
     CodeStoryboardRequest,
+    ForcesOfProgress,
     JobStatus,
     JobType,
     MeetingRecapRequest,
@@ -29,7 +33,9 @@ from src.storyboard.schemas import (
     RoadmapStoryboardRequest,
     StoryboardJobResponse,
     StoryboardJobStatusResponse,
+    SurveyResponse,
     TranscriptStoryboardRequest,
+    WorkflowSurvey,
 )
 from src.storyboard.state import StoryboardJobManager
 
@@ -567,3 +573,170 @@ async def generate_meeting_recap(
         detected_persona=result.get("detected_persona"),
         odi_opportunity_score=result.get("odi_opportunity_score"),
     )
+
+
+# ============================================================================
+# Phase 1.5 — Vertical Workflow Survey endpoints
+# ============================================================================
+
+
+@router.get(
+    "/survey/templates/{vertical}",
+    response_model=WorkflowSurvey,
+    summary="Fetch the workflow survey template for a vertical",
+    description=(
+        "Returns the JTBD-structured workflow survey for the requested "
+        "vertical. Phase 1 ships higher_ed, legal, and live_events. "
+        "Other verticals return 404."
+    ),
+)
+async def get_survey_template(vertical: str) -> WorkflowSurvey:
+    """Return the WorkflowSurvey for ``vertical`` or 404 if not registered."""
+    from src.tools.storyboard.vertical_surveys import get_survey
+
+    survey = get_survey(vertical)
+    if survey is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"No workflow survey registered for vertical '{vertical}'. "
+                f"Phase 1 covers higher_ed, legal, live_events. Phase 2 "
+                f"will add the remaining verticals."
+            ),
+        )
+    return survey
+
+
+# Request schema for the submit endpoint — defined inline so the router
+# stays the single source of truth for the survey-submission contract.
+class SurveySubmitRequest(BaseModel):
+    """Body for POST /storyboard/survey/submit.
+
+    The transcript is optional — survey-only submissions still produce a
+    BDR brief, just with confidence=lower.
+    """
+
+    vertical: str
+    responses: SurveyResponse
+    transcript: str | None = None
+    prospect_company: str | None = None
+    prospect_first_name: str | None = None
+
+
+class SurveySubmitResponse(BaseModel):
+    """Response for POST /storyboard/survey/submit."""
+
+    bdr_call_brief: BDRCallBrief
+    buyer_profile: BuyerProfile
+
+
+def _persona_from_role_text(role_text: str | None) -> str:
+    """Heuristic: map a role-question answer to AudiencePersona.
+
+    Falls back to 'av_director' when the role string can't be matched —
+    'av_director' is the most common buyer across verticals per memory.
+    """
+    from src.tools.storyboard.problem_statements import normalize_doc_persona
+
+    if not role_text:
+        return "av_director"
+    direct = normalize_doc_persona(role_text)
+    if direct:
+        return direct
+    lower = role_text.lower()
+    if "av director" in lower or "av architecture" in lower:
+        return "av_director"
+    if "production manager" in lower or "technical director" in lower:
+        return "technical_director"
+    if "court admin" in lower:
+        return "court_admin"
+    if "venue" in lower or "event technology" in lower:
+        return "venue_manager"
+    if "design engineer" in lower or "systems integrator" in lower:
+        return "system_engineer"
+    if "reseller" in lower or "account development" in lower:
+        return "av_integrator"
+    return "av_director"
+
+
+def _profile_from_responses(vertical: str, responses: SurveyResponse) -> BuyerProfile:
+    """Build a BuyerProfile from raw survey answers.
+
+    The first answer to a question whose id ends in `_q1` is treated as the
+    role disambiguator. Workflow signals get copied through verbatim. Forces
+    of Progress are filled in only when we have enough signal — empty
+    fields are fine; the brief generator handles them.
+    """
+    answers = responses.answers
+    role_q_id = next(
+        (qid for qid in answers if qid.endswith("_q1")),
+        None,
+    )
+    role_value = answers.get(role_q_id) if role_q_id else None
+    role_str = role_value if isinstance(role_value, str) else None
+    persona = _persona_from_role_text(role_str)
+
+    workflow_signals: dict[str, str] = {}
+    for k, v in answers.items():
+        if isinstance(v, str):
+            workflow_signals[k] = v
+        elif isinstance(v, list):
+            workflow_signals[k] = "; ".join(v)
+
+    return BuyerProfile(
+        detected_persona=persona,
+        detected_vertical=vertical,
+        forces_of_progress=ForcesOfProgress(),
+        pain_points_ranked=[],
+        workflow_signals=workflow_signals,
+    )
+
+
+@router.post(
+    "/survey/submit",
+    response_model=SurveySubmitResponse,
+    summary="Submit a workflow survey response and get a BDR call brief",
+    description=(
+        "Accepts a SurveyResponse (and optional transcript). Returns a "
+        "BDRCallBrief with persona detection, top-3 verbatim problem "
+        "statements, JTBD job statement, Forces of Progress, calibrated "
+        "questions, and an NSTTD-style follow-up email."
+    ),
+)
+async def submit_survey(request: SurveySubmitRequest) -> SurveySubmitResponse:
+    """Build a BDR brief from survey responses + optional transcript."""
+    from src.tools.storyboard.bdr_brief_generator import (
+        generate_brief_from_profile,
+        generate_brief_from_transcript,
+    )
+    from src.tools.storyboard.vertical_surveys import get_survey
+
+    if get_survey(request.vertical) is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"No workflow survey registered for vertical "
+                f"'{request.vertical}'. Phase 1 covers higher_ed, legal, "
+                f"live_events."
+            ),
+        )
+
+    profile = _profile_from_responses(request.vertical, request.responses)
+
+    if request.transcript and request.transcript.strip():
+        brief = generate_brief_from_transcript(
+            transcript=request.transcript,
+            vertical=profile.detected_vertical,
+            persona=profile.detected_persona,
+            forces=profile.forces_of_progress,
+            extraction_confidence=0.7,
+            prospect_first_name=request.prospect_first_name,
+        )
+    else:
+        brief = generate_brief_from_profile(
+            profile,
+            extraction_confidence=0.6,
+            prospect_first_name=request.prospect_first_name,
+        )
+
+    return SurveySubmitResponse(bdr_call_brief=brief, buyer_profile=profile)

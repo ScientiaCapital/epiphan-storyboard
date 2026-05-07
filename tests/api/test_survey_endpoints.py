@@ -119,11 +119,14 @@ def test_submit_survey_with_transcript() -> None:
     assert r.status_code == 200, r.text
     brief = r.json()["bdr_call_brief"]
     assert brief["detected_vertical"] == "higher_ed"
-    # Calibrated questions discipline
-    assert all(
-        q.strip().split()[0].lower() in ("what", "how")
-        for q in brief["calibrated_questions"]
-    )
+    # Calibrated questions discipline: first-word root (apostrophe-stripped)
+    # must be 'what' or 'how'. Contractions like "What's" pass.
+    import re as _re
+
+    for q in brief["calibrated_questions"]:
+        first_word = q.strip().split()[0] if q.strip() else ""
+        root = _re.split(r"['’]", first_word, maxsplit=1)[0].lower()
+        assert root in ("what", "how"), q
 
 
 def test_submit_unknown_vertical_returns_400() -> None:

@@ -59,7 +59,11 @@ def filter_calibrated_questions(questions: list[str]) -> list[str]:
         q = raw.strip()
         if not q:
             continue
-        first = q.split()[0].rstrip(".,;:?").lower() if q.split() else ""
+        # First token, case-folded, stripped of punctuation AND contractions
+        # ("what's" / "how's" / "what're" still count as valid openers).
+        first_word = q.split()[0] if q.split() else ""
+        first_root = re.split(r"['’]", first_word, maxsplit=1)[0]
+        first = first_root.rstrip(".,;:?").lower()
         if first not in _CALIBRATED_OPENERS:
             continue
         if re.search(r"\bwhy\b", q.lower()):

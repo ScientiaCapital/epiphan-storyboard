@@ -164,11 +164,13 @@ def test_generate_brief_from_transcript_assembles_all_fields() -> None:
     assert brief.icp_score == 90
     # At least 1 problem statement matched against transcript
     assert len(brief.top_problem_statements) >= 1
-    # Calibrated questions all start with What/How
-    assert all(
-        q.strip().split()[0].lower() in ("what", "how")
-        for q in brief.calibrated_questions
-    )
+    # Calibrated questions all start with What/How (contractions OK).
+    import re as _re
+
+    for q in brief.calibrated_questions:
+        first_word = q.strip().split()[0] if q.strip() else ""
+        root = _re.split(r"['’]", first_word, maxsplit=1)[0].lower()
+        assert root in ("what", "how"), q
     # NSTTD email present and reasonably short
     assert len(brief.nsttd_email) > 0
     assert brief.confidence > 0

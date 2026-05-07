@@ -514,3 +514,107 @@ class MeetingRecapResponse(BaseModel):
         None,
         description="JTBD Opportunity Index (0-100) — how underserved is this prospect?",
     )
+
+
+# ── Phase 1.4: Vertical Workflow Surveys ─────────────────────────────────────
+
+
+class SurveyQuestion(BaseModel):
+    """One question in a vertical workflow survey.
+
+    Each question is tagged with its JTBD job-map step so survey responses
+    can be aggregated into a coherent BuyerProfile downstream. The optional
+    ``force_signal`` tags tell the prompt builder which Force of Progress
+    (push/pull/anxiety/habit) the answer feeds.
+    """
+
+    id: str = Field(..., description="Stable question id (unique within a survey).")
+    section: str = Field(..., description="Section header for the question.")
+    text: str = Field(..., description="Question text shown to the respondent.")
+    type: Literal["single", "multi", "matrix", "open"] = Field(
+        ..., description="Form-control type."
+    )
+    options: list[str] | None = Field(
+        None,
+        description="Choice options for single/multi/matrix questions.",
+    )
+    limit: int | None = Field(
+        None,
+        description="For multi-select with a cap (e.g. 'select up to 2').",
+    )
+    job_map_step: Literal[
+        "define",
+        "locate",
+        "prepare",
+        "confirm",
+        "execute",
+        "monitor",
+        "modify",
+        "conclude",
+    ] = Field(..., description="JTBD job-map step this question maps to.")
+    force_signal: Literal["push", "pull", "anxiety", "habit"] | None = Field(
+        None,
+        description="Force of Progress this answer signals when present.",
+    )
+    internal_intent: str | None = Field(
+        None,
+        description=(
+            "BDR-only note describing why this question exists. Not shown "
+            "to respondent; consumed by the prompt builder to weight the "
+            "answer correctly."
+        ),
+    )
+
+
+class WorkflowSurvey(BaseModel):
+    """A vertical-specific workflow survey, modelled after the JTBD switch
+    interview. Sourced from the BDR playbook + Live Events workflow doc."""
+
+    vertical: str = Field(..., description="Vertical key — matches EPIPHAN_VERTICALS.")
+    title: str = Field(..., description="Display title.")
+    intro: str = Field(..., description="Intro copy shown above the form.")
+    sections: list[str] = Field(..., description="Ordered list of section headers.")
+    questions: list[SurveyQuestion] = Field(
+        ..., description="All questions, in display order."
+    )
+
+
+class SurveyResponse(BaseModel):
+    """One submitted set of answers to a WorkflowSurvey."""
+
+    survey_id: str = Field(..., description="The vertical key of the survey.")
+    answers: dict[str, str | list[str] | dict[str, int]] = Field(
+        ...,
+        description=(
+            "Map of question_id -> answer. Type depends on question.type: "
+            "single→str, multi→list[str], matrix→dict[str,int], open→str."
+        ),
+    )
+
+
+class BuyerProfile(BaseModel):
+    """Survey + transcript signals fused into the shape the prompt builders
+    consume. Fed into ``meeting-recap`` to enrich extraction."""
+
+    detected_persona: str = Field(
+        ..., description="AudiencePersona enum value selected from survey."
+    )
+    detected_vertical: str = Field(
+        ..., description="Vertical key (matches EPIPHAN_VERTICALS)."
+    )
+    forces_of_progress: ForcesOfProgress = Field(
+        default_factory=ForcesOfProgress,
+        description="Per-Force narrative inferred from survey answers.",
+    )
+    pain_points_ranked: list[tuple[str, float]] = Field(
+        default_factory=list,
+        description="(pain_anchor, severity 0-1) pairs derived from survey.",
+    )
+    workflow_signals: dict[str, str] = Field(
+        default_factory=dict,
+        description="Misc structured signals (room count, tools used, etc.).",
+    )
+    matched_problem_statements: list[str] = Field(
+        default_factory=list,
+        description="Verbatim problem statements that resonate with this profile.",
+    )

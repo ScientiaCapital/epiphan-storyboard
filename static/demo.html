@@ -264,6 +264,122 @@ Example:
             </div>
         </div>
 
+        <!-- ==================================================================
+             BDR Discovery Workflow — paste a transcript, fill the vertical
+             survey, or do both. Returns a structured BDR Call Brief grounded
+             on the verbatim BDR playbook problem-statement library.
+             ================================================================== -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 mt-8 shadow-lg border border-white/50">
+            <details>
+                <summary class="cursor-pointer text-lg font-semibold text-epiphan-navy">
+                    BDR Discovery Workflow — Survey + Brief
+                </summary>
+                <p class="text-sm text-gray-500 mt-2 mb-5">
+                    Paste a Clari/Gong/Fireflies transcript, fill out the vertical workflow survey, or both.
+                    Get back a structured BDR Call Brief: detected persona, top problem statements,
+                    JTBD job statement, calibrated questions, and an NSTTD-formatted follow-up email.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-500 mb-1.5" for="bdrVerticalSelect">Vertical</label>
+                        <select id="bdrVerticalSelect" onchange="onBdrVerticalChange()"
+                            class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
+                            <option value="higher_ed" selected>🎓 Higher Education</option>
+                            <option value="legal">⚖️ Courts / Legal</option>
+                            <option value="live_events">🎥 Live Events</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-500 mb-1.5" for="bdrModeSelect">Discovery Mode</label>
+                        <select id="bdrModeSelect" onchange="onBdrModeChange()"
+                            class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
+                            <option value="transcript">Transcript only</option>
+                            <option value="survey">Survey only</option>
+                            <option value="both">Both (richest signal)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-500 mb-1.5" for="bdrFirstName">Prospect first name (optional)</label>
+                        <input id="bdrFirstName" type="text" placeholder="e.g. Jordan"
+                            class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40" />
+                    </div>
+                </div>
+
+                <!-- Transcript paste area (visible when mode=transcript or both) -->
+                <div id="bdrTranscriptArea" class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-500 mb-1.5" for="bdrTranscriptInput">
+                        Paste call transcript / Clari summary
+                    </label>
+                    <textarea id="bdrTranscriptInput" rows="6" maxlength="100000"
+                        placeholder="Paste a call transcript here…"
+                        class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-white text-sm font-mono leading-snug focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40"></textarea>
+                </div>
+
+                <!-- Survey form (visible when mode=survey or both) -->
+                <div id="bdrSurveyArea" class="mb-4 hidden">
+                    <h3 class="text-sm font-semibold text-gray-500 mb-1.5">Workflow Survey</h3>
+                    <p id="bdrSurveyIntro" class="text-xs text-gray-500 mb-3"></p>
+                    <div id="bdrSurveyForm" class="space-y-3"></div>
+                </div>
+
+                <button id="bdrSubmitBtn" onclick="submitBdrSurvey()"
+                    class="w-full px-6 py-3 text-base font-bold text-white rounded-xl
+                           bg-gradient-to-r from-epiphan-navy to-epiphan-green
+                           shadow-lg shadow-epiphan-navy/15 hover:shadow-xl hover:-translate-y-0.5
+                           disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                    Generate BDR Call Brief
+                </button>
+
+                <!-- Loading -->
+                <div id="bdrLoading" class="text-center mt-5 hidden">
+                    <div class="spinner"></div>
+                    <p class="text-gray-600 text-sm mt-2">Building call brief…</p>
+                </div>
+
+                <!-- Error -->
+                <div id="bdrError" class="bg-red-50 text-red-800 p-4 rounded-lg border-l-4 border-red-500 mt-4 hidden text-sm"></div>
+
+                <!-- Brief result -->
+                <div id="bdrBriefResult" class="mt-6 hidden">
+                    <div class="flex flex-wrap items-center gap-3 mb-4">
+                        <span id="bdrPersonaChip" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-epiphan-green/15 text-epiphan-navy"></span>
+                        <span id="bdrIcpChip" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-epiphan-navy/10 text-epiphan-navy"></span>
+                        <span id="bdrNbaChip" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"></span>
+                    </div>
+
+                    <div class="mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-epiphan-navy">
+                        <h4 class="font-semibold text-epiphan-navy text-sm mb-1">JTBD Job Statement</h4>
+                        <p id="bdrJobStatement" class="text-sm text-gray-700"></p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-epiphan-navy text-sm mb-2">Top Problem Statements (read aloud as openers)</h4>
+                        <ul id="bdrProblemStatements" class="space-y-2 text-sm text-gray-700"></ul>
+                    </div>
+
+                    <div class="mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-epiphan-green">
+                        <h4 class="font-semibold text-epiphan-navy text-sm mb-1">Challenger Reframe</h4>
+                        <p id="bdrChallengerReframe" class="text-sm text-gray-700"></p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-epiphan-navy text-sm mb-2">Calibrated Discovery Questions</h4>
+                        <ol id="bdrCalibratedQuestions" class="list-decimal list-inside text-sm text-gray-700 space-y-1"></ol>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <h4 class="font-semibold text-epiphan-navy text-sm">NSTTD Follow-up Email</h4>
+                            <button onclick="copyBdrEmail()" class="text-xs text-epiphan-navy underline">Copy</button>
+                        </div>
+                        <textarea id="bdrEmail" readonly rows="10"
+                            class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-white text-sm font-mono leading-snug focus:outline-none"></textarea>
+                    </div>
+                </div>
+            </details>
+        </div>
+
         <!-- Footer -->
         <footer class="text-center mt-12 pb-6 text-xs text-gray-400">
             Powered by <span class="font-semibold text-epiphan-navy">Epiphan Video</span> &middot; THK Enterprises LLC
@@ -685,6 +801,272 @@ Example:
             el.textContent = message;
             el.classList.remove('hidden');
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // ====================================================================
+        // BDR Discovery Workflow — Phase 1.8
+        // Wires the /storyboard/survey/templates/{vertical} GET and
+        // /storyboard/survey/submit POST endpoints into the demo UI.
+        // All DOM construction uses textContent + createElement (no innerHTML
+        // with untrusted data) for XSS safety.
+        // ====================================================================
+
+        let _bdrSurveyCache = {}; // vertical -> WorkflowSurvey
+
+        async function fetchBdrSurvey(vertical) {
+            if (_bdrSurveyCache[vertical]) return _bdrSurveyCache[vertical];
+            const r = await fetch(`/storyboard/survey/templates/${encodeURIComponent(vertical)}`);
+            if (!r.ok) throw new Error(`Could not fetch survey template: ${r.status}`);
+            const survey = await r.json();
+            _bdrSurveyCache[vertical] = survey;
+            return survey;
+        }
+
+        function renderBdrSurvey(survey) {
+            $('bdrSurveyIntro').textContent = survey.intro;
+            const form = $('bdrSurveyForm');
+            form.replaceChildren();
+
+            // Group questions by section
+            const sections = {};
+            for (const q of survey.questions) {
+                if (!sections[q.section]) sections[q.section] = [];
+                sections[q.section].push(q);
+            }
+
+            for (const sectionName of survey.sections) {
+                const qs = sections[sectionName] || [];
+                if (qs.length === 0) continue;
+                const sectionEl = document.createElement('details');
+                sectionEl.className = 'border border-gray-200 rounded-lg p-3';
+                const summary = document.createElement('summary');
+                summary.className = 'cursor-pointer text-sm font-semibold text-epiphan-navy';
+                summary.textContent = `${sectionName} (${qs.length})`;
+                sectionEl.appendChild(summary);
+                const wrap = document.createElement('div');
+                wrap.className = 'mt-3 space-y-3';
+                for (const q of qs) {
+                    wrap.appendChild(renderBdrQuestion(q));
+                }
+                sectionEl.appendChild(wrap);
+                form.appendChild(sectionEl);
+            }
+        }
+
+        function renderBdrQuestion(q) {
+            const wrap = document.createElement('div');
+            const lbl = document.createElement('label');
+            lbl.className = 'block text-sm text-gray-700 mb-1';
+            lbl.textContent = q.text;
+            wrap.appendChild(lbl);
+
+            if (q.type === 'single' && q.options) {
+                const sel = document.createElement('select');
+                sel.dataset.qid = q.id;
+                sel.className = 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-white text-sm';
+                const blank = document.createElement('option');
+                blank.value = '';
+                blank.textContent = '— select —';
+                sel.appendChild(blank);
+                for (const opt of q.options) {
+                    const o = document.createElement('option');
+                    o.value = opt;
+                    o.textContent = opt;
+                    sel.appendChild(o);
+                }
+                wrap.appendChild(sel);
+            } else if (q.type === 'multi' && q.options) {
+                const list = document.createElement('div');
+                list.className = 'space-y-1';
+                list.dataset.qid = q.id;
+                list.dataset.qtype = 'multi';
+                for (const opt of q.options) {
+                    const row = document.createElement('label');
+                    row.className = 'flex items-center gap-2 text-sm';
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.value = opt;
+                    cb.dataset.qid = q.id;
+                    row.appendChild(cb);
+                    row.appendChild(document.createTextNode(' ' + opt));
+                    list.appendChild(row);
+                }
+                wrap.appendChild(list);
+            } else if (q.type === 'open') {
+                const ta = document.createElement('textarea');
+                ta.dataset.qid = q.id;
+                ta.rows = 2;
+                ta.className = 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-white text-sm';
+                wrap.appendChild(ta);
+            } else if (q.type === 'matrix' && q.options) {
+                for (const row of q.options) {
+                    const r = document.createElement('div');
+                    r.className = 'flex items-center justify-between text-sm py-1';
+                    const lbl2 = document.createElement('span');
+                    lbl2.textContent = row;
+                    lbl2.className = 'text-gray-600';
+                    r.appendChild(lbl2);
+                    const radios = document.createElement('span');
+                    radios.className = 'flex gap-2';
+                    for (let i = 1; i <= 5; i++) {
+                        const radio = document.createElement('input');
+                        radio.type = 'radio';
+                        radio.name = `${q.id}__${row}`;
+                        radio.value = String(i);
+                        radio.dataset.qid = q.id;
+                        radio.dataset.qtype = 'matrix';
+                        radio.dataset.row = row;
+                        radios.appendChild(radio);
+                    }
+                    r.appendChild(radios);
+                    wrap.appendChild(r);
+                }
+            }
+            return wrap;
+        }
+
+        function collectBdrAnswers() {
+            const answers = {};
+            const singles = $('bdrSurveyForm').querySelectorAll('select[data-qid], textarea[data-qid]');
+            for (const el of singles) {
+                if (el.value && el.value.trim()) answers[el.dataset.qid] = el.value.trim();
+            }
+            const cbs = $('bdrSurveyForm').querySelectorAll('input[type=checkbox][data-qid]');
+            for (const cb of cbs) {
+                if (cb.checked) {
+                    if (!answers[cb.dataset.qid]) answers[cb.dataset.qid] = [];
+                    answers[cb.dataset.qid].push(cb.value);
+                }
+            }
+            const radios = $('bdrSurveyForm').querySelectorAll('input[type=radio][data-qtype=matrix]:checked');
+            for (const r of radios) {
+                if (!answers[r.dataset.qid]) answers[r.dataset.qid] = {};
+                answers[r.dataset.qid][r.dataset.row] = parseInt(r.value, 10);
+            }
+            return answers;
+        }
+
+        async function onBdrVerticalChange() {
+            const mode = $('bdrModeSelect').value;
+            if (mode !== 'transcript') {
+                await loadBdrSurveyForCurrent();
+            }
+        }
+
+        async function onBdrModeChange() {
+            const mode = $('bdrModeSelect').value;
+            $('bdrTranscriptArea').classList.toggle('hidden', mode === 'survey');
+            $('bdrSurveyArea').classList.toggle('hidden', mode === 'transcript');
+            if (mode !== 'transcript') {
+                await loadBdrSurveyForCurrent();
+            }
+        }
+
+        async function loadBdrSurveyForCurrent() {
+            const vertical = $('bdrVerticalSelect').value;
+            try {
+                const survey = await fetchBdrSurvey(vertical);
+                renderBdrSurvey(survey);
+            } catch (err) {
+                showBdrError(`Survey load failed: ${err.message}`);
+            }
+        }
+
+        async function submitBdrSurvey() {
+            const vertical = $('bdrVerticalSelect').value;
+            const mode = $('bdrModeSelect').value;
+            const transcript = $('bdrTranscriptInput').value.trim();
+            const firstName = $('bdrFirstName').value.trim() || null;
+
+            if (mode === 'transcript' && !transcript) {
+                showBdrError('Paste a transcript or switch to Survey / Both mode.');
+                return;
+            }
+
+            const payload = {
+                vertical,
+                responses: {
+                    survey_id: vertical,
+                    answers: mode === 'transcript' ? {} : collectBdrAnswers(),
+                },
+                transcript: (mode === 'survey') ? null : (transcript || null),
+                prospect_first_name: firstName,
+            };
+
+            $('bdrError').classList.add('hidden');
+            $('bdrBriefResult').classList.add('hidden');
+            $('bdrLoading').classList.remove('hidden');
+            $('bdrSubmitBtn').disabled = true;
+
+            try {
+                const r = await fetch('/storyboard/survey/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (!r.ok) {
+                    const detail = await r.text();
+                    throw new Error(`HTTP ${r.status}: ${detail.slice(0, 240)}`);
+                }
+                const body = await r.json();
+                renderBdrBrief(body.bdr_call_brief);
+            } catch (err) {
+                showBdrError(err.message || String(err));
+            } finally {
+                $('bdrLoading').classList.add('hidden');
+                $('bdrSubmitBtn').disabled = false;
+            }
+        }
+
+        function renderBdrBrief(brief) {
+            $('bdrPersonaChip').textContent = `Persona: ${brief.detected_persona}`;
+            $('bdrIcpChip').textContent = `ICP score: ${brief.icp_score}`;
+
+            const nbaChip = $('bdrNbaChip');
+            nbaChip.textContent = `Next: ${brief.next_best_action.replace(/_/g, ' ')}`;
+            const nbaColors = {
+                schedule_15min: 'bg-emerald-500/15 text-emerald-700',
+                send_problem_email: 'bg-amber-500/15 text-amber-700',
+                route_to_ae: 'bg-blue-500/15 text-blue-700',
+                disqualify: 'bg-gray-500/15 text-gray-700',
+            };
+            nbaChip.className = `inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${nbaColors[brief.next_best_action] || 'bg-gray-500/15 text-gray-700'}`;
+
+            $('bdrJobStatement').textContent = brief.job_statement || '—';
+            $('bdrChallengerReframe').textContent = brief.challenger_reframe || '—';
+
+            const ul = $('bdrProblemStatements');
+            ul.replaceChildren();
+            for (const ps of brief.top_problem_statements || []) {
+                const li = document.createElement('li');
+                li.className = 'p-2 bg-gray-50 rounded border-l-2 border-epiphan-green';
+                li.textContent = ps;
+                ul.appendChild(li);
+            }
+
+            const ol = $('bdrCalibratedQuestions');
+            ol.replaceChildren();
+            for (const q of brief.calibrated_questions || []) {
+                const li = document.createElement('li');
+                li.textContent = q;
+                ol.appendChild(li);
+            }
+
+            $('bdrEmail').value = brief.nsttd_email || '';
+            $('bdrBriefResult').classList.remove('hidden');
+            $('bdrBriefResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function copyBdrEmail() {
+            const ta = $('bdrEmail');
+            ta.select();
+            document.execCommand('copy');
+        }
+
+        function showBdrError(msg) {
+            const el = $('bdrError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
         }
     </script>
 </body>

@@ -192,6 +192,20 @@ async def process_meeting_recap(
     # Parse JSON from response
     result = _parse_json_response(raw_response)
 
+    # DA-R1.1.b (2026-05-09): Coerce known-fragile fields where the LLM
+    # occasionally returns a list when MeetingRecapResponse expects a string.
+    # The ``summary`` field is documented in the prompt as "3-5 bullet
+    # executive summary" which the LLM frequently interprets as a JSON array.
+    # MeetingRecapResponse.summary is typed ``str``, so without this coercion
+    # the router's Pydantic validation 500s — exactly the failure mode that
+    # was masked by the broken ``extract_content`` AttributeError before
+    # DA-R1.1. Defensive normalization keeps the contract honest.
+    if isinstance(result.get("summary"), list):
+        bullets = [str(item).strip() for item in result["summary"] if item]
+        result["summary"] = "\n".join(
+            b if b.startswith(("•", "-", "*")) else f"• {b}" for b in bullets
+        )
+
     # DA-R1.1: Augment with two-pass narrative+schema for long transcripts.
     # The meeting-recap prompt already extracts forces_of_progress and
     # frankenstack_description in a single pass, but the rigid 17-key JSON
@@ -273,17 +287,33 @@ async def process_meeting_recap(
 
 
 def _parse_json_response(response: str) -> dict[str, Any]:
-    """Parse JSON from LLM response, handling markdown code blocks."""
+    """Parse JSON from LLM response, handling markdown code blocks AND any
+    natural-language preamble the model might emit before the JSON.
+
+    DA-R1.1.b (2026-05-09) — DeepSeek frequently returns "Here's the
+    structured meeting recap in JSON format:\\n\\n```json\\n{...}\\n```".
+    The previous implementation only stripped the leading ``` fence, so any
+    preamble before the fence (or any text after the closing fence) caused
+    json.loads() to fail and the function returned the entire raw text in
+    a degraded ``{"summary": text}`` fallback. That degraded result then
+    failed router validation with a misleading 500.
+
+    The robust parse: find the first ``{`` and the matching last ``}`` and
+    parse only that slice. ``_repair_json`` handles the remaining markdown
+    cleanup + trailing comma / unterminated string repair.
+    """
+    from src.tools.storyboard.gemini_client import _repair_json
+
     text = response.strip()
-    if text.startswith("```"):
-        lines = text.split("\n")
-        lines = lines[1:]  # Remove ```json
-        if lines and lines[-1].strip() == "```":
-            lines = lines[:-1]
-        text = "\n".join(lines)
+
+    # Locate the JSON object by braces — survives any preamble/postscript.
+    first_brace = text.find("{")
+    last_brace = text.rfind("}")
+    if first_brace != -1 and last_brace > first_brace:
+        text = text[first_brace : last_brace + 1]
 
     try:
-        return json.loads(text)
+        return json.loads(_repair_json(text))
     except json.JSONDecodeError:
         logger.warning("Failed to parse meeting recap JSON, returning raw text")
         return {"summary": text, "key_topics": [], "product_recommendations": []}

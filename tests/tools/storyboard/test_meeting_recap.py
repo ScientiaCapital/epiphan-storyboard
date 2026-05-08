@@ -286,6 +286,71 @@ async def test_disabled_flag_skips_two_pass_even_on_long_transcript() -> None:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# 7. DA-R1.1.b — Defensive coercion: LLM sometimes returns ``summary`` as a
+#    list of bullets when MeetingRecapResponse expects a string. Coerce.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_summary_list_is_coerced_to_string() -> None:
+    """Regression: ``MeetingRecapResponse.summary: str`` blows up with a
+    Pydantic ValidationError when the LLM returns a JSON array. The prompt
+    asks for "3-5 bullet executive summary" and the LLM frequently obliges
+    with ``["bullet 1", "bullet 2", ...]``. We coerce that to a multiline
+    string so the router's response model validates.
+    """
+    payload = json.loads(_meeting_recap_payload())
+    payload["summary"] = [
+        "AV Director manages 47 lecture-capture rooms",
+        "60% are PC-based with software encoders",
+        "Loses 8-12 recordings per semester to PC failures",
+    ]
+
+    fake_client = MagicMock(spec=GeminiStoryboardClient)
+    fake_client.config = GeminiConfig(api_key="t")
+    fake_client._call_text_model = AsyncMock(return_value=json.dumps(payload))
+
+    with patch(
+        "src.tools.storyboard.gemini_client.GeminiStoryboardClient",
+        return_value=fake_client,
+    ):
+        result = await process_meeting_recap(
+            transcript="Short transcript.",
+            audience="av_director",
+            vertical="higher_ed",
+        )
+
+    assert isinstance(result["summary"], str), (
+        "summary must be coerced to str (was list)."
+    )
+    assert "AV Director manages" in result["summary"]
+    assert "PC failures" in result["summary"]
+    # All three bullets present in the multiline join
+    assert result["summary"].count("\n") == 2
+
+
+@pytest.mark.asyncio
+async def test_summary_string_is_passed_through_unchanged() -> None:
+    """When the LLM correctly returns a string, the coercion is a no-op."""
+    fake_client = MagicMock(spec=GeminiStoryboardClient)
+    fake_client.config = GeminiConfig(api_key="t")
+    fake_client._call_text_model = AsyncMock(return_value=_meeting_recap_payload())
+
+    with patch(
+        "src.tools.storyboard.gemini_client.GeminiStoryboardClient",
+        return_value=fake_client,
+    ):
+        result = await process_meeting_recap(
+            transcript="Short transcript.",
+            audience="court_admin",
+            vertical="legal",
+        )
+
+    assert isinstance(result["summary"], str)
+    assert result["summary"] == "Court admin describes systemic recording loss."
+
+
 @pytest.mark.asyncio
 async def test_two_pass_overlay_does_not_touch_other_meeting_recap_keys() -> None:
     """The 15 non-overlaid keys (job_statement, hiring_firing, summary,

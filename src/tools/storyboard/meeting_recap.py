@@ -25,6 +25,8 @@ from src.tools.storyboard.epiphan_presets import (
 from src.tools.storyboard.prompt_builders import (
     build_knowledge_context,
     build_language_guidelines_minimal,
+    build_narrative_extraction_prompt,
+    build_schema_mapping_prompt,
 )
 from src.tools.storyboard.scenario_library import match_scenarios_by_phrases
 
@@ -170,17 +172,75 @@ async def process_meeting_recap(
     - Validated product links from SALES_COLLATERAL
     - Collateral links based on detected vertical
     """
-    from src.tools.storyboard.gemini_client import GeminiStoryboardClient
+    from src.tools.storyboard.gemini_client import (
+        GeminiStoryboardClient,
+        _repair_json,
+    )
 
     # Build the prompt
     prompt = build_meeting_recap_prompt(transcript, audience, vertical)
 
-    # Call Gemini for extraction
+    # Call the configured text model for single-pass extraction.
+    # NOTE (DA-R1.1, 2026-05-09): the previous call was
+    # ``await client.extract_content(prompt)`` — a method that does NOT exist
+    # on GeminiStoryboardClient. The endpoint had been silently 500-ing
+    # in production. ``_call_text_model`` is the same helper DA-R1's
+    # two-pass uses, so meeting-recap and storyboard share routing.
     client = GeminiStoryboardClient()
-    raw_response = await client.extract_content(prompt)
+    raw_response = await client._call_text_model(prompt)
 
     # Parse JSON from response
     result = _parse_json_response(raw_response)
+
+    # DA-R1.1: Augment with two-pass narrative+schema for long transcripts.
+    # The meeting-recap prompt already extracts forces_of_progress and
+    # frankenstack_description in a single pass, but the rigid 17-key JSON
+    # shape pressures the LLM to compress nuance under schema-fitting.
+    # For transcripts >= two_pass_threshold_chars, run the narrative+schema
+    # two-pass (same building blocks DA-R1 uses in gemini_client._understand)
+    # and OVERLAY the richer forces + frankenstack onto the meeting-recap dict.
+    # The other 15 keys (job_statement, challenger_reframe, follow_up_email,
+    # etc.) come from the single-pass and are left untouched — that is the
+    # contract MeetingRecapResponse depends on.
+    if (
+        client.config.enable_two_pass_extraction
+        and len(transcript) >= client.config.two_pass_threshold_chars
+    ):
+        try:
+            narrative_prompt = build_narrative_extraction_prompt(
+                transcript=transcript,
+                audience=audience,
+                vertical=vertical,
+            )
+            narrative = await client._call_text_model(narrative_prompt)
+
+            schema_prompt = build_schema_mapping_prompt(
+                narrative=narrative,
+                audience=audience,
+            )
+            schema_response = await client._call_text_model(schema_prompt)
+            two_pass = json.loads(_repair_json(schema_response))
+
+            if two_pass.get("forces_of_progress"):
+                result["forces_of_progress"] = two_pass["forces_of_progress"]
+            if two_pass.get("frankenstack"):
+                result["frankenstack_description"] = two_pass["frankenstack"]
+            result["two_pass_applied"] = True
+            logger.info(
+                "[MEETING-RECAP] Two-pass augmentation applied "
+                "(transcript=%d chars, forces+frankenstack overlaid).",
+                len(transcript),
+            )
+        except Exception as exc:
+            logger.warning(
+                "[MEETING-RECAP] Two-pass augmentation failed (%s: %s); "
+                "keeping single-pass result.",
+                type(exc).__name__,
+                exc,
+            )
+            result["two_pass_applied"] = False
+    else:
+        result["two_pass_applied"] = False
 
     # Enrich with scenario matching
     scenario_matches = match_scenarios_by_phrases(

@@ -1,7 +1,7 @@
 # Observer: Code Quality Report
 
-**Date:** 2026-05-08
-**Session:** leverage-day Fix A (SSOT demo dropdowns)
+**Date:** 2026-05-09
+**Session:** DA-R1.1 (most recent); earlier sessions preserved below
 **Project:** epiphan-storyboard
 **Observer Model:** claude-sonnet-4-6
 
@@ -59,6 +59,7 @@ Zero tech-debt markers found in the three changed files (`src/demo/router.py`, `
 | 2026-05-07 | feature/bdr-call-brief-and-surveys | DA audit Phase 1.1-1.3 | 6 | 7 (0C/4W/3I) | archived to .claude/archive/2026-05-07-OBSERVER-QUALITY.md |
 | 2026-05-08 | leverage-day Fix A (SSOT demo dropdowns) | Read-only audit of GenerateRequest SSOT refactor | 5 | 4 (0C/2W/2I) | OPEN |
 | 2026-05-08 | leverage-day Fix B (grounding integration tests) | Read-only audit of test_grounding_integration.py + 3 fixtures | 5 | 2 (0C/0W/2I) | OPEN |
+| 2026-05-09 | DA-R1.1 two-pass wired into meeting_recap + bug fix | Read-only audit of meeting_recap.py + test_meeting_recap.py | 2 | 3 (0C/0W/3I) | OPEN |
 
 ---
 
@@ -139,4 +140,49 @@ Two-pass fires for transcripts when `len(content) >= 10_000` OR `extraction_conf
 | Coverage gaps flagged | 0 |
 | StoryboardUnderstanding callsites verified backwards-compat | 16 (all in src/ + tests/, all pass) |
 
-**Gate:** 🟢 GREEN — ship to prod.
+**Gate:** GREEN — ship to prod.
+
+---
+
+## DA-R1.1 (2026-05-09) — Quality
+
+**Session:** DA-R1.1 — wire two-pass into `process_meeting_recap` + fix critical broken-endpoint bug
+**Files changed:** `src/tools/storyboard/meeting_recap.py` (+63/-3), `tests/tools/storyboard/test_meeting_recap.py` (new, ~330 lines, 6 tests).
+**Builder verification before audit:** 1546 pytest pass (+6 net new), mypy 54 (delta -1 from bug-fix silencing a pre-existing error), ruff clean on both files.
+
+### Critical (must fix before merge)
+None — the critical bug (`extract_content` non-existent method) was the target of this diff and is confirmed fixed.
+
+### Warnings (fix or log to backlog)
+None.
+
+### Info (nice to have)
+
+**[INFO] — `two_pass_applied` flag is internal state not surfaced in `MeetingRecapResponse`** (`meeting_recap.py:228,241,243`)
+
+`result["two_pass_applied"]` is set in all three branches (overlay success, graceful failure, short-transcript skip) and returned as part of the raw dict that `process_meeting_recap` returns. Whether it reaches the API caller depends on whether `MeetingRecapResponse` passes through extra fields. If `MeetingRecapResponse` uses `model_config = ConfigDict(extra="ignore")` (Pydantic v2 default), this flag is silently dropped at the response boundary. If `extra="allow"`, it leaks into the JSON response. Neither is wrong per se, but the flag's intended audience (debugging vs. API contract) is ambiguous. Suggested follow-up: either (a) add `two_pass_applied: bool = False` explicitly to `MeetingRecapResponse` to make it a first-class field useful for cost/quality instrumentation, or (b) use `logger.info` only and drop the dict key to avoid the ambiguity.
+
+**[INFO] — Broad `except Exception` in augmentation block** (`meeting_recap.py:234`)
+
+Same pattern as `_extract_via_two_pass` in `gemini_client.py` (flagged [INFO] in DA-R1 and accepted). The warning IS logged with `type(exc).__name__` and `exc` message; single-pass result is preserved; `two_pass_applied` is set `False`. Not a silent-failure regression — identical discipline to the established pattern one layer up.
+
+**[INFO] — Test mocking with `MagicMock(spec=GeminiStoryboardClient)` is the right tool for this bug class** (`test_meeting_recap.py:111`)
+
+`MagicMock(spec=...)` is what catches the missing-method bug: because `extract_content` is not defined on `GeminiStoryboardClient`, the spec-constrained mock raises `AttributeError` rather than auto-creating a mock attribute. The test comment (lines 105-109) explicitly documents this behavior. The six tests collectively cover all four branches: single-pass only (short), two-pass overlay (long), graceful failure, disabled flag, and key-preservation invariant. Test pattern is sound and CI-cheap.
+
+### Code Quality Metrics
+
+| Metric | Value |
+|--------|-------|
+| Files changed | 2 (meeting_recap.py +63/-3, test_meeting_recap.py new) |
+| Tests added | 6 |
+| Tests passing | 6/6 (1546 total suite) |
+| Tests failing | 0 |
+| Mypy delta | -1 (55 -> 54; bug fix silenced pre-existing error) |
+| Ruff warnings introduced | 0 |
+| New tech-debt markers | 0 |
+| New dependencies | 0 |
+| Silent failures | 0 (broad except logs type+message before degrading) |
+| `extract_content` confirmed absent in src/ | CONFIRMED — grep returns no results |
+
+**Gate:** GREEN — ship to prod.

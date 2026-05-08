@@ -1,7 +1,7 @@
 # Observer: Architecture Report
 
-**Date:** 2026-05-08
-**Session:** leverage-day Fix A (SSOT demo dropdowns)
+**Date:** 2026-05-09
+**Session:** DA-R1.1 (most recent); earlier sessions preserved below
 **Project:** epiphan-storyboard
 **Observer Model:** claude-sonnet-4-6
 
@@ -69,6 +69,7 @@ The test asserts `ssot_values == enum_values` (line 100). This means SSOT and `A
 | 2026-05-07 | feature/bdr-call-brief-and-surveys | 3 risks / 4 smells | archived to .claude/archive/2026-05-07-OBSERVER-ARCH.md |
 | 2026-05-08 | leverage-day Fix A (SSOT demo dropdowns) | 0 blockers / 1 risk / 3 smells | OPEN |
 | 2026-05-08 | leverage-day Fix B (grounding integration tests) | 0 blockers / 0 risks / 2 smells | OPEN |
+| 2026-05-09 | DA-R1.1 two-pass wired into meeting_recap + bug fix | 0 blockers / 0 risks / 2 smells | OPEN |
 
 ---
 
@@ -127,26 +128,65 @@ The new `_call_text_model` (lines 758-772) mirrors the text-path dispatch in `_u
 
 | Contract | Status | Notes |
 |----------|--------|-------|
-| `StoryboardUnderstanding` schema is additive (no required field changes) | ✅ PASS | New fields `forces_of_progress` and `frankenstack` default to `None`. Verified across 16 callsites in `src/` + `tests/`. |
-| Two-pass replaces refinement (no double-burn) | ✅ PASS | `_understand` returns directly from `_extract_via_two_pass` when triggered, skipping `_refine_extraction`. |
-| Mocking discipline (no live LLM in CI) | ✅ PASS | All 14 new tests use `MagicMock(text=...)` with `side_effect`. Zero new `requires_api_keys` markers. |
-| Brand-agnosticism on new fixture | ✅ PASS | 17,074-char fixture contains zero Crestron/Extron/Q-SYS tokens. |
-| Mypy delta | ✅ PASS | 46 errors pre, 46 errors post — exact baseline preserved. |
-| Ruff lint delta on changed files | ✅ PASS | 0 new warnings; 1 pre-existing B904 at line 313 (not my code). |
+| `StoryboardUnderstanding` schema is additive (no required field changes) | PASS | New fields `forces_of_progress` and `frankenstack` default to `None`. Verified across 16 callsites in `src/` + `tests/`. |
+| Two-pass replaces refinement (no double-burn) | PASS | `_understand` returns directly from `_extract_via_two_pass` when triggered, skipping `_refine_extraction`. |
+| Mocking discipline (no live LLM in CI) | PASS | All 14 new tests use `MagicMock(text=...)` with `side_effect`. Zero new `requires_api_keys` markers. |
+| Brand-agnosticism on new fixture | PASS | 17,074-char fixture contains zero Crestron/Extron/Q-SYS tokens. |
+| Mypy delta | PASS | 46 errors pre, 46 errors post — exact baseline preserved. |
+| Ruff lint delta on changed files | PASS | 0 new warnings; 1 pre-existing B904 at line 313 (not my code). |
 
 ### Devil's Advocate Challenges
 
 | File | Challenge | Verdict |
 |------|-----------|---------|
-| `_extract_via_two_pass` | Why `max(single, two_pass)` for confidence merge? Could pick the two-pass value directly since it had a richer narrative intermediate. | DEFENSIBLE. Max is the safer choice — if the schema-mapping pass returns a low confidence (parse went OK but the LLM signaled low certainty), we don't want to *downgrade* the single-pass result. The single-pass already had its own confidence signal. Max means "two-pass can only improve, never regress." |
+| `_extract_via_two_pass` | Why `max(single, two_pass)` for confidence merge? Could pick the two-pass value directly since it had a richer narrative intermediate. | DEFENSIBLE. Max is the safer choice — if the schema-mapping pass returns a low confidence (parse went OK but the LLM signaled low certainty), we don't want to downgrade the single-pass result. The single-pass already had its own confidence signal. Max means "two-pass can only improve, never regress." |
 | Trigger condition `len(content) >= threshold OR conf < threshold` | The OR short-circuits to two-pass on degenerate input (short transcript, parse error → conf=0.0). 2× LLM cost on a malformed input. | DEFENSIBLE BUT INSTRUMENTABLE. Desirable behavior — we want to retry low-confidence regardless of length. If cost dashboards ever show a spike, add a `min_chars_for_two_pass` floor (e.g., 1000) to gate the conf-based trigger. Not a blocker today. |
 | Schema extension via Option B (additive) instead of Option A (rewrite pass-2 prompt) | Option A is "purer" — single source of extraction truth. Option B keeps two flows. | DEFENSIBLE. User picked B explicitly during brainstorming for backwards-compat. Option A would have required prompt-engineering risk (large changes to a tested prompt) and would have made the rollout less safe. B preserves the existing single-pass quality bar and adds richer fields on top. |
 | Why does `build_schema_mapping_prompt` exist if we don't rewrite it? | The prompt was shipped in Phase 1.3 and never invoked. DA-R1 is its first caller. | NOT A CONCERN. This is exactly what DA-R1 was scoped to do — wire the unused infrastructure. The prompts had unit tests already (`test_prompt_builders.py:312-349`). The integration call was the missing piece, and that's what this fix delivers. |
 | Why isn't `meeting_recap.py` also wired? | `meeting_recap.process_meeting_recap` uses its own prompt builder, not `understand_transcript`. Two-pass benefits would compound there too. | LEGITIMATE FOLLOWUP. Out of scope for DA-R1 (which targets `gemini_client.py` per the backlog). Worth a stretch goal in the plan or a follow-up backlog item — `DA-R1.1` to wire two-pass into `process_meeting_recap`. |
 
-### Monitoring Runs
+---
 
-| Date | Session | Findings | Status |
-|------|---------|----------|--------|
-| 2026-05-08 | leverage-day Fix B | 0 blockers / 0 risks / 0 critical | OPEN — see Fix B section |
-| 2026-05-09 | DA-R1 two-pass extraction | 0 blockers / 0 risks / 1 smell (`DA-A3` follow-up) / 0 critical | **🟢 GREEN — ship** |
+## DA-R1.1 (2026-05-09) — Architecture
+
+**Session:** DA-R1.1 — wire two-pass into `process_meeting_recap` + fix critical broken-endpoint bug
+**Files changed:** `src/tools/storyboard/meeting_recap.py` (+63/-3), `tests/tools/storyboard/test_meeting_recap.py` (new, ~330 lines, 6 tests).
+**Devil's advocate focus:** augmentation placement, trigger duplication, key-name mismatch, and how long the broken endpoint was live.
+
+### Blockers
+None.
+
+### Risks
+None.
+
+### Smells (log to backlog)
+
+**[SMELL] — Trigger condition duplicated between `gemini_client._understand` and `meeting_recap.process_meeting_recap`** (`meeting_recap.py:205-208`)
+
+Both call sites evaluate `config.enable_two_pass_extraction and len(content) >= config.two_pass_threshold_chars`. DA-R1 flagged consolidating dispatch logic as `DA-A3`. This reinforces that case: a third call site in `meeting_recap` means three places to update when the trigger rule changes (e.g., adding a per-persona override or a confidence floor). Suggested backlog item: `_should_two_pass(content: str, config: GeminiConfig) -> bool` extracted to `gemini_client.py`. Low urgency while there are only two-pass-eligible paths, but the surface area is growing.
+
+**[SMELL] — `frankenstack_description` (meeting-recap key) overlaid from `frankenstack` (two-pass schema key)** (`meeting_recap.py:226-227`)
+
+The two-pass schema emits `"frankenstack"` (bare); the meeting-recap dict uses `"frankenstack_description"` (qualified). The mapping is intentional (comment in code) and correct, but the mismatch means a reader tracing the data flow must cross-reference two schemas to confirm the rename. The `_two_pass_schema_payload` fixture in the test also uses `"frankenstack"` (line 91), making the asymmetry explicit and test-verified. No action required now, but if `MeetingRecapResponse` ever gains a Pydantic alias for this field, the rename should be standardized.
+
+### Devil's Advocate Challenges
+
+| File | Challenge | Verdict |
+|------|-----------|---------|
+| `process_meeting_recap` augmentation block | Why inline in `process_meeting_recap` rather than a separate `_augment_with_two_pass(result, transcript, ...)` helper? Plan explicitly called out "path b" as deliberate. | JUSTIFIED. The meeting-recap-specific prompt builders (`build_narrative_extraction_prompt`, `build_schema_mapping_prompt`) are already imported here. Extracting to a helper would require passing 4+ args and a client reference, saving no lines and adding indirection for a block that runs once per function. The inline placement is correct for a 25-line block. |
+| Single commit `c544c4b` covers all of meeting_recap.py history | The git log shows one commit: `c544c4b feat: JTBD + Challenger + NSTTD sales frameworks, AV Integrator persona, meeting recap, quality gate`. The broken `extract_content` call shipped in that same commit (initial implementation). DA-R1.1 is the first subsequent touch. The endpoint has been broken since its inception — there was no regression, it simply was never wired correctly. Zero prior test coverage meant CI never surfaced it. Duration: however long since `c544c4b` (multiple days based on surrounding backlog commits). | CONFIRMED — not a regression, an original implementation defect. The MagicMock(spec=...) pattern in the new tests is the correct prophylactic: it would have caught this at write time. |
+| `two_pass_applied` in the raw result dict | Is this dead data (silently dropped by `MeetingRecapResponse`) or a first-class API field? | UNRESOLVED — see QUALITY.md [INFO]. The builder set it; whether the API surface exposes it depends on MeetingRecapResponse's `extra` config. Worth making explicit in the next schema revision. |
+| Augmentation only overlays `forces_of_progress` and `frankenstack_description` — why not `challenger_reframe` or `job_statement`? | The other 15 keys are meeting-recap-specific (follow-up email, calibrated questions, buyer signals, NSTTD). Two-pass schema (`build_schema_mapping_prompt`) was designed for Forces+Frankenstack extraction only. Overlaying outside its design scope would introduce noise. | JUSTIFIED BY DESIGN SCOPE. If two-pass schema is later expanded (DA-A3 territory), the overlay logic here should expand in lockstep. |
+
+### Contract Compliance
+
+| Contract | Status | Notes |
+|----------|--------|-------|
+| `extract_content` absent from `GeminiStoryboardClient` | CONFIRMED | `grep -rn "def extract_content" src/` returns no output. The bug was real. |
+| Bug-fix regression test in place | PASS | `test_process_meeting_recap_uses_call_text_model` with `MagicMock(spec=GeminiStoryboardClient)` will fail RED if `extract_content` reappears or `_call_text_model` is removed. |
+| 15 single-pass keys preserved after two-pass overlay | PASS (test-enforced) | `test_long_transcript_triggers_two_pass_overlay` asserts `job_statement`, `challenger_reframe`, `follow_up_email`, etc. remain single-pass values. |
+| Short-transcript skip (< threshold) | PASS (test-enforced) | `test_short_transcript_skips_two_pass` asserts `await_count == 1`. |
+| Graceful failure preserves single-pass | PASS (test-enforced) | `test_two_pass_failure_falls_back_to_single_pass` asserts `two_pass_applied is False` and single-pass keys intact. |
+| `enable_two_pass_extraction=False` skips augmentation | PASS (test-enforced) | `test_two_pass_disabled_skips_augmentation` asserts `await_count == 1`. |
+
+**Gate:** GREEN — ship to prod.

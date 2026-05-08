@@ -453,6 +453,133 @@ def test_generate_accepts_new_artist_styles(client):
 
 
 # ============================================================================
+# Source-of-truth regression — HTML dropdown options must match Literal types
+# ============================================================================
+#
+# The Blueprint regression (b1d5789), Broadcasting regression (b1d5789), and
+# av_integrator regression (today) are all the same bug class: the HTML
+# `<option value="...">` list and the Pydantic Literal in src/demo/router.py
+# drift out of sync. The fix is documented in Backlog as a future SSOT
+# refactor, but until that lands these scrape-based tests catch any new
+# drift fail-loud at CI.
+
+
+def _scrape_html_select_options(select_id: str) -> set[str]:
+    """Return the set of `<option value="...">` values for the given <select>.
+
+    Cheap regex scrape — keeps the test free of an HTML-parser dependency.
+    Returns the empty set if the select isn't found, which would itself be
+    a regression worth flagging.
+    """
+    import re
+    from pathlib import Path
+
+    html = Path("static/demo.html").read_text()
+    # Find the select block — match from the opening tag (with id) to its
+    # closing </select>. Allow attributes between id and the >.
+    select_re = re.compile(
+        rf'<select\b[^>]*\bid="{re.escape(select_id)}"[^>]*>(.*?)</select>',
+        flags=re.DOTALL,
+    )
+    m = select_re.search(html)
+    if not m:
+        return set()
+    block = m.group(1)
+    return set(re.findall(r'<option\s+value="([^"]+)"', block))
+
+
+@pytest.mark.parametrize(
+    "html_value",
+    sorted(_scrape_html_select_options("audienceSelect")),
+)
+def test_audience_dropdown_values_in_pydantic_literal(client, html_value):
+    """Every value in the audienceSelect <select> must validate via the
+    GenerateRequest schema. Catches drift like commit b1d5789 (visual_style)
+    and the av_integrator gap surfaced 2026-05-08.
+    """
+    with patch("src.demo.router.UnifiedStoryboardTool") as MockTool:
+        mock_instance = AsyncMock()
+        mock_instance.run.return_value = _mock_tool_success()
+        MockTool.return_value = mock_instance
+
+        response = client.post(
+            "/demo/generate",
+            json={
+                "input_type": "code",
+                "code": "def foo(): pass",
+                "audience": html_value,
+            },
+        )
+
+        assert response.status_code != 422, (
+            f"Pydantic rejected audience={html_value!r} from the demo "
+            f"dropdown. The HTML and the Literal in src/demo/router.py "
+            f"have drifted. Body: {response.text}"
+        )
+
+
+@pytest.mark.parametrize(
+    "html_value",
+    sorted(_scrape_html_select_options("verticalSelect")),
+)
+def test_vertical_dropdown_values_in_pydantic_literal(client, html_value):
+    """Every value in the verticalSelect <select> must validate via
+    GenerateRequest. Catches the same drift class for verticals."""
+    if html_value == "auto":
+        # The demo wires "auto" to None on the client side. Skip — the
+        # Pydantic Literal correctly rejects "auto" as a sentinel.
+        return
+    with patch("src.demo.router.UnifiedStoryboardTool") as MockTool:
+        mock_instance = AsyncMock()
+        mock_instance.run.return_value = _mock_tool_success()
+        MockTool.return_value = mock_instance
+
+        response = client.post(
+            "/demo/generate",
+            json={
+                "input_type": "code",
+                "code": "def foo(): pass",
+                "audience": "av_director",
+                "vertical": html_value,
+            },
+        )
+
+        assert response.status_code != 422, (
+            f"Pydantic rejected vertical={html_value!r} from the demo "
+            f"dropdown. The HTML and the Literal in src/demo/router.py "
+            f"have drifted. Body: {response.text}"
+        )
+
+
+@pytest.mark.parametrize(
+    "html_value",
+    sorted(_scrape_html_select_options("visualStyleSelect")),
+)
+def test_visual_style_dropdown_values_in_pydantic_literal(client, html_value):
+    """Every value in the visualStyleSelect <select> must validate."""
+    with patch("src.demo.router.UnifiedStoryboardTool") as MockTool:
+        mock_instance = AsyncMock()
+        mock_instance.run.return_value = _mock_tool_success()
+        MockTool.return_value = mock_instance
+
+        response = client.post(
+            "/demo/generate",
+            json={
+                "input_type": "code",
+                "code": "def foo(): pass",
+                "audience": "av_director",
+                "visual_style": html_value,
+            },
+        )
+
+        assert response.status_code != 422, (
+            f"Pydantic rejected visual_style={html_value!r} from the demo "
+            f"dropdown. The HTML and the Literal in src/demo/router.py "
+            f"have drifted. Body: {response.text}"
+        )
+
+
+# ============================================================================
 # Integration Tests (require files to exist)
 # ============================================================================
 

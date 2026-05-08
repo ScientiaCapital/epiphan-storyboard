@@ -125,6 +125,7 @@ class GenerateRequest(BaseModel):
         "technical_director",
         "dealer_dave",
         "system_engineer",
+        "av_integrator",
     ] = Field(
         "av_director",
         description="Target audience persona (Epiphan ICP)",

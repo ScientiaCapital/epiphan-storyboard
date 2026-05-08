@@ -14,9 +14,20 @@ from pathlib import Path
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from src.tools.storyboard.epiphan_presets import get_collateral_links
+from src.demo._dropdowns import (
+    ArtistStyle,
+    OutputFormat,
+    Vertical,
+    VisualStyle,
+    options_payload,
+)
+from src.tools.storyboard.epiphan_presets import (
+    AudiencePersona,
+    StoryboardStage,
+    get_collateral_links,
+)
 from src.tools.storyboard.storage import get_storage
 from src.tools.storyboard.unified_storyboard import UnifiedStoryboardTool
 
@@ -80,9 +91,24 @@ class ExampleCodeResponse(BaseModel):
 
 
 class GenerateRequest(BaseModel):
-    """Request for POST /demo/generate."""
+    """Request for POST /demo/generate.
 
-    # input_type is now optional - auto-inferred from provided fields
+    Persona / vertical / format / style fields are typed as enums sourced
+    from ``src/demo/_dropdowns.py`` (the demo dropdown SSOT) and
+    ``src/tools/storyboard/epiphan_presets.AudiencePersona``. Adding a new
+    option means adding it to those enums — the inline ``Literal`` lists
+    that used to live here drifted from ``static/demo.html`` more than once
+    (commit b1d5789, av_integrator on 2026-05-08), so the enum import is
+    the structural fix.
+
+    ``use_enum_values=True`` keeps the runtime field type as plain ``str``
+    so downstream tool callsites (``unified_storyboard.run({"audience": ...})``)
+    continue to receive a string without needing ``.value`` accesses.
+    """
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    # input_type is optional — auto-inferred from provided fields
     input_type: Literal["image", "code"] | None = Field(
         None,
         description="Type of input: 'image' or 'code'. Auto-inferred if not provided.",
@@ -104,69 +130,29 @@ class GenerateRequest(BaseModel):
         "epiphan_av",
         description="ICP preset to use",
     )
-    stage: Literal["preview", "demo", "shipped"] = Field(
-        "demo",
+    stage: StoryboardStage = Field(
+        StoryboardStage.DEMO,
         description="Storyboard stage for BDR cadence",
     )
-    audience: Literal[
-        "av_director",
-        "ld_director",
-        "sim_center_director",
-        "court_admin",
-        "corp_comms",
-        "ehs_manager",
-        "law_firm_it",
-        "provost",
-        "university_president",
-        "university_finance",
-        "edtech_manager",
-        "venue_manager",
-        "production_director",
-        "technical_director",
-        "dealer_dave",
-        "system_engineer",
-        "av_integrator",
-    ] = Field(
-        "av_director",
-        description="Target audience persona (Epiphan ICP)",
+    audience: AudiencePersona = Field(
+        AudiencePersona.AV_DIRECTOR,
+        description="Target audience persona (Epiphan ICP). See AudiencePersona enum.",
     )
-    vertical: Literal[
-        "higher_ed",
-        "corporate",
-        "live_events",
-        "government",
-        "houses_of_worship",
-        "healthcare",
-        "industrial",
-        "legal",
-        "ux_research",
-        "k12",
-        "broadcasting",
-    ] | None = Field(
+    vertical: Vertical | None = Field(
         None,
         description="Target vertical/industry. Auto-inferred from persona if not provided.",
     )
-    output_format: Literal["infographic", "storyboard"] = Field(
-        "infographic",
-        description="Output format: 'infographic' (horizontal 16:9) or 'storyboard' (vertical 9:16)",
+    output_format: OutputFormat = Field(
+        OutputFormat.INFOGRAPHIC,
+        description="Output format: 'infographic' (16:9 horizontal) or 'storyboard' (9:16 vertical).",
     )
-    visual_style: Literal[
-        "clean",
-        "polished",
-        "photo_realistic",
-        "minimalist",
-        "isometric",
-        "sketch",
-        "data_viz",
-        "bold",
-        "blueprint",
-    ] = Field(
-        "polished",
-        description="Visual style: 'clean', 'polished', 'photo_realistic', 'minimalist', 'isometric' (3D Stripe/Linear), 'sketch' (whiteboard), 'data_viz' (charts), 'bold' (Bauhaus), 'blueprint' (technical drawing)",
+    visual_style: VisualStyle = Field(
+        VisualStyle.POLISHED,
+        description="Visual style of the rendered image. See VisualStyle enum.",
     )
-    artist_style: str | None = Field(
+    artist_style: ArtistStyle | None = Field(
         None,
-        description="Optional artist style: 'salvador_dali', 'monet', 'diego_rivera', 'warhol', 'van_gogh', 'picasso', 'giger' (biomechanical), 'frida_kahlo', 'siqueiros'",
+        description="Optional artist-style overlay. See ArtistStyle enum.",
     )
 
 
@@ -248,6 +234,22 @@ def read_file_content(relative_path: str) -> str:
 # ============================================================================
 # Endpoints
 # ============================================================================
+
+
+@router.get(
+    "/options",
+    summary="Canonical persona / vertical / style / format options for the demo UI",
+)
+async def list_demo_options() -> dict[str, Any]:
+    """Return the SSOT dropdown options consumed by ``static/demo.html``.
+
+    The demo HTML can either ship the ``<option>`` elements inline (today)
+    or fetch this endpoint on load and populate the dropdowns from it
+    (future). Either way, the SSOT lives in ``src/demo/_dropdowns.py``;
+    ``tests/demo/test_dropdown_parity.py`` enforces the three-way invariant
+    between SSOT, ``GenerateRequest``, and the HTML.
+    """
+    return options_payload()
 
 
 @router.get(

@@ -9,6 +9,16 @@
 
 ## Tech Debt / Architecture
 
+- **DA-A1: Resolve `ArtistStyle` dual-nullability** (effort: 30 min, impact: low — design hygiene, not user-visible) **[NEW 2026-05-08]**
+  - `src/demo/_dropdowns.py:73-91` defines `ArtistStyle.NONE = "none"` while `GenerateRequest.artist_style: ArtistStyle | None` (router.py:153) also allows `None`. Two representations of "no overlay": Python `None` and string `"none"`. Downstream `prompts.get_artist_style_instructions("none")` falls through `dict.get` to empty string — no user-visible bug, but the design has redundant code paths.
+  - Recommended fix: remove `NONE` from the enum, change demo HTML to `<option value="">🎨 None</option>`, add a `@field_validator` on `GenerateRequest.artist_style` that maps `""` to `None`. Single source of truth for "no overlay."
+  - Source: Observer audit 2026-05-08 (Fix A SSOT). See `.claude/observers/QUALITY.md` warning, `.claude/observers/ARCH.md` smell.
+
+- **DA-A2: Migrate `static/demo.html` dropdowns to fetch `/demo/options`** (effort: 1 hr, impact: low — eliminates the last drift surface) **[NEW 2026-05-08]**
+  - Fix A added the `/demo/options` endpoint as future-proofing. The HTML still ships static `<option>` blocks. Migrating to fetch-on-load + JS-populate would eliminate the third drift surface entirely (HTML can no longer disagree with the SSOT — it consumes it). Trade-off: extra network round-trip on page load.
+  - If we don't migrate this sprint, the parity test (`test_html_dropdown_options_match_ssot`) keeps the surface honest. Endpoint is then redundant scaffolding — either migrate or mark `deprecated=True`.
+  - Source: Observer audit 2026-05-08 (Fix A SSOT). See `.claude/observers/ARCH.md` smell.
+
 - **DA-W2: Tighten exception handling in `build_problem_statement_anchor`** (effort: 15 min, impact: low) **[NEW 2026-05-07]**
   - `src/tools/storyboard/prompt_builders.py:140` catches bare `except Exception:`. Narrow to `(ValueError, ImportError)` and add `logger.debug(...)` so silent grounding-degradation is observable.
   - Source: DA observer audit, finding W-2.

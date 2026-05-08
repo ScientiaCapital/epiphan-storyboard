@@ -1,10 +1,14 @@
 # Project Context: epiphan-storyboard
 
-**Generated:** 2026-05-09 (end-of-day, DA-R1.1 ship — meeting-recap unblocked)
-**Branch:** main @ ac4a7ac (DA-R1.1 + DA-R1.1.b shipped + tagged)
-**Tags:** v1.3-meeting-recap-unblock (latest) · v1.2-two-pass-extraction (2026-05-09) · v1.1-leverage-day (2026-05-08) · v1.0-bdr-workflow (2026-05-07)
-**Production:** https://epiphan-storyboard.vercel.app (main-aligned deploy, all four releases live + smoke-verified — including the now-unbroken POST /storyboard/meeting-recap)
+**Generated:** 2026-05-08 (Fri, end-of-day — locked via /end workflow)
+**Branch:** main @ 89d021d (clean — pushed, working tree empty, feature branch cleaned)
+**Tags:** v1.3-meeting-recap-unblock · v1.2-two-pass-extraction · v1.1-leverage-day · v1.0-bdr-workflow (all pushed to origin)
+**Production:** https://epiphan-storyboard.vercel.app — 4 releases live + smoke-verified, including the now-unbroken `POST /storyboard/meeting-recap`
 **Tech Stack:** Python 3.11+, FastAPI, Pydantic v2, Vercel serverless
+
+> 📌 **Tomorrow:** `DA-R1.1.a + DA-A3` paired sprint via `feature-dev` workflow (Builder + Observer, lightweight) | Est: 40 min, ~$5 | Top unresolved: `_should_two_pass(content, config)` helper (consolidates trigger duplication across 2 callsites). See `.claude/TASK.md` and `Backlog.md` for the full ranked list. If energy is high, stack `DA-S3` (Vertical-aware Frankenstack blocks, +1 hr).
+
+> 🛈 **Date-label note:** internal section headers below say "2026-05-09" — these are writer-error labels added during the late session today (2026-05-08). Git log + archive filenames + tags carry the correct date. All today's work shipped on **2026-05-08**.
 
 ---
 

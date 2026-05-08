@@ -1,65 +1,95 @@
 # Project Context: epiphan-storyboard
 
-**Generated:** 2026-05-07 (end-of-day)
-**Branch:** feature/bdr-call-brief-and-surveys @ b003112 (pushed to origin)
-**Production:** https://epiphan-storyboard.vercel.app (deployed today, smoke-verified)
+**Generated:** 2026-05-07 (end-of-day, merged to main 2026-05-08 morning)
+**Branch:** main @ abae0f1 (Phase 1 BDR Workflow merged via fast-forward)
+**Tag:** v1.0-bdr-workflow
+**Production:** https://epiphan-storyboard.vercel.app (main-aligned deploy, smoke-verified)
 **Tech Stack:** Python 3.11+, FastAPI, Pydantic v2, Vercel serverless
 
 ---
 
-## Today's Work (2026-05-07) — Phase 1 BDR Discovery Workflow ✅
+## Phase 1 BDR Discovery Workflow — Shipped & Live
 
-Shipped 11 commits on `feature/bdr-call-brief-and-surveys`, 5,630 LOC, 1,446 tests passing, deployed to production.
+11 commits originally on `feature/bdr-call-brief-and-surveys`, fast-forwarded to `main`, tagged `v1.0-bdr-workflow`, redeployed cleanly from main.
 
-| Commit | What |
+| Layer | Status |
 |---|---|
-| `4e5752c` | feat: Problem Statements library (Phase 1.1) — verbatim BDR pain library, ~30 statements seeded across Higher Ed / Legal / Live Events × all key personas, 32-doc-role → 17-enum alias table |
-| `d58a675` | feat: Transcript Compactor (Phase 1.2) — replaces 32K hard truncation with extractive summarization |
-| `bcb53d3` | feat: Prompt Builder polish (Phase 1.3) — 4 fixes: compactor wired, two-pass narrative+schema prompts, verbatim grounding anchor, brand-agnostic Frankenstack patterns |
-| `06ef8e6` | fix: dropped Crestron/Extron/Q-SYS brand names from Frankenstack (DA-W1) + DA audit reports |
-| `40f688f` | feat: Vertical Workflow Surveys (Phase 1.4) — Higher Ed 18q / Legal 17q / Live Events 40q |
-| `5795d9f` | feat: BDR Call Brief generator (Phase 1.6) — persona-keyed templates, NSTTD email, NBA decision matrix |
-| `23593dd` | feat: Survey API endpoints (Phase 1.5) — GET /storyboard/survey/templates/{vertical}, POST /storyboard/survey/submit |
-| `6d4444d` | feat: 3 quality-gate checks for the BDR brief (Phase 1.7) — resonance, calibrated form, brief completeness |
-| `271c2df` | feat: BDR Discovery Workflow UI panel (Phase 1.8) — vertical/mode toggle, dynamic survey form, brief result card |
-| `f497086` | fix: contraction-aware calibrated-question filter (post-smoke polish) |
-| `b003112` | chore: end-of-day backlog + observer archive |
+| Problem Statements library (Higher Ed / Legal / Live Events seeded) | ✅ live |
+| Transcript Compactor (replaces 32K hard truncation) | ✅ live |
+| Prompt builder polish (4 fixes including brand-agnostic Frankenstack) | ✅ live |
+| 3 vertical workflow surveys (Higher Ed 18q / Legal 17q / Live Events 40q) | ✅ live |
+| Survey API endpoints (GET templates / POST submit) | ✅ live |
+| BDR Call Brief generator (deterministic core) | ✅ live |
+| Quality gate enhancements (3 new checks) | ✅ live |
+| Demo UI BDR Discovery Workflow panel | ✅ live |
 
-**DA observer audit:** 0 criticals, 4 warnings (1 fixed inline, 3 in backlog), 3 risks + 4 smells (all in backlog as DA-* items). Brand-agnosticism on partner platforms (Panopto/Kaltura/YuJa/Echo360/Canvas/Blackboard/Moodle/Zoom/Teams/WebEx) verified clean — zero violations.
+## Production smoke (main-aligned deploy)
+
+```
+GET  /health                                       → 200
+GET  /storyboard/survey/templates/higher_ed        → 200 (18q / 6 sections)
+GET  /storyboard/survey/templates/legal            → 200 (17q)
+GET  /storyboard/survey/templates/live_events      → 200 (40q)
+GET  /storyboard/survey/templates/government       → 404 (Phase 2 hint)
+POST /storyboard/survey/submit                     → av_director, ICP 90, 3 statements / 5 questions / 76-word email
+GET  /                                             → demo with BDR Discovery section
+```
 
 ## Working Tree Status
 
 ```
-clean — feature branch pushed to origin
-worktree: epiphan-storyboard @ b003112 [feature/bdr-call-brief-and-surveys]
+clean — main pushed to origin/main
+  Local:   main @ abae0f1
+  Remote:  origin/main @ abae0f1
+  Tag:     v1.0-bdr-workflow → abae0f1 (pushed)
+  Branch:  feature/bdr-call-brief-and-surveys preserved (merged, can be deleted by user)
 ```
 
-## Production Verification (smoke)
+## DA observer audit summary
 
-```
-GET  /health                                       → 200 {"status":"healthy"}
-GET  /storyboard/survey/templates/higher_ed        → 200 (18 questions / 6 sections)
-GET  /storyboard/survey/templates/legal            → 200 (17 questions)
-GET  /storyboard/survey/templates/live_events      → 200 (40 questions)
-GET  /storyboard/survey/templates/government       → 404 (Phase 2 hint message)
-POST /storyboard/survey/submit (transcript-only)   → av_director, ICP 90, 5 calibrated qs, 76-word email
-GET  /                                             → demo page renders with BDR Discovery section
+- **0 critical findings**
+- **4 warnings** (1 fixed inline, 3 in Backlog)
+- **3 risks + 4 smells** all in Backlog as DA-* items
+- **Brand-agnosticism on partner platforms** (Panopto/Kaltura/YuJa/Echo360/Canvas/Blackboard/Moodle/Zoom/Teams/WebEx) — verified zero violations
+
+---
+
+## Tomorrow's Sprint Kickoff (2026-05-08)
+
+**Recommended lead task:** **DA-R1 — Wire two-pass narrative+schema Forces extraction into `gemini_client.py`**
+- Effort: 2–3 hr / Impact: HIGH
+- Why: Phase 1.3 shipped the prompts as infrastructure-ready, but the orchestration call site that runs both passes is the open half. Realizes the Forces-of-Progress quality lift.
+- Where: `src/tools/storyboard/gemini_client.py:516–630` (existing refine plumbing as integration point)
+- TDD: write a test that asserts a two-pass call path is taken when transcript ≥ ~10K chars or `extraction_confidence < 0.75`
+- Skill: `feature-dev`
+- Estimate: $4–8
+
+**If wrapping for the sprint or pivoting:**
+| Quick wins (under 1 hr) | Effort | Impact |
+|---|---|---|
+| DA-W2: Tighten `except Exception` in `build_problem_statement_anchor` | 15 min | low |
+| DA-W4: 5 edge-case tests for `transcript_compactor` | 30 min | low |
+| DA-I2: Skip dup `key_moments` block when ratio==1.0 | 10 min | low |
+| `av_integrator` audience Literal audit | 5 min | low |
+| `.gitleaksignore` for historical placeholder | 5 min | low |
+
+**Medium-impact (~1 hr each):**
+- DA-S1: End-to-end grounding integration test (3 fixtures, one per Phase-1 vertical)
+- DA-S4: Capture one anonymized real Clari/Gong transcript per Phase-1 vertical as regression fixture
+
+**Phase 2 work (multi-day):**
+- Surveys for Government / Corporate AV / Healthcare / Houses of Worship / K-12 / Channel
+- Outbound HubSpot webhook for BDR brief auto-attach
+- Survey response persistence (Supabase / Redis)
+
+## Sprint kickoff command
+
+```bash
+cd /Users/tmk/Desktop/tk_projects/epiphan-storyboard
+git checkout -b feature/two-pass-forces-extraction main
+# Open .claude/Backlog.md and read the DA-R1 entry for the spec
 ```
 
 ---
 
-## Tomorrow
-
-**Recommended next:** **DA-R1 — Wire two-pass narrative+schema Forces extraction into `gemini_client.py`** (effort: 2–3 hr, impact: HIGH). The prompts are infrastructure-ready from Phase 1.3; the missing piece is the orchestration call site that runs both passes when transcript size or low extraction confidence warrants. This realizes the Forces-of-Progress quality lift documented in the original `tidy-beaming-pebble.md` plan.
-
-**Skill:** `feature-dev` for the orchestration design; standard TDD with the existing refine-pass plumbing at `src/tools/storyboard/gemini_client.py:516–630` as the integration point.
-
-**Estimated cost:** $4–8 for the orchestration work + tests.
-
-**Top unresolved observer/backlog flag:** **DA-R1** (above) — this is the open half of Phase 1.3's Fix #2. Until it's wired the new prompts are dormant infrastructure. Second-priority is **DA-S1** (1 hr): an end-to-end integration test that asserts the full grounding chain (vertical+persona → problem-statement anchor → prompt builder → verbatim text in output) — guards against module-boundary regressions when DA-R1 lands.
-
-**Alternative path:** if continuing the BDR thread isn't the priority tomorrow, **merge `feature/bdr-call-brief-and-surveys` to `main` via PR**. The branch is fully shipped and production-deployed; merging is just bookkeeping. URL to open the PR: https://github.com/ScientiaCapital/epiphan-storyboard/pull/new/feature/bdr-call-brief-and-surveys
-
----
-
-_Auto-updated by /end workflow._
+_Auto-updated by /end workflow on rollover to 2026-05-08._

@@ -1,10 +1,77 @@
 # Project Context: epiphan-storyboard
 
-**Generated:** 2026-05-08 (end-of-day, leverage-day wrap)
-**Branch:** main @ 08e7344 (Fix A + Fix B shipped sequentially)
-**Tag:** v1.1-leverage-day (this session) · v1.0-bdr-workflow (previous Phase 1 merge)
-**Production:** https://epiphan-storyboard.vercel.app (main-aligned deploy, Fix A live + smoke-verified)
+**Generated:** 2026-05-09 (end-of-day, DA-R1 ship)
+**Branch:** main @ d1d62a6 (DA-R1 two-pass extraction shipped + tagged)
+**Tags:** v1.2-two-pass-extraction (this session) · v1.1-leverage-day (2026-05-08) · v1.0-bdr-workflow (2026-05-07)
+**Production:** https://epiphan-storyboard.vercel.app (main-aligned deploy, all three releases live + smoke-verified)
 **Tech Stack:** Python 3.11+, FastAPI, Pydantic v2, Vercel serverless
+
+---
+
+## 2026-05-09 — DA-R1 Two-Pass Forces Extraction Ship
+
+Realizes Phase 1.3's quality lift. Single architectural fix, ~3 hr execution end-to-end.
+
+| Decision | Choice |
+|---|---|
+| Theme | Realize Phase 1.3 quality lift (DA-R1 from backlog) |
+| Lens | Single high-leverage point fix |
+| Execution | Same skill stack — `brainstorming` + `agent-teams` (Builder+Observer) + `dispatching-parallel-agents` + `workflow-orchestrator` gate |
+| Schema reconciliation | Locked Option B (additive `forces_of_progress` + `frankenstack` on existing `StoryboardUnderstanding`) |
+| Done bar | TDD red→green → observer signoff → push → `vercel --prod --force` → live verify |
+
+### What shipped (commit `d1d62a6`)
+
+| Change | Detail |
+|---|---|
+| `src/tools/storyboard/gemini_client.py` (+189) | New `ForcesOfProgress` Pydantic model · `StoryboardUnderstanding` extended additively (16 callsites verified backwards-compat) · `GeminiConfig.enable_two_pass_extraction` (default `True`) + `two_pass_threshold_chars` (default `10_000`) · new `_extract_via_two_pass()` method · new `_call_text_model()` helper · trigger wired in `_understand` (replaces `_refine_extraction` when fired) |
+| `tests/tools/storyboard/test_gemini_client.py` (+454) | 14 new tests across 4 classes — all mock LLM, zero live API · TDD red→green throughout |
+| `tests/storyboard/test_grounding_integration.py` (+43) | 3 new tests pulling the long fixture into the parametrized suite + threshold sanity check |
+| `tests/fixtures/transcripts/higher_ed_strategy_review_long_synthetic.txt` (new, 17,074 chars) | Synthetic 47-min strategic AV-portfolio review · multi-speaker · zero forbidden brands |
+
+### Trigger logic
+For transcripts: if `len(content) ≥ 10K` OR `extraction_confidence < 0.75` → run two-pass (narrative → schema-mapping) instead of free-form `_refine_extraction`. Two-pass `extraction_confidence` becomes `max(single_pass, two_pass)`. On any failure (LLM error, parse error), graceful degrade to single-pass result with logged warning.
+
+### Test / lint / mypy delta
+
+| Metric | Before | After | Delta |
+|---|---|---|---|
+| pytest (excl. live integration) | 1,523 | 1,540 | +17 |
+| Mypy errors (`gemini_client.py`) | 46 | 46 | 0 |
+| Ruff lint | clean | clean | — |
+| New TODO/FIXME/HACK markers | — | 0 | clean |
+
+### Observer findings
+
+🟢 **GREEN gate** — 0 blockers, 0 critical, 0 warnings, 1 architecture smell (logged as `DA-A3`). Audit appended to `.claude/observers/QUALITY.md` and `ARCH.md` under `## DA-R1 (2026-05-09)`.
+
+### New backlog items added today
+
+- `DA-A3` — Consolidate text-path dispatch into `_call_text_model` (refactor `_understand`'s inline text branch to call the new helper). 30 min, low.
+- `DA-R1.1` — Wire two-pass into `meeting_recap.process_meeting_recap` (currently has its own prompt path that skips the two-pass benefit). 1 hr, medium.
+
+### Live verification (post-deploy)
+
+- ✅ `GET /health` → `{"status":"healthy"}`
+- ✅ `POST /demo/generate` schema validation enforces enum (`av_integrator` accepted, `foobar` rejects with 422)
+- ✅ `GET /demo/options` returns canonical 17 personas / 11 verticals / 2 formats / 9 styles / 10 artists
+
+### Tomorrow's lead candidates
+
+The DA-R1 fix unlocks a few natural follow-ups in priority order:
+
+1. **`DA-R1.1`** — Wire two-pass into the meeting-recap pipeline (1 hr). Direct quality lift for the BDR meeting-recap flow.
+2. **`DA-A3`** — Consolidate text-path dispatch (30 min). Cheap maintenance, removes the dual-callsite hazard.
+3. **`DA-S3`** — Vertical-aware Frankenstack pattern blocks (1 hr). Higher-Ed and Live-Events have different Frankenstacks; the current global block dilutes signal.
+
+```bash
+git checkout -b feature/two-pass-meeting-recap main
+# Read .claude/Backlog.md DA-R1.1 for the spec
+```
+
+---
+
+## 2026-05-08 — Leverage Day Wrap
 
 ---
 

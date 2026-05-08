@@ -1,0 +1,40 @@
+Discovery call — Multi-purpose performing arts venue (1,200 seats)
+Date: 2026-05-02 · Length: 19 min · Source: Fireflies (synthetic — no PII)
+
+[00:00:11] BDR (Jordan): Hey Pat, appreciate you carving out the time. Last we spoke briefly at LDI, you mentioned the season is wall-to-wall. Quick refresher on the venue setup?
+
+[00:00:24] Venue Manager (Pat): Sure. We're a 1,200-seat hall, mainly performing arts. Symphony in residence, a touring Broadway slot, plus we host probably a hundred corporate-rental events a year — keynotes, product launches, hybrid all-hands. Our AV team is three full-time, two seasonal. We're booked 22 to 26 days a month.
+
+[00:00:48] Jordan: That's a lot of turnarounds. What does the multi-event day look like for you?
+
+[00:00:55] Pat: Hell. [laughs] I mean, today we have a symphony rehearsal at 9 AM, a TED-style talk at noon, and a ballet at 7:30. Each one wants different cameras, different streaming destinations, different recording requirements. The TED-style wants live-stream to YouTube and Vimeo with branded overlays. The ballet just records to local for archive. The symphony does a Sunday afternoon broadcast feed to a regional radio station's video partner, plus stream-to-platform for ticketed digital seats.
+
+[00:01:38] Jordan: How are you switching between those configurations?
+
+[00:01:42] Pat: We had to build our own thing because nothing off the shelf could handle three completely different signal flows in the same day. We have an ATEM in the booth, a vMix machine for streaming, a separate hardware recorder for archive, and a [INAUDIBLE — large bus passing] cellular bonding unit when the venue's internet is saturated by the audience. So that's four boxes that should be one. And we have config presets in vMix that we load by name, but if anyone touches the wrong button, the show goes down.
+
+[00:02:24] Jordan: Venue AV directors tell us they're running 20-plus events a month and rebuilding the signal chain from scratch every time because no single product handles their full event mix. Sound familiar?
+
+[00:02:36] Pat: Yes. That is exactly our life. And the worst part — when one of those four boxes fails mid-show, we don't have a hot standby. We have a tour-bus driver helping us reset a recorder. It's not designed for our scale.
+
+[00:02:54] Jordan: How are streaming partners — YouTube, the radio station's platform, your ticketed-seats vendor — how are those integrated?
+
+[00:03:02] Pat: They're partners. They're fine. They give us an RTMP key or an SRT URL, we point our encoder at it, content flows. The platforms are fine. The encoder layer is the mess. Specifically: we have to maintain three separate encoder presets per show because different platforms want different bitrates and codecs, and our setup doesn't let us do simulcast cleanly without burning a second machine.
+
+[00:03:38] Jordan: Cloud-managed rooms — is that something you have today?
+
+[00:03:44] Pat: We have nothing centralized. My production director is the human cloud. He has a notebook with IPs and passwords. If he's on vacation, we are vulnerable. If a recorder hangs, we walk to the booth, we power-cycle, we restart the show. There's no remote view, no fleet inventory, no firmware push.
+
+[00:04:08] Jordan: What does success look like 12 months from now?
+
+[00:04:14] Pat: One unified box per camera position that can encode, record, stream, switch — and a single dashboard that shows me green / yellow / red across all of them. So when the symphony director walks in and asks "are we ready," I can say yes without sending someone to climb a ladder.
+
+[00:04:34] Jordan: That's the production director's whole job, basically.
+
+[00:04:38] Pat: That's my whole job. Production directors are for the art. The infrastructure should answer for itself.
+
+[00:04:48] Jordan: Got it. I want to send you a case study from a multi-purpose venue running a similar mix that consolidated to a single encoder line per camera plus cloud management. Different scale but the same shape. Then 30 minutes to talk through how you'd phase it, given your seasonal staffing. Friday morning?
+
+[00:05:12] Pat: Send it. Friday 10 AM works.
+
+[00:05:16] Jordan: Done. Thanks, Pat.

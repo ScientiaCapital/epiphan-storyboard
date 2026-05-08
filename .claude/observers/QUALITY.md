@@ -58,3 +58,41 @@ Zero tech-debt markers found in the three changed files (`src/demo/router.py`, `
 |------|---------|------|--------------|----------|--------|
 | 2026-05-07 | feature/bdr-call-brief-and-surveys | DA audit Phase 1.1-1.3 | 6 | 7 (0C/4W/3I) | archived to .claude/archive/2026-05-07-OBSERVER-QUALITY.md |
 | 2026-05-08 | leverage-day Fix A (SSOT demo dropdowns) | Read-only audit of GenerateRequest SSOT refactor | 5 | 4 (0C/2W/2I) | OPEN |
+| 2026-05-08 | leverage-day Fix B (grounding integration tests) | Read-only audit of test_grounding_integration.py + 3 fixtures | 5 | 2 (0C/0W/2I) | OPEN |
+
+---
+
+## Fix B (2026-05-08) — Quality
+
+**Date:** 2026-05-08
+**Files audited:** `tests/storyboard/test_grounding_integration.py`, `tests/fixtures/transcripts/higher_ed_lecture_capture_synthetic.txt`, `tests/fixtures/transcripts/legal_court_recording_synthetic.txt`, `tests/fixtures/transcripts/live_events_venue_synthetic.txt`
+
+### Test Run Results
+
+All 13 tests pass in 0.02s. Full suite (excluding integration): 1506 passed. Ruff: all checks passed.
+
+### Findings
+
+**[INFO] — tests/storyboard/test_grounding_integration.py — Coverage gap: new AudiencePersona members without problem_statements records are not caught**
+
+`test_grounding_chain_injects_anchor` only covers the three hard-coded `GROUNDED_COMBOS`. If a developer adds a new persona to `AudiencePersona` without seeding `problem_statements`, this file catches nothing — the persona simply joins the Phase-2 silent-degradation bucket without warning. There is no test that iterates all `AudiencePersona` members and asserts each either (a) has at least one problem statement or (b) is explicitly enumerated in an allowed Phase-2 set.
+
+Suggested fix: Add a `test_all_personas_either_grounded_or_phase2_declared()` test that calls `get_problem_statements(vertical, persona)` for every `AudiencePersona` and fails if any new member is in neither a grounded set nor a declared Phase-2 allowlist. This converts a silent-degradation risk into a loud CI failure at persona-addition time.
+
+**[INFO] — tests/fixtures/transcripts/ — Fixtures are 4.2–4.5 KB (brief but structurally valid)**
+
+The three fixtures clock in at 4,218–4,461 bytes (roughly 40 lines each), representing 19–28 minute calls. This passes the `>1500 char` sanity assertion with headroom but is shorter than a real Gong transcript of that stated length (which would typically be 15,000–25,000 chars). For the current test purpose — asserting prompt structure, not LLM extraction quality — the size is adequate. If `match_statements_to_transcript` scoring is ever exercised in a test, the fixtures may need to be more verbose to produce meaningful signal-match counts.
+
+No TODO/FIXME/HACK/XXX/TEMP markers introduced. No new dependencies added. No silent failures or empty catch blocks in the new test file.
+
+### Fix B Quality Metrics
+
+| Metric | Value |
+|--------|-------|
+| Tests added | 13 |
+| Tests passing | 13 |
+| Tests failing | 0 |
+| Ruff warnings | 0 |
+| New tech-debt markers | 0 |
+| New dependencies | 0 |
+| Coverage gaps flagged | 1 (all-personas enumeration) |

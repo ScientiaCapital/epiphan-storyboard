@@ -68,3 +68,38 @@ The test asserts `ssot_values == enum_values` (line 100). This means SSOT and `A
 |------|---------|----------|--------|
 | 2026-05-07 | feature/bdr-call-brief-and-surveys | 3 risks / 4 smells | archived to .claude/archive/2026-05-07-OBSERVER-ARCH.md |
 | 2026-05-08 | leverage-day Fix A (SSOT demo dropdowns) | 0 blockers / 1 risk / 3 smells | OPEN |
+| 2026-05-08 | leverage-day Fix B (grounding integration tests) | 0 blockers / 0 risks / 2 smells | OPEN |
+
+---
+
+## Fix B (2026-05-08) — Architecture
+
+**Date:** 2026-05-08
+**Files audited:** `tests/storyboard/test_grounding_integration.py`, `tests/fixtures/transcripts/` (3 files)
+
+### Regression Scenario Analysis
+
+**Refactor scenario A (remove `problem_statement_anchor` parameter from `_build_transcript_prompt`):** CAUGHT. The `test_grounding_chain_injects_anchor` test asserts that `"VERBATIM PAIN LANGUAGE"` appears in the assembled prompt. If the anchor injection call is removed, this header disappears and the test fails. The chain assertion at Step 3 is the correct kill-switch.
+
+**Refactor scenario B (Frankenstack block reintroduces Crestron/Extron/Q-SYS):** CAUGHT. `test_prompt_does_not_name_forbidden_brands` strips the literal transcript from the prompt and checks only builder-added content against `FORBIDDEN_BRAND_TOKENS`. The transcript-strip technique is sound — it isolates the builder's contribution, not the fixture's vocabulary.
+
+**Refactor scenario C (new AudiencePersona member without problem_statements records):** NOT CAUGHT. The test only covers three hard-coded `GROUNDED_COMBOS`. A new persona silently joins the Phase-2 degradation bucket with no CI signal. See QUALITY.md [INFO] for the recommended all-personas enumeration test.
+
+### Fixture Location Convention
+
+Fixtures live at `tests/fixtures/transcripts/`. The existing test tree has no other `fixtures/` directory — this is net-new. The `tests/storyboard/` subdirectory has a `transcripts/` sub-path only implicitly via the path calculation `Path(__file__).resolve().parents[1] / "fixtures" / "transcripts"`. This resolves to `tests/fixtures/transcripts/` when `__file__` is `tests/storyboard/test_grounding_integration.py`, which is correct.
+
+The path anchor pattern matches the Fix A resolution for `test_dropdown_parity.py` — it is the right pattern and will resolve correctly from any pytest invocation directory.
+
+### Test File Location
+
+`tests/storyboard/` is the correct location for this file. It requires no API keys, no network, and no live database — all assertions operate on the output of in-process Python functions. Placing it under `tests/integration/` would be misleading (that directory is gated by API key availability). The storyboard subdirectory already contains `test_api_integration.py` and `test_schemas.py`, so `test_grounding_integration.py` follows the local naming convention.
+
+### Devil's Advocate Challenges (Fix B)
+
+| File | Challenge | Verdict |
+|------|-----------|---------|
+| `tests/fixtures/transcripts/` | Should fixtures live under `tests/storyboard/fixtures/` to co-locate with the test that uses them? | MILD CONCERN. The `tests/fixtures/` root placement is consistent with a shared-fixtures convention and keeps the storyboard test directory clean. The path anchor in the test is explicit. Acceptable as-is unless a second test module needs its own fixture subdirectory. |
+| `test_grounding_chain_graceful_when_no_statements` | This test re-uses the `higher_ed` fixture for a `government` vertical call. Does that misrepresent the test's intent? | VALID CONCERN. The graceful-degradation test is checking prompt-builder behavior, not transcript relevance, so reusing an unrelated fixture is technically correct. But a reader could mistake it for a government-vertical fixture. A one-line comment — `# Fixture content is irrelevant here; we're testing builder behavior for an unseeded vertical` — would prevent confusion. |
+| `FORBIDDEN_BRAND_TOKENS = ["Crestron", "Extron", "Q-SYS"]` | Is this list maintained? If a fourth brand is added to the cleanup contract, this constant won't update automatically. | MILD CONCERN. The list is defined once at module level with a clear reference to the cleanup commit. If the BDR brand-safety contract expands, this constant is the single place to update. The risk is forgetting to update it — there is no enforcement mechanism. A comment linking to an authoritative source (e.g., a backlog item or a doc) would reduce drift risk. |
+| `test_prompt_carries_persona_signal` | Asserting `persona in prompt` is a loose check. `"av_director"` would pass even if it appeared only in the transcript content itself. | VALID CONCERN. The test does not strip the transcript before checking. If a fixture happened to mention "av_director" verbatim, the test would pass even if the builder omitted the persona signal. The brand-agnosticism tests do strip the transcript — this test does not. Lower severity because persona names are unlikely to appear verbatim in the synthetic transcripts, but the inconsistency is worth noting. |

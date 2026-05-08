@@ -1,0 +1,40 @@
+Discovery call — Mid-sized County Superior Court Administration
+Date: 2026-04-29 · Length: 22 min · Source: Gong (synthetic — no PII)
+
+[00:00:18] BDR (Reza): Thanks for the time, Diane. I know court IT is wall-to-wall right now with the e-filing transition. Can you set the scene on the courtroom AV side specifically?
+
+[00:00:35] Court Admin (Diane): Sure. We have 14 courtrooms in the main building, four more in the family-court annex. We're required to capture every proceeding for the official record — both the audio for the court reporter's reference, and lately the bench has wanted video for some of the high-profile civil matters and any remote-witness testimony. The reporters are still our system of record for verbatim, but the AV record is becoming primary for appellate review in [INAUDIBLE — dropped audio] cases.
+
+[00:01:14] Reza: How is that capture happening today?
+
+[00:01:18] Diane: Mixed. Six of the courtrooms have a vendor-installed integrated system from probably eight years ago. It records to a local DVR that an IT tech has to swap a hard drive on every Friday. The other twelve we kludged together ourselves — a ceiling mic, an HD camera, and a PC running OBS in the back of each room. The PC sometimes the desk clerk turns it off because it's loud, and we lose the morning calendar. We had a wrongful-conviction inquiry come back to us last year asking for the audio of a 2024 hearing and we couldn't find it. We had to call the court reporter and pay for a re-transcription out of her notes. It was [pause] it was bad.
+
+[00:02:08] Reza: A lot of courts we work with were failing to capture the complete audio record reliably, and they didn't know about a gap until appellate review came back asking for it. That's the same shape as what you just described.
+
+[00:02:21] Diane: Yes. Exactly. And the worst part is we did know it was a risk — we just couldn't justify the budget for a real solution because we had something that "worked." Until it didn't.
+
+[00:02:38] Reza: How are you handling remote witness testimony? I imagine that's gotten more common.
+
+[00:02:46] Diane: It has. We use Zoom for that. Zoom itself is fine — the issue is bringing the Zoom feed into the official record. Right now the bailiff plugs his laptop into the courtroom system with an HDMI splitter, and we record both the in-room camera and the Zoom output to two separate files. Then a clerk has to manually time-sync them later. It's a mess. We've had instances where the Zoom recording stopped because the laptop went to sleep, and we only had the in-room view, which doesn't have the witness's face.
+
+[00:03:25] Reza: So Zoom is a partner — it's the integration layer in front of it that's causing pain?
+
+[00:03:32] Diane: Yes. The video conferencing platform is fine. The encoder ahead of it — the bailiff's laptop with HDMI splitters — that's the duct tape. We need that layer to be a real appliance.
+
+[00:03:48] Reza: Cloud management — at your scale of 18 rooms, what's the ops model?
+
+[00:03:55] Diane: Right now? My senior tech drives between buildings with a thumb drive. I would love a single dashboard. I would love to know whether all 18 rooms recorded today before I leave for the weekend, instead of finding out Monday from a clerk that one of them dropped out. The hard requirement is centralized monitoring. The hard requirement is also chain-of-custody — whatever we deploy has to log who accessed which recording when, because some of these are sealed.
+
+[00:04:35] Reza: Got it. Sealed records and audit trail are non-negotiable.
+
+[00:04:42] Diane: Non-negotiable.
+
+[00:04:46] Reza: Last question — how does the budget cycle work for something like this? Per-room replacement or full-courthouse migration?
+
+[00:04:55] Diane: We just got authority to spend on a 24-month phased plan. Six rooms in the first cohort, then 12, then the four in family court. So we are actively in evaluation right now.
+
+[00:05:12] Reza: That's perfect timing. I'd like to send you a deployment writeup from a similar-sized court that did exactly that phased rollout, and then have a 30-minute conversation about your six-room cohort specifically. Open later this week?
+
+[00:05:28] Diane: Send it. Thursday afternoon for the call.
+
+[00:05:32] Reza: Done. Thanks, Diane.

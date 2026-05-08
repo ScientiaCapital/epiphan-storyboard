@@ -1,0 +1,40 @@
+Discovery call — University of Midwestern (R1 research university)
+Date: 2026-04-22 · Length: 28 min · Source: Clari (synthetic — no PII)
+
+[00:00:14] BDR (Sarah): Hi Mike, thanks for taking the call. I know you're heads-down on the spring schedule. Can you give me the 30-second version of what your team is dealing with right now?
+
+[00:00:32] AV Director (Mike): Yeah, sure. So we've got 47 lecture-capture rooms across three campuses. About 60 percent of them are running classroom PCs feeding our LMS. The other 40 percent we've upgraded to dedicated capture appliances over the last two years. The problem is the PCs. Every semester start we lose probably eight to twelve recordings in the first two weeks because Windows pushes an update overnight, or the antivirus quarantines the capture agent, or [INAUDIBLE — phone ringing in background] the room PC just bluescreens during a 9 AM lecture.
+
+[00:01:18] Sarah: How are you finding out when a recording fails?
+
+[00:01:22] Mike: That's the worst part. We don't. The professor finds out when they go to publish to Canvas and there's nothing there. Then they email us, then we drive to the building, then we explain to them that we don't have a backup. And then admin asks why we don't have a backup, and we [pause] we end up looking like we're not doing our jobs even though the actual issue is the PC layer in front of the LMS.
+
+[00:01:55] Sarah: A lot of AV directors we talk to have rooms going unrecorded because the classroom PC feeding the LMS crashed mid-lecture, and they don't find out until faculty calls. That sounds exactly like what you're describing.
+
+[00:02:08] Mike: That's it, yeah. Every. Single. Semester.
+
+[00:02:14] Sarah: How are you currently triaging it? Are you running anything on top of the PC stack?
+
+[00:02:21] Mike: We had to. We ended up using a script that emails us if the agent service stops. But it doesn't catch the BSOD case. So we wrote another script that checks if the NDI feed shows up in our switcher in the booth. And then in addition to that, we have a student worker physically walk the building twice a day during finals week to verify the lights are green on the recorders. It's like, you know, it's a workaround on top of a workaround.
+
+[00:02:55] Sarah: How does Canvas, or whatever LMS you're using, factor into this? Are they aware?
+
+[00:03:02] Mike: Canvas is fine. Panopto is fine when the upstream feed actually arrives. The LMS is not the broken thing — the LMS just publishes whatever we hand it. The broken layer is everything between the camera and the LMS. The PC, the encoder software, the capture card driver. That whole stack is what fails.
+
+[00:03:30] Sarah: Got it. If you could wave a wand and replace one piece of that stack tomorrow, where would you start?
+
+[00:03:38] Mike: The PC layer. Hands down. I want a hardware appliance that records to local storage and pushes to Panopto whether or not the network blips. And I want one piece of software, hosted somewhere, where I can see all 47 rooms at once and know which ones are recording, which ones aren't, and why. Not a separate Excel spreadsheet of IP addresses that I update by hand.
+
+[00:04:15] Sarah: That cloud-management piece — is that a hard requirement or a nice-to-have?
+
+[00:04:22] Mike: At our scale? Hard requirement. I cannot drive to three campuses every time a green light needs checking. And I'm not adding three more headcount to the team to do it for me.
+
+[00:04:35] Sarah: Makes sense. One more — when you're evaluating, what does the faculty experience look like? Do they touch any UI, or is it all hands-off?
+
+[00:04:48] Mike: Hands-off is the goal. Ideally a professor walks in, the system detects them via room schedule, and recording just starts. If they have to push a button or log into something, half of them won't, and then we're back to the same problem.
+
+[00:05:12] Sarah: Perfect. I want to share two things with you — we have a deployment at a peer R1 school that went from about 80 percent reliable to 99-plus over a 14-month migration. They had the same PC + software-encoder stack you described. I'd love to send you the case study and then maybe set up 30 minutes to walk through what they did. Does next Tuesday work for a follow-up?
+
+[00:05:38] Mike: Send the case study, yeah. Let me see it before I commit a meeting. But yeah, this is the right conversation.
+
+[00:05:46] Sarah: Done. I'll have it to you by EOD. Talk soon, Mike.

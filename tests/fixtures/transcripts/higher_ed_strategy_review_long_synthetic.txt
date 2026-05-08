@@ -1,0 +1,153 @@
+Strategic AV Portfolio Review — University of Midwestern (R1, ~28K students)
+Date: 2026-04-30 · Length: 47 min · Source: Internal recording, anonymized · No PII
+
+Attendees:
+- Mike (AV Director, central IT)
+- Lauren (CIO)
+- Hector (VP, Academic Technology)
+- Dr. Patel (Faculty Senate, Engineering)
+- Sarah (BDR — guest, joined at 00:18:00)
+
+[00:00:08] Lauren (CIO): Mike, thanks for putting this together. We have 45 minutes. The board wants a clear picture of where lecture-capture stands before the spring vote on the academic-technology line item. Walk us through the current state, what's broken, and what your team is recommending.
+
+[00:00:32] Mike (AV Director): Sure. Big picture: 47 lecture-capture rooms across three campuses. Sixty percent of them — 28 rooms — are still running classroom PCs with software encoders feeding our LMS. The other 19 are on dedicated capture hardware we deployed in waves over the last 26 months. The new rooms work. The old rooms are eating our team alive. We are losing, on average, between eight and twelve recordings per week during regular term, and during finals we lose probably twenty in a single week.
+
+[00:01:18] Hector: When you say "losing," do you mean the recording fails to start, or fails to upload, or both?
+
+[00:01:24] Mike: Both, depending. Most often the encoder service on the classroom PC dies because Windows pushes an update overnight and the next morning the agent is no longer running. Antivirus quarantines the capture executable maybe twice a month. The PC bluescreens during a 9 AM lecture maybe once a week somewhere on campus. And then there's a tail of weird ones — a custodian unplugs the USB camera, the network drops the upload mid-stream, a classroom HDMI source negotiates the wrong resolution. We have a bug bash list of 34 different root causes we've documented since August.
+
+[00:02:14] Dr. Patel: Mike, from the faculty side, the experience is different from what you're describing. We don't see "the encoder failed." We see: the recording isn't in Canvas. We open a ticket. Three days later AV explains it didn't capture. By then we've already taught the next lecture, and if the missing one was a complex derivation or a guest speaker, we cannot reconstruct it. I had a guest from MIT in October. We lost the recording. I had to apologize to forty students and to MIT.
+
+[00:03:08] Lauren: How many faculty tickets per month is this generating?
+
+[00:03:14] Mike: We're up to about 110 lecture-capture-related tickets per month. About sixty percent of them resolve to "the recording didn't happen and we cannot recover it." About thirty percent are uploads that succeeded but went to the wrong Canvas course. The remaining ten percent are audio-only, video missing, or vice versa.
+
+[00:03:42] Hector: One-ten tickets a month. What's that costing in headcount?
+
+[00:03:48] Mike: We have one full-time AV ops person dedicated to lecture-capture triage. He is at capacity and we're using student workers to physically walk the buildings during finals to verify green lights. That's another fifteen, maybe twenty hours a week of student labor that should be doing something more valuable than confirming a status LED.
+
+[00:04:25] Lauren: OK. Walk me through the 19 newer rooms — the ones on dedicated hardware. What's different?
+
+[00:04:32] Mike: The newer rooms have a hardware encoder per camera position, a small appliance that records to local storage and pushes to Canvas via Panopto. The encoder is rack-mounted, no operator interaction needed, and we manage it from a single dashboard. Failure mode is essentially zero — we have not lost a recording in any of those 19 rooms in the last 11 months, except for one case where an electrical contractor accidentally cut power to a basement room during a renovation. That's not really a recording-system failure.
+
+[00:05:18] Dr. Patel: Eleven months without a missed recording in the new rooms versus eight to twelve a week in the old rooms?
+
+[00:05:24] Mike: Yes. That's the actual delta. The hardware approach is reliable. The PC approach is not.
+
+[00:05:42] Lauren: So why are 28 rooms still on the PC stack?
+
+[00:05:48] Mike: Money. We costed out a phased migration in 2024 and the board paused it during the budget freeze. We have not had authority to spend on this since. The cost-per-room of the hardware approach is roughly $3,200 — the appliance, mounting, network drop, and labor. Times 28 rooms, that's about $90,000. Then there's the cloud-management seat at the central level, which we already pay for the 19 newer rooms — adding 28 more is incremental but predictable.
+
+[00:06:30] Hector: How does the board's decision compare to the cost of the current ops burden?
+
+[00:06:38] Mike: I have been making this argument internally. One full-time triage role is roughly $85,000 fully loaded. Twenty hours a week of student labor is another $25,000 annualized. Lost productive time on the faculty side is harder to estimate, but Dr. Patel's MIT incident — that's reputational, not just operational. So we are spending more than $100,000 a year ON not-having-the-system, and the migration is a one-time $90,000.
+
+[00:07:25] Lauren: That's a 90-day payback if we frame it that way.
+
+[00:07:31] Mike: Roughly, yes. And it's Sarah from the vendor side joining us at the next break — I asked her to walk through what the migration actually looks like at a peer R1.
+
+[00:07:48] Lauren: Good. Before she joins — Hector, on the academic-technology side, are there any considerations I'm missing?
+
+[00:08:02] Hector: Two. First, search and accessibility. The new rooms produce captioned recordings automatically through Panopto's pipeline. The old rooms produce recordings, when they produce them, that get manually captioned by a contractor, on a five-day SLA. We have a backlog of three hundred recordings waiting for captions. The ADA office is unhappy.
+
+[00:08:42] Hector: Second, research recordings. We have a growing list of sponsored research that needs to capture lab demonstrations, and the faculty doing that work do not want to learn a new tool for every project. They want one button, one interface, one place to find the recording afterward. The old PC stack does not support this — we cannot ask a chemistry PI to log into a classroom PC, configure the encoder, and remember to start it. The new hardware does support it, because the appliance is scheduled and it just runs.
+
+[00:09:35] Dr. Patel: I want to add something from the faculty senate side. The classroom-PC approach is not just unreliable. It's also a security concern. We had an incident last fall where a classroom PC was compromised — a malware drop from a student plugging in a USB stick — and the IT response involved re-imaging the machine. The encoder stayed offline for three weeks because re-imaging it was deprioritized behind the rest of the security incident. During those three weeks, we lost every recording in that building. The hardware appliance, by contrast, is not running an OS that a student can compromise.
+
+[00:10:48] Lauren: Mike, what's the ops model for the new rooms? Who manages them day-to-day?
+
+[00:10:54] Mike: The cloud dashboard does most of the work. I can look at all 19 rooms at once from a single browser tab and see which ones are recording, which ones are scheduled, which ones are idle, and which ones — in the last 11 months, exactly zero — are in error state. Firmware updates push from the dashboard. Configuration is centralized. If I add a new vertical scheduling rule for finals week, it propagates to all rooms in the cohort. The triage role I described would essentially go away if all 47 rooms were on this stack.
+
+[00:11:48] Hector: What does the dashboard cost?
+
+[00:11:52] Mike: The seat is included in the per-appliance cost up to a fleet size of 50. We're at 19 rooms with capacity for 31 more before we hit a tier change. So adding 28 rooms still fits the current tier.
+
+[00:12:18] Lauren: What about the LMS integration? Are we still pushing to Panopto, and does the ADA captioning flow through?
+
+[00:12:24] Mike: Same Panopto integration. Same captioning flow. We are not changing the LMS or the captioning vendor — we're changing the encoder layer underneath them. That's important: Panopto isn't broken. Canvas isn't broken. The contractor we use for captioning isn't broken. The thing that's broken is the classroom-PC layer between the camera and Panopto. Replacing that one layer fixes the failure mode without disrupting anything downstream.
+
+[00:13:18] Dr. Patel: This is the part the board did not understand last year. They thought we were saying our LMS was broken. We were saying our encoders were broken.
+
+[00:13:30] Lauren: Right. Mike, can you write that up in two sentences for the board memo? "We are not changing the LMS. We are replacing the classroom-PC encoders feeding the LMS." That distinction matters.
+
+[00:13:48] Mike: Done. Will have it to you by Friday.
+
+[00:14:15] Lauren: Hector, on accessibility — if we close the captioning backlog by getting reliable feeds into Panopto's auto-caption pipeline, what does that do to the ADA office's posture?
+
+[00:14:24] Hector: It eliminates the backlog as a recurring issue. Panopto's auto-caption is good enough for first-pass — the ADA office still spot-checks but doesn't have to manually caption every recording. We'd reduce the contractor spend by maybe forty percent and resolve the SLA complaint.
+
+[00:15:02] Lauren: What's the contractor spend currently?
+
+[00:15:08] Hector: About $48,000 a year for the manual-caption queue. Forty percent of that is $19,200 saved annually if the auto-caption pipeline gets a clean feed. So that's another ongoing line item that improves with this migration.
+
+[00:15:32] Lauren: OK. Add that to the board memo. Mike, who's the vendor on the dashboard side, and is there any lock-in risk I should know about?
+
+[00:15:42] Mike: The dashboard is the vendor's cloud service, but the appliances themselves are open-standard at the streaming layer — they speak SRT, RTMP, NDI, and HLS. If we ever wanted to switch to a different cloud-management plane, the appliances themselves continue to work and we have local recordings as a fallback. That's why we picked them in 2024 — the lock-in was minimal.
+
+[00:16:18] Lauren: Good. That was one of the board's worries last year. Hector, anything else from your side?
+
+[00:16:24] Hector: One. We should plan for the 2027 expansion of the engineering quad. Six new classrooms coming online. If we standardize on this stack now, those six rooms come online with the same provisioning workflow as everything else. If we don't, we will have a third generation of equipment to maintain.
+
+[00:16:58] Mike: Agreed. The marginal cost of pre-standardizing is essentially zero. The marginal cost of NOT standardizing is another year of triage on a third stack.
+
+[00:17:15] Lauren: OK. Sarah, you've been listening from the vendor side. Come on in. Walk us through what the migration actually looks like for a peer institution.
+
+[00:18:00] Sarah (BDR): Thanks, Lauren. I appreciate the time. To start — what Mike has described is exactly the shape of conversation we have probably twenty times a quarter with R1 universities. The classroom-PC + software-encoder stack is a generation behind, and the failure modes you're seeing are not unique to your campus. The good news is the migration path is well-trodden.
+
+[00:18:42] Sarah: I'd like to share three numbers from a peer institution that finished this exact migration eighteen months ago. One: they went from 78% recording reliability to 99.4% in the first quarter post-migration. Two: they reduced lecture-capture-related tickets by 91%. Three: they redeployed two FTEs from triage to faculty support, which generated more goodwill than the technical fix itself. The faculty perception was that AV finally became a partner instead of a problem.
+
+[00:19:45] Dr. Patel: Faculty support — meaning what, exactly?
+
+[00:19:52] Sarah: Onboarding new faculty to the recording workflow, helping with edge cases like outdoor lab demos, building one-off integrations for sponsored research. The kind of work AV teams want to be doing but couldn't because they were drowning in tickets.
+
+[00:20:35] Lauren: How long did the migration take?
+
+[00:20:40] Sarah: They did it in three cohorts, six months apart, over a fourteen-month window. Cohort one was a pilot of six rooms. Cohort two was twenty rooms. Cohort three was the remaining twenty-two rooms plus three new construction rooms. The pacing matched their academic calendar — they avoided heavy rollout during midterms and finals.
+
+[00:21:15] Hector: Anything they would have done differently?
+
+[00:21:22] Sarah: They told me they wished they had over-invested in the first cohort's documentation. The pilot rooms became the training reference for the rest of the migration, and a few processes the AV team had implicit-knowledge of had to be re-discovered when the broader team started provisioning rooms in cohort two. Spending an extra week on runbooks during cohort one would have saved several weeks across cohorts two and three.
+
+[00:22:08] Mike: That tracks with how I'd want to do it here. Cohort one is the engineering quad, six rooms, lower stakes because the engineering faculty are early-adopters. Cohort two is the medical school's didactic rooms. Cohort three is the humanities quad and the satellite campus.
+
+[00:22:42] Lauren: Sarah, what does cohort one cost, end-to-end, including the documentation overhead Mike just mentioned?
+
+[00:22:50] Sarah: Six rooms at the unit cost Mike quoted — about $19,200 in equipment — plus probably $8,000 in deployment labor, plus a one-time $4,000 for runbook authoring. Call it $31,000 for cohort one. After that, cohort two and cohort three drop to roughly the unit cost only because the runbooks are reusable.
+
+[00:23:38] Lauren: And how long is cohort one?
+
+[00:23:42] Sarah: Eight to twelve weeks from PO to last-room-online, depending on how aggressively your AV ops team can pace the install. Most of that time is scheduling around academic use of the rooms — the technical install per room is half a day.
+
+[00:24:28] Lauren: OK. I think I have what I need for the board memo. Mike, can you draft it with these numbers, and Hector and I will review by Wednesday?
+
+[00:24:38] Mike: On it.
+
+[00:24:42] Hector: One more question for Sarah. On the security side — Dr. Patel raised the malware-incident concern. Does the appliance have an attack surface I should brief our infosec team on?
+
+[00:24:58] Sarah: It runs a hardened Linux build with a minimal service surface — SSH for admin (key-based), the streaming protocols I mentioned (SRT/RTMP/NDI/HLS), and the management dashboard's outbound connection. There's no general-purpose OS, no user shell exposed to the network, no removable-media autorun. The peer institution I mentioned has it on their network ACL with about twelve rules total, and their CISO signed off in two weeks. I can connect you with their CISO if you'd like a peer reference.
+
+[00:26:08] Hector: Yes, please. That's exactly the kind of reference our team will want.
+
+[00:26:18] Lauren: Good. Anything else from any of you?
+
+[00:26:22] Dr. Patel: One thing from the faculty senate. Whatever we deploy needs to be opt-out, not opt-in. If we make faculty press a button to start the recording, half of them won't, and we'll have a different version of the same problem — recordings missing because nobody started them. The system should default to recording based on the room schedule.
+
+[00:27:08] Mike: Agreed. The current dashboard supports schedule-driven start/stop, and the default we'd configure is on-by-default with an opt-out flag in the LMS course settings for instructors who want control. That's how the 19 newer rooms work today.
+
+[00:27:42] Lauren: Perfect. OK, let's wrap. Mike, board memo by Friday. Hector and I review Monday. Board vote is the following Wednesday. Sarah, thank you for joining — I'll have Mike loop you in if the board has follow-up questions.
+
+[00:28:14] Sarah: Sounds good. Thank you all for the time. I'll send Mike the peer-institution case study and the CISO contact this afternoon.
+
+[00:28:24] Lauren: Thanks everyone.
+
+— End of recording (28:30 elapsed) —
+
+Notes from Mike's followup memo (added 2026-05-01):
+- Total migration cost (28 rooms, 3 cohorts): $89,600 equipment + $24,000 deployment + $4,000 runbooks = $117,600
+- Annual operational savings: $85,000 triage role + $25,000 student labor + $19,200 captioning = $129,200/yr
+- Payback: < 12 months
+- Reliability target: 99%+ recording success (from current 76%)
+- Migration window: Mar 2026 (cohort 1) → May 2027 (cohort 3)
+- Faculty senate concern (opt-out default): addressed via existing schedule-driven config
+- Infosec concern: peer-institution CISO reference inbound from Sarah
+- The single sentence the board needs to internalize: We are not changing the LMS. We are replacing the classroom-PC encoders feeding the LMS.

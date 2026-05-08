@@ -374,6 +374,7 @@ def test_every_persona_is_grounded_or_explicit_phase2(persona: str) -> None:
         "higher_ed_lecture_capture_synthetic.txt",
         "legal_court_recording_synthetic.txt",
         "live_events_venue_synthetic.txt",
+        "higher_ed_strategy_review_long_synthetic.txt",
     ],
 )
 def test_fixture_is_realistic_and_clean(fixture: str) -> None:
@@ -390,4 +391,46 @@ def test_fixture_is_realistic_and_clean(fixture: str) -> None:
             f"Fixture {fixture} names a forbidden brand {token!r}. "
             "Rewrite the synthetic transcript to use Frankenstack-style "
             "language instead (see existing fixtures for examples)."
+        )
+
+
+# ---------------------------------------------------------------------------
+# DA-R1 — long-fixture coverage of the two-pass orchestration
+# ---------------------------------------------------------------------------
+
+
+def test_long_fixture_exceeds_two_pass_threshold() -> None:
+    """Sanity-check that the 'long' fixture is actually long enough to trip
+    the default two_pass_threshold_chars (10_000). If a future edit shortens
+    it below the threshold, the threshold-based routing would never fire in
+    the integration scenarios that depend on it."""
+    from src.tools.storyboard.gemini_client import GeminiConfig
+
+    text = _read_fixture("higher_ed_strategy_review_long_synthetic.txt")
+    default_threshold = GeminiConfig(api_key="t").two_pass_threshold_chars
+    assert len(text) >= default_threshold, (
+        f"Long fixture is only {len(text)} chars but the default two-pass "
+        f"threshold is {default_threshold}. Either lengthen the fixture or "
+        "lower the default threshold."
+    )
+
+
+def test_long_fixture_assembles_valid_extraction_prompt() -> None:
+    """The long fixture must flow through ``build_extraction_prompt`` cleanly
+    — no exceptions, prompt non-empty, structural headers present. This is
+    the prereq the two-pass orchestration in ``_understand`` depends on."""
+    transcript = _read_fixture("higher_ed_strategy_review_long_synthetic.txt")
+
+    prompt = build_extraction_prompt(
+        content_type="transcript",
+        audience="av_director",
+        vertical="higher_ed",
+        content=transcript,
+    )
+
+    assert len(prompt) > 5000, "Long-fixture prompt is suspiciously short."
+    for header in EXPECTED_PROMPT_HEADERS:
+        assert header in prompt, (
+            f"Long-fixture prompt missing structural header {header!r}. "
+            "The grounding chain dropped a piece on long inputs."
         )

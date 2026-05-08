@@ -203,18 +203,20 @@ class TestUnderstandCodeMocked:
 
         # Mock response with new extraction verification fields
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "headline": "Track Your Jobs Effortlessly",
-            "tagline": "One platform for all your projects",
-            "what_it_does": "See all your projects in one place.",
-            "business_value": "Save 5 hours per week.",
-            "who_benefits": "Project managers and owners",
-            "differentiator": "Works on your phone in the field.",
-            "pain_point_addressed": "Spreadsheet chaos.",
-            "suggested_icon": "clipboard",
-            "raw_extracted_text": "def track_job(): pass - Job tracking function",
-            "extraction_confidence": 0.95,
-        })
+        mock_response.text = json.dumps(
+            {
+                "headline": "Track Your Jobs Effortlessly",
+                "tagline": "One platform for all your projects",
+                "what_it_does": "See all your projects in one place.",
+                "business_value": "Save 5 hours per week.",
+                "who_benefits": "Project managers and owners",
+                "differentiator": "Works on your phone in the field.",
+                "pain_point_addressed": "Spreadsheet chaos.",
+                "suggested_icon": "clipboard",
+                "raw_extracted_text": "def track_job(): pass - Job tracking function",
+                "extraction_confidence": 0.95,
+            }
+        )
 
         # Mock the client
         mock_genai_client = MagicMock()
@@ -294,7 +296,10 @@ class TestUnderstandCodeMocked:
 
         # Should return error state (not generic copy) so CEO/CTO can review
         # NOTE: New behavior - we show extraction failed instead of hiding with generic copy
-        assert "EXTRACTION FAILED" in result.headline or "FAILED" in result.headline.upper()
+        assert (
+            "EXTRACTION FAILED" in result.headline
+            or "FAILED" in result.headline.upper()
+        )
         assert result.extraction_confidence == 0.0
 
 
@@ -314,6 +319,7 @@ class TestUnderstandImageMocked:
 
         # Test that bytes can be encoded to base64
         import base64
+
         test_bytes = b"fake image data"
         b64 = base64.b64encode(test_bytes).decode()
         assert len(b64) > 0
@@ -326,6 +332,7 @@ class TestUnderstandImageMocked:
 
         # Test data URL handling
         import base64
+
         test_data = b"fake image data"
         b64_string = base64.b64encode(test_data).decode()
 
@@ -531,7 +538,9 @@ class TestBuildGenerationContentSection:
             section = self._build_section(audience)
             section_lower = section.lower()
             assert "mep" not in section_lower, f"MEP in {audience} section"
-            assert "contractor" not in section_lower, f"contractor in {audience} section"
+            assert "contractor" not in section_lower, (
+                f"contractor in {audience} section"
+            )
             assert "hvac" not in section_lower, f"HVAC in {audience} section"
             assert "hard hat" not in section_lower, f"hard hat in {audience} section"
 
@@ -645,8 +654,10 @@ class TestOpenRouterRetryBackoff:
         async def capture_sleep(duration):
             sleep_times.append(duration)
 
-        with patch("httpx.AsyncClient", return_value=mock_client), \
-             patch("asyncio.sleep", side_effect=capture_sleep):
+        with (
+            patch("httpx.AsyncClient", return_value=mock_client),
+            patch("asyncio.sleep", side_effect=capture_sleep),
+        ):
             result = await client._call_openrouter_with_retry(
                 payload={
                     "model": "test",
@@ -703,10 +714,417 @@ class TestOpenRouterRetryBackoff:
         mock_client.__aexit__ = AsyncMock(return_value=False)
         mock_client.post = mock_post
 
-        with patch("httpx.AsyncClient", return_value=mock_client), \
-             patch("asyncio.sleep", new_callable=AsyncMock):
+        with (
+            patch("httpx.AsyncClient", return_value=mock_client),
+            patch("asyncio.sleep", new_callable=AsyncMock),
+        ):
             with pytest.raises(Exception, match="Max retries exceeded"):
                 await client._call_openrouter_with_retry(
                     payload={"model": "test", "messages": []},
                     max_retries=3,
                 )
+
+
+# ============================================================================
+# DA-R1 — Two-pass narrative+schema Forces extraction
+# ============================================================================
+#
+# Backlog DA-R1: Phase 1.3 shipped build_narrative_extraction_prompt and
+# build_schema_mapping_prompt as infrastructure-ready, but the orchestration
+# call site in _understand() doesn't wire them. Production still runs the
+# rigid single-pass extraction. Two-pass is the un-coupled approach: pass 1
+# narrative preserves nuance, pass 2 maps narrative → strict JSON. Fires on
+# transcripts ≥ two_pass_threshold_chars OR extraction_confidence < threshold.
+#
+# Schema reconciliation: additive — StoryboardUnderstanding gains optional
+# forces_of_progress + frankenstack fields. Single-pass result's flat 10
+# fields are preserved; two-pass overlays the new structured fields.
+
+
+class TestStoryboardUnderstandingForcesOfProgress:
+    """Schema extension — StoryboardUnderstanding gains forces_of_progress + frankenstack."""
+
+    def test_storyboard_understanding_accepts_forces_of_progress(self):
+        """The schema must accept an optional ForcesOfProgress dict."""
+        from src.tools.storyboard.gemini_client import ForcesOfProgress
+
+        forces = ForcesOfProgress(
+            push="The classroom PC layer crashes mid-lecture.",
+            pull="Hardware-encoded reliability with cloud fleet management.",
+            anxiety="The new system might still need PC-layer babysitting.",
+            habit="Walking the building twice a day to check green lights.",
+        )
+        u = StoryboardUnderstanding(
+            headline="t",
+            what_it_does="t",
+            business_value="t",
+            who_benefits="t",
+            differentiator="t",
+            pain_point_addressed="t",
+            forces_of_progress=forces,
+            frankenstack="Classroom PC + software encoder + manual log scrape.",
+        )
+        assert u.forces_of_progress is forces
+        assert "Classroom PC" in (u.frankenstack or "")
+
+    def test_storyboard_understanding_forces_default_none(self):
+        """Existing call sites that don't set forces_of_progress must still work."""
+        u = StoryboardUnderstanding(
+            headline="t",
+            what_it_does="t",
+            business_value="t",
+            who_benefits="t",
+            differentiator="t",
+            pain_point_addressed="t",
+        )
+        assert u.forces_of_progress is None
+        assert u.frankenstack is None
+
+
+class TestGeminiConfigTwoPassFields:
+    """GeminiConfig gains two_pass routing controls."""
+
+    def test_default_enable_two_pass_extraction_is_true(self):
+        """Two-pass should default ON so the quality lift is realized in prod."""
+        config = GeminiConfig(api_key="t")
+        assert config.enable_two_pass_extraction is True
+
+    def test_default_two_pass_threshold_is_10000_chars(self):
+        """The 10K threshold matches the Backlog DA-R1 spec."""
+        config = GeminiConfig(api_key="t")
+        assert config.two_pass_threshold_chars == 10_000
+
+    def test_two_pass_can_be_disabled(self):
+        """Operators must be able to flip it off (cost / latency trade-off)."""
+        config = GeminiConfig(api_key="t", enable_two_pass_extraction=False)
+        assert config.enable_two_pass_extraction is False
+
+
+class TestExtractViaTwoPass:
+    """Direct unit tests for the new _extract_via_two_pass method."""
+
+    def _mocked_gemini_client(self, narrative_text: str, schema_json: str):
+        """Build a client whose Gemini text path returns ``narrative_text``
+        on the first call and ``schema_json`` on the second."""
+        config = GeminiConfig(api_key="test-key", text_provider="gemini")
+        client = GeminiStoryboardClient(config=config)
+
+        responses = [MagicMock(text=narrative_text), MagicMock(text=schema_json)]
+        mock_genai_client = MagicMock()
+        mock_genai_client.models.generate_content.side_effect = responses
+
+        client._client = mock_genai_client
+        client._initialized = True
+        return client
+
+    @pytest.mark.asyncio
+    async def test_method_exists(self):
+        """_extract_via_two_pass must exist on GeminiStoryboardClient."""
+        config = GeminiConfig(api_key="t")
+        client = GeminiStoryboardClient(config=config)
+        assert hasattr(client, "_extract_via_two_pass")
+
+    @pytest.mark.asyncio
+    async def test_merges_forces_into_single_pass_result(self):
+        """The merge must preserve flat fields from single-pass and overlay
+        forces_of_progress + frankenstack from the two-pass schema mapping."""
+        single_pass = StoryboardUnderstanding(
+            headline="Reliable Lecture Capture",
+            what_it_does="Records every classroom session.",
+            business_value="Saves 12 hours of triage per week.",
+            who_benefits="University AV directors.",
+            differentiator="Hardware-first, no PC layer.",
+            pain_point_addressed="Lectures going unrecorded.",
+            extraction_confidence=0.6,
+        )
+
+        narrative = "PUSH: PC layer fails. PULL: Hardware reliability. ..."
+        schema_json = json.dumps(
+            {
+                "forces_of_progress": {
+                    "push": "PC layer fails mid-lecture.",
+                    "pull": "Hardware-encoded reliability.",
+                    "anxiety": "Will the migration introduce new failure modes?",
+                    "habit": "Walking the building twice daily.",
+                },
+                "frankenstack": "PC + software encoder + manual triage script.",
+                "extraction_confidence": 0.85,
+            }
+        )
+        client = self._mocked_gemini_client(narrative, schema_json)
+
+        result = await client._extract_via_two_pass(
+            transcript="(long transcript)",
+            audience="av_director",
+            vertical="higher_ed",
+            single_pass_result=single_pass,
+        )
+
+        # Flat fields preserved
+        assert result.headline == "Reliable Lecture Capture"
+        assert result.business_value == "Saves 12 hours of triage per week."
+        # New fields populated
+        assert result.forces_of_progress is not None
+        assert "PC layer fails" in result.forces_of_progress.push
+        assert "Walking the building" in result.forces_of_progress.habit
+        assert result.frankenstack is not None
+        assert "PC + software encoder" in result.frankenstack
+        # Confidence is the max of the two passes
+        assert result.extraction_confidence == 0.85
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_single_pass_on_parse_error(self):
+        """If the schema-mapping LLM returns garbage, return single_pass unchanged."""
+        single_pass = StoryboardUnderstanding(
+            headline="H",
+            what_it_does="W",
+            business_value="B",
+            who_benefits="WB",
+            differentiator="D",
+            pain_point_addressed="P",
+            extraction_confidence=0.5,
+        )
+        client = self._mocked_gemini_client(
+            narrative_text="PUSH: ...",
+            schema_json="this is definitely not valid json {",
+        )
+
+        result = await client._extract_via_two_pass(
+            transcript="(transcript)",
+            audience="av_director",
+            vertical=None,
+            single_pass_result=single_pass,
+        )
+
+        assert result is single_pass  # exact same object — no merge happened
+        assert result.forces_of_progress is None
+        assert result.extraction_confidence == 0.5  # unchanged
+
+    @pytest.mark.asyncio
+    async def test_falls_back_when_llm_call_raises(self):
+        """If either LLM call raises, return single_pass unchanged (graceful degradation)."""
+        single_pass = StoryboardUnderstanding(
+            headline="H",
+            what_it_does="W",
+            business_value="B",
+            who_benefits="WB",
+            differentiator="D",
+            pain_point_addressed="P",
+            extraction_confidence=0.4,
+        )
+        config = GeminiConfig(api_key="test-key", text_provider="gemini")
+        client = GeminiStoryboardClient(config=config)
+
+        mock_genai_client = MagicMock()
+        mock_genai_client.models.generate_content.side_effect = RuntimeError(
+            "upstream 503"
+        )
+
+        client._client = mock_genai_client
+        client._initialized = True
+
+        result = await client._extract_via_two_pass(
+            transcript="(transcript)",
+            audience="av_director",
+            vertical="legal",
+            single_pass_result=single_pass,
+        )
+
+        assert result is single_pass
+
+
+class TestUnderstandRoutesToTwoPass:
+    """End-to-end: _understand() must route long / low-confidence transcripts
+    through _extract_via_two_pass instead of _refine_extraction."""
+
+    def _single_pass_payload(self, confidence: float) -> str:
+        """Build a JSON payload the single-pass path will return."""
+        return json.dumps(
+            {
+                "headline": "Test Headline",
+                "tagline": "",
+                "what_it_does": "Does the thing.",
+                "business_value": "Saves time.",
+                "who_benefits": "Users.",
+                "differentiator": "It's better.",
+                "pain_point_addressed": "Pain.",
+                "suggested_icon": "clipboard",
+                "raw_extracted_text": "...",
+                "extraction_confidence": confidence,
+            }
+        )
+
+    def _schema_pass_payload(self) -> str:
+        return json.dumps(
+            {
+                "forces_of_progress": {
+                    "push": "p",
+                    "pull": "l",
+                    "anxiety": "a",
+                    "habit": "h",
+                },
+                "frankenstack": "stack",
+                "extraction_confidence": 0.9,
+            }
+        )
+
+    @pytest.mark.asyncio
+    async def test_long_transcript_triggers_two_pass(self):
+        """Transcript ≥ two_pass_threshold_chars must route through two-pass even
+        when single-pass returned high confidence."""
+        config = GeminiConfig(
+            api_key="test-key",
+            text_provider="gemini",
+            two_pass_threshold_chars=100,  # tiny threshold for the test
+        )
+        client = GeminiStoryboardClient(config=config)
+
+        long_transcript = "A" * 200  # > 100 chars threshold
+
+        mock_responses = [
+            MagicMock(text=self._single_pass_payload(confidence=0.9)),  # single-pass
+            MagicMock(text="PUSH: ... PULL: ..."),  # narrative pass
+            MagicMock(text=self._schema_pass_payload()),  # schema pass
+        ]
+        mock_genai_client = MagicMock()
+        mock_genai_client.models.generate_content.side_effect = mock_responses
+
+        client._client = mock_genai_client
+        client._initialized = True
+
+        result = await client._understand(
+            "transcript",
+            content=long_transcript,
+            audience="av_director",
+            vertical="higher_ed",
+        )
+
+        # Three Gemini calls total: single-pass + narrative + schema
+        assert mock_genai_client.models.generate_content.call_count == 3
+        assert result.forces_of_progress is not None
+        assert result.frankenstack == "stack"
+
+    @pytest.mark.asyncio
+    async def test_low_confidence_short_transcript_triggers_two_pass(self):
+        """Even short transcripts must route through two-pass when the
+        single-pass returned low confidence (< refinement_threshold)."""
+        config = GeminiConfig(
+            api_key="test-key",
+            text_provider="gemini",
+            two_pass_threshold_chars=10_000,  # large — won't trip on length
+            refinement_threshold=0.75,
+        )
+        client = GeminiStoryboardClient(config=config)
+
+        mock_responses = [
+            MagicMock(text=self._single_pass_payload(confidence=0.5)),  # low conf
+            MagicMock(text="PUSH: ..."),
+            MagicMock(text=self._schema_pass_payload()),
+        ]
+        mock_genai_client = MagicMock()
+        mock_genai_client.models.generate_content.side_effect = mock_responses
+
+        client._client = mock_genai_client
+        client._initialized = True
+
+        result = await client._understand(
+            "transcript",
+            content="short transcript",
+            audience="av_director",
+        )
+
+        assert mock_genai_client.models.generate_content.call_count == 3
+        assert result.forces_of_progress is not None
+
+    @pytest.mark.asyncio
+    async def test_short_high_confidence_skips_two_pass(self):
+        """The trigger must NOT fire when transcript is short AND confidence is high.
+        Otherwise we'd burn 2× the cost on every short transcript."""
+        config = GeminiConfig(
+            api_key="test-key",
+            text_provider="gemini",
+            two_pass_threshold_chars=10_000,
+            refinement_threshold=0.75,
+            enable_refinement=False,  # skip the existing refine path so call count is clean
+        )
+        client = GeminiStoryboardClient(config=config)
+
+        mock_responses = [
+            MagicMock(text=self._single_pass_payload(confidence=0.95)),  # high conf
+        ]
+        mock_genai_client = MagicMock()
+        mock_genai_client.models.generate_content.side_effect = mock_responses
+
+        client._client = mock_genai_client
+        client._initialized = True
+
+        result = await client._understand(
+            "transcript",
+            content="short transcript",
+            audience="av_director",
+        )
+
+        # Only ONE call — single-pass. Two-pass did not fire.
+        assert mock_genai_client.models.generate_content.call_count == 1
+        assert result.forces_of_progress is None
+
+    @pytest.mark.asyncio
+    async def test_disabled_flag_skips_two_pass_even_on_long_transcript(self):
+        """enable_two_pass_extraction=False is the operator escape hatch."""
+        config = GeminiConfig(
+            api_key="test-key",
+            text_provider="gemini",
+            enable_two_pass_extraction=False,
+            two_pass_threshold_chars=100,
+            enable_refinement=False,
+        )
+        client = GeminiStoryboardClient(config=config)
+
+        mock_responses = [
+            MagicMock(text=self._single_pass_payload(confidence=0.9)),
+        ]
+        mock_genai_client = MagicMock()
+        mock_genai_client.models.generate_content.side_effect = mock_responses
+
+        client._client = mock_genai_client
+        client._initialized = True
+
+        result = await client._understand(
+            "transcript",
+            content="A" * 200,  # would otherwise trip the threshold
+            audience="av_director",
+        )
+
+        assert mock_genai_client.models.generate_content.call_count == 1
+        assert result.forces_of_progress is None
+
+    @pytest.mark.asyncio
+    async def test_non_transcript_content_never_routes_to_two_pass(self):
+        """Code content type must never trigger two-pass — narrative+schema
+        framing only makes sense for transcripts."""
+        config = GeminiConfig(
+            api_key="test-key",
+            text_provider="gemini",
+            two_pass_threshold_chars=10,
+            refinement_threshold=0.99,  # almost always trip on confidence too
+            enable_refinement=False,
+        )
+        client = GeminiStoryboardClient(config=config)
+
+        mock_responses = [
+            MagicMock(text=self._single_pass_payload(confidence=0.5)),  # low conf
+        ]
+        mock_genai_client = MagicMock()
+        mock_genai_client.models.generate_content.side_effect = mock_responses
+
+        client._client = mock_genai_client
+        client._initialized = True
+
+        result = await client._understand(
+            "code",
+            content="def foo(): pass" * 100,
+            audience="av_director",
+        )
+
+        assert mock_genai_client.models.generate_content.call_count == 1
+        assert result.forces_of_progress is None

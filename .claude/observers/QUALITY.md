@@ -96,3 +96,47 @@ No TODO/FIXME/HACK/XXX/TEMP markers introduced. No new dependencies added. No si
 | New tech-debt markers | 0 |
 | New dependencies | 0 |
 | Coverage gaps flagged | 1 (all-personas enumeration) |
+
+---
+
+## DA-R1 (2026-05-09) — Quality
+
+**Session:** leverage-day +1 / DA-R1 two-pass narrative+schema Forces extraction
+**Files changed:** `src/tools/storyboard/gemini_client.py` (+189/-27), `tests/tools/storyboard/test_gemini_client.py` (+454), `tests/storyboard/test_grounding_integration.py` (+43), `tests/fixtures/transcripts/higher_ed_strategy_review_long_synthetic.txt` (new, 17,074 chars).
+**Builder verification before audit:** 1540 pytest pass (+17 net new), mypy 46 (baseline preserved, zero new errors), ruff clean on changed files.
+
+### Critical (must fix before merge)
+None.
+
+### Warnings (fix or log to backlog)
+None.
+
+### Info (nice to have)
+
+**[INFO] — `_extract_via_two_pass` catches `Exception` broadly** (`gemini_client.py:711-715`)
+
+The method wraps narrative+schema+parse in a single try/except that catches `Exception` and returns `single_pass_result` unchanged with a `logger.warning`. This is appropriate graceful degradation — the existing `_refine_extraction` (lines 626-630) uses an identical pattern with the same intent (preserve the known-good single-pass output rather than fail the whole understand call). The warning IS logged with the exception type and message, so debugging is not blind. Not a silent-failure regression.
+
+**[INFO] — Cost-trigger sanity** (`gemini_client.py:_understand`)
+
+Two-pass fires for transcripts when `len(content) >= 10_000` OR `extraction_confidence < 0.75`. The OR has a footgun: a malformed JSON in single-pass produces `extraction_confidence == 0.0` which trips the trigger even on a 200-character transcript. This is desirable (we want to retry low-confidence extractions) but doubles the cost on degenerate input. Acceptable in production; worth instrumenting if it ever shows up in cost dashboards.
+
+**[INFO] — Test mocking discipline** — 54 mock invocations across the new tests; zero `real_api` / `live_api` / `requires_api_keys` markers introduced. The new test class `TestUnderstandRoutesToTwoPass` parametrizes via `MagicMock(text=...).side_effect = [responses]` to inject sequential LLM responses (single-pass + narrative + schema). Pattern matches the existing `TestUnderstandCodeMocked` class. CI-cheap and deterministic.
+
+**[INFO] — Long fixture brand-agnosticism** — `higher_ed_strategy_review_long_synthetic.txt` (17,074 chars) contains zero Crestron/Extron/Q-SYS tokens. Frankenstack-style language ("classroom-PC layer", "software encoder", "[INAUDIBLE]") matches the convention from yesterday's three shorter fixtures. Multi-speaker structure (CIO, AV Director, VP, Faculty Senate, BDR) makes the long-context two-pass actually exercise narrative extraction across viewpoints rather than a single-voice monologue.
+
+### Code Quality Metrics
+
+| Metric | Value |
+|--------|-------|
+| Tests added | 17 (14 in test_gemini_client.py, 3 in test_grounding_integration.py) |
+| Tests passing | 17/17 |
+| Tests failing | 0 |
+| Mypy delta | 0 (46 baseline preserved) |
+| Ruff warnings introduced | 0 |
+| New tech-debt markers | 0 |
+| New dependencies | 0 |
+| Coverage gaps flagged | 0 |
+| StoryboardUnderstanding callsites verified backwards-compat | 16 (all in src/ + tests/, all pass) |
+
+**Gate:** 🟢 GREEN — ship to prod.

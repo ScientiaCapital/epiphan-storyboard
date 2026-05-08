@@ -9,6 +9,16 @@
 
 ## Tech Debt / Architecture
 
+- **DA-A3: Consolidate text-path dispatch into `_call_text_model`** (effort: 30 min, impact: low — code dedup) **[NEW 2026-05-09]**
+  - DA-R1 added `_call_text_model` (`src/tools/storyboard/gemini_client.py:758-772`) but did not refactor the inline text-path dispatch in `_understand` (lines 853-878). The two now mirror each other. When somebody adds a new text provider (e.g. Qwen-text, Claude-via-OpenRouter), they'll need to update both sites — easy to miss.
+  - Fix: refactor `_understand`'s text branch to call `_call_text_model(prompt)` instead of the inline if/elif. Verify all 1540 tests still pass; mypy delta zero.
+  - Source: Observer audit 2026-05-09 (DA-R1). See `.claude/observers/ARCH.md` smell.
+
+- **DA-R1.1: Wire two-pass into `meeting_recap.process_meeting_recap`** (effort: 1 hr, impact: medium for meeting-recap-only callers) **[NEW 2026-05-09]**
+  - DA-R1 wired two-pass into `_understand`/`understand_transcript` in `gemini_client.py`. The meeting-recap pipeline at `src/tools/storyboard/meeting_recap.py:158-180` uses its own `build_meeting_recap_prompt` and does NOT route through `understand_transcript`. Long meeting-recap transcripts therefore don't benefit from the two-pass quality lift.
+  - Fix: Either (a) refactor `process_meeting_recap` to invoke `understand_transcript` with the long-transcript path, OR (b) replicate the trigger+two-pass logic inside `process_meeting_recap`. Option (a) consolidates code paths; option (b) preserves the dedicated meeting-recap prompt.
+  - Source: Observer audit 2026-05-09 (DA-R1). See `.claude/observers/ARCH.md` Devil's Advocate row.
+
 - **DA-A1: Resolve `ArtistStyle` dual-nullability** (effort: 30 min, impact: low — design hygiene, not user-visible) **[NEW 2026-05-08]**
   - `src/demo/_dropdowns.py:73-91` defines `ArtistStyle.NONE = "none"` while `GenerateRequest.artist_style: ArtistStyle | None` (router.py:153) also allows `None`. Two representations of "no overlay": Python `None` and string `"none"`. Downstream `prompts.get_artist_style_instructions("none")` falls through `dict.get` to empty string — no user-visible bug, but the design has redundant code paths.
   - Recommended fix: remove `NONE` from the enum, change demo HTML to `<option value="">🎨 None</option>`, add a `@field_validator` on `GenerateRequest.artist_style` that maps `""` to `None`. Single source of truth for "no overlay."

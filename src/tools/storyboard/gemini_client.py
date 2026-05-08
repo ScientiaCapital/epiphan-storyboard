@@ -131,6 +131,24 @@ VisionModel = Literal["gemini", "qwen"]
 TextModel = Literal["gemini", "deepseek"]
 
 
+class ForcesOfProgress(BaseModel):
+    """Christensen's four Forces of Progress, as extracted from a transcript.
+
+    Populated only by the two-pass narrative+schema extraction path
+    (DA-R1, see ``_extract_via_two_pass``). Single-pass extraction leaves
+    this as ``None`` on the parent ``StoryboardUnderstanding``.
+    """
+
+    push: str = Field(default="", description="What the buyer is pushing AWAY from")
+    pull: str = Field(
+        default="", description="What is pulling them TOWARD a new solution"
+    )
+    anxiety: str = Field(default="", description="Anxieties about the new solution")
+    habit: str = Field(
+        default="", description="Habits inertia keeping them in the status quo"
+    )
+
+
 class StoryboardUnderstanding(BaseModel):
     """Extracted understanding from code/roadmap analysis."""
 
@@ -161,6 +179,17 @@ class StoryboardUnderstanding(BaseModel):
     extraction_confidence: float = Field(
         default=1.0, description="Confidence score 0-1. Below 0.7 = flag for review"
     )
+    # DA-R1: optional structured Forces-of-Progress + Frankenstack — populated
+    # by the two-pass extraction path on long / low-confidence transcripts.
+    # Existing single-pass call sites leave these None; consumers opt in.
+    forces_of_progress: ForcesOfProgress | None = Field(
+        default=None,
+        description="Two-pass-only: Christensen Forces of Progress (push/pull/anxiety/habit)",
+    )
+    frankenstack: str | None = Field(
+        default=None,
+        description="Two-pass-only: description of the buyer's current workaround stack",
+    )
 
 
 @dataclass
@@ -187,6 +216,14 @@ class GeminiConfig:
     )
     refinement_threshold: float = 0.75  # Confidence below this triggers refinement pass
 
+    # DA-R1: Two-pass narrative+schema extraction for transcripts.
+    # Realizes the Phase 1.3 quality lift — the narrative pass preserves nuance
+    # the LLM would otherwise compress away under JSON-shape pressure. Replaces
+    # _refine_extraction for transcripts when the trigger fires (long content
+    # OR low single-pass confidence). 2× LLM cost, mitigated by the threshold.
+    enable_two_pass_extraction: bool = True
+    two_pass_threshold_chars: int = 10_000
+
     # Model identifiers
     gemini_vision_model: str = (
         "models/gemini-2.0-flash"  # Gemini vision model (fallback)
@@ -211,7 +248,9 @@ class GeminiConfig:
         if self.api_key is None:
             self.api_key = (os.getenv("GOOGLE_API_KEY") or "").strip() or None
         if self.openrouter_api_key is None:
-            self.openrouter_api_key = (os.getenv("OPENROUTER_API_KEY") or "").strip() or None
+            self.openrouter_api_key = (
+                os.getenv("OPENROUTER_API_KEY") or ""
+            ).strip() or None
 
 
 class GeminiStoryboardClient:
@@ -327,7 +366,9 @@ class GeminiStoryboardClient:
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 429 and attempt < max_retries - 1:
                     wait_time = min(2**attempt, 32) + random.uniform(0, 0.5)
-                    logger.warning(f"[OPENROUTER] Rate limited, waiting {wait_time:.1f}s")
+                    logger.warning(
+                        f"[OPENROUTER] Rate limited, waiting {wait_time:.1f}s"
+                    )
                     await asyncio.sleep(wait_time)
                     continue
                 raise
@@ -397,7 +438,9 @@ class GeminiStoryboardClient:
                             if url.startswith("data:"):
                                 b64_data = url.split(",", 1)[1]
                                 png_bytes = base64.b64decode(b64_data)
-                                logger.info(f"[OPENROUTER-IMG] Got image: {len(png_bytes)} bytes")
+                                logger.info(
+                                    f"[OPENROUTER-IMG] Got image: {len(png_bytes)} bytes"
+                                )
                                 return png_bytes
                             async with httpx.AsyncClient() as dl:
                                 img_resp = await dl.get(url)
@@ -420,9 +463,14 @@ class GeminiStoryboardClient:
                 )
 
             except httpx.HTTPStatusError as e:
-                if e.response.status_code == 429 and attempt < self.config.max_retries - 1:
+                if (
+                    e.response.status_code == 429
+                    and attempt < self.config.max_retries - 1
+                ):
                     wait_time = min(2**attempt, 32) + random.uniform(0, 0.5)
-                    logger.warning(f"[OPENROUTER-IMG] Rate limited, waiting {wait_time:.1f}s")
+                    logger.warning(
+                        f"[OPENROUTER-IMG] Rate limited, waiting {wait_time:.1f}s"
+                    )
                     await asyncio.sleep(wait_time)
                     continue
                 raise
@@ -591,7 +639,9 @@ Return ONLY valid JSON matching this exact structure:
                 if self._has_google_api_key:
                     # Use Gemini as alternate for text refinement
                     self._ensure_client()
-                    logger.info("[REFINE] Using Gemini as alternate for text refinement")
+                    logger.info(
+                        "[REFINE] Using Gemini as alternate for text refinement"
+                    )
                     response = self._client.models.generate_content(
                         model=self.config.gemini_vision_model,
                         contents=refinement_prompt,
@@ -599,7 +649,9 @@ Return ONLY valid JSON matching this exact structure:
                     response_text = response.text
                 else:
                     # No Google key — use Qwen as alternate for text refinement
-                    logger.info("[REFINE] Using Qwen VL as alternate for text refinement (no Google key)")
+                    logger.info(
+                        "[REFINE] Using Qwen VL as alternate for text refinement (no Google key)"
+                    )
                     response_text = await self._call_qwen_vision(refinement_prompt)
             else:
                 # Image was initially processed by Qwen, refine with DeepSeek for reasoning
@@ -628,6 +680,96 @@ Return ONLY valid JSON matching this exact structure:
                 f"[REFINE] Refinement failed ({e}), keeping initial extraction"
             )
             return initial
+
+    async def _extract_via_two_pass(
+        self,
+        *,
+        transcript: str,
+        audience: str,
+        vertical: str | None,
+        single_pass_result: StoryboardUnderstanding,
+    ) -> StoryboardUnderstanding:
+        """DA-R1: Run the narrative→schema two-pass extraction for transcripts.
+
+        Pass 1 produces a free-text Forces-of-Progress narrative — the LLM
+        is not constrained by JSON shape, so it can preserve nuance the
+        rigid single-pass would otherwise compress away.
+        Pass 2 maps the narrative into a strict JSON schema (forces dict +
+        frankenstack + extraction_confidence).
+
+        The merge is additive: ``single_pass_result``'s flat 10 fields are
+        preserved, and we overlay ``forces_of_progress`` + ``frankenstack``
+        from the schema-mapping pass. Confidence becomes the max of the two.
+
+        On any failure (LLM error, JSON parse error), we log a warning and
+        return ``single_pass_result`` unchanged — graceful degradation that
+        keeps the existing single-pass quality bar.
+        """
+        try:
+            narrative_prompt = prompt_builders.build_narrative_extraction_prompt(
+                transcript=transcript,
+                audience=audience,
+                vertical=vertical,
+            )
+            narrative_text = await self._call_text_model(narrative_prompt)
+
+            schema_prompt = prompt_builders.build_schema_mapping_prompt(
+                narrative=narrative_text,
+                audience=audience,
+            )
+            schema_response = await self._call_text_model(schema_prompt)
+
+            # Reuse the same JSON-repair plumbing the single-pass parse uses.
+            repaired = _repair_json(schema_response)
+            parsed: dict[str, Any] = json.loads(repaired)
+
+            forces_dict = parsed.get("forces_of_progress") or {}
+            forces = ForcesOfProgress(**forces_dict) if forces_dict else None
+            frankenstack = parsed.get("frankenstack") or None
+            two_pass_confidence = float(parsed.get("extraction_confidence", 0.0))
+
+            logger.info(
+                "[TWO-PASS] Merged forces_of_progress + frankenstack into single-pass result. "
+                f"Confidence: {single_pass_result.extraction_confidence:.2f} -> "
+                f"{max(single_pass_result.extraction_confidence, two_pass_confidence):.2f}"
+            )
+
+            return single_pass_result.model_copy(
+                update={
+                    "forces_of_progress": forces,
+                    "frankenstack": frankenstack,
+                    "extraction_confidence": max(
+                        single_pass_result.extraction_confidence,
+                        two_pass_confidence,
+                    ),
+                }
+            )
+        except Exception as exc:
+            logger.warning(
+                f"[TWO-PASS] Failed ({type(exc).__name__}: {exc}); "
+                "keeping single-pass result unchanged."
+            )
+            return single_pass_result
+
+    async def _call_text_model(self, prompt: str) -> str:
+        """Dispatch a text-only prompt to the configured text provider.
+
+        Mirrors the routing in ``_understand``'s text path — DeepSeek by
+        default, Gemini if a Google API key is set, DeepSeek as final
+        fallback. Used by ``_extract_via_two_pass`` so both passes route
+        the same way as the single-pass extraction.
+        """
+        if self.config.text_provider == "deepseek":
+            return await self._call_deepseek(prompt)
+        if self._has_google_api_key:
+            self._ensure_client()
+            assert self._client is not None  # _ensure_client guarantees this
+            response = self._client.models.generate_content(
+                model=self.config.gemini_vision_model,
+                contents=prompt,
+            )
+            return str(response.text)
+        return await self._call_deepseek(prompt)
 
     async def _understand(
         self,
@@ -769,6 +911,33 @@ Return ONLY valid JSON matching this exact structure:
             else:
                 refine_content = content or ""
                 refine_type = "text"
+
+            # DA-R1: Two-pass narrative+schema extraction for transcripts.
+            # Trigger fires when the input is a transcript AND either it's long
+            # enough to benefit from un-coupling narrative from schema, OR the
+            # single-pass came back with low confidence. When two-pass fires,
+            # it REPLACES the existing _refine_extraction stage (two-pass IS the
+            # refinement — running both would burn cost without quality gain).
+            if (
+                self.config.enable_two_pass_extraction
+                and content_type == "transcript"
+                and (
+                    len(content or "") >= self.config.two_pass_threshold_chars
+                    or initial_result.extraction_confidence
+                    < self.config.refinement_threshold
+                )
+            ):
+                logger.info(
+                    "[UNDERSTAND] Routing transcript through two-pass extraction "
+                    f"(len={len(content or '')}, "
+                    f"confidence={initial_result.extraction_confidence:.2f})"
+                )
+                return await self._extract_via_two_pass(
+                    transcript=content or "",
+                    audience=audience,
+                    vertical=vertical,
+                    single_pass_result=initial_result,
+                )
 
             return await self._refine_extraction(
                 initial=initial_result,
@@ -1090,7 +1259,9 @@ DESIGN PRINCIPLES:
             return {
                 "status": "healthy",
                 "image_backend": image_backend,
-                "image_model": self.config.image_model if has_google else self.config.openrouter_image_model,
+                "image_model": self.config.image_model
+                if has_google
+                else self.config.openrouter_image_model,
                 "text_provider": self.config.text_provider,
                 "vision_provider": self.config.vision_provider,
                 "google_api_key_configured": has_google,
@@ -1102,4 +1273,4 @@ DESIGN PRINCIPLES:
             "error": "Neither GOOGLE_API_KEY nor OPENROUTER_API_KEY configured",
             "google_api_key_configured": False,
             "openrouter_api_key_configured": False,
-            }
+        }

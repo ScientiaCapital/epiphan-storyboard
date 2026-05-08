@@ -103,3 +103,50 @@ The path anchor pattern matches the Fix A resolution for `test_dropdown_parity.p
 | `test_grounding_chain_graceful_when_no_statements` | This test re-uses the `higher_ed` fixture for a `government` vertical call. Does that misrepresent the test's intent? | VALID CONCERN. The graceful-degradation test is checking prompt-builder behavior, not transcript relevance, so reusing an unrelated fixture is technically correct. But a reader could mistake it for a government-vertical fixture. A one-line comment — `# Fixture content is irrelevant here; we're testing builder behavior for an unseeded vertical` — would prevent confusion. |
 | `FORBIDDEN_BRAND_TOKENS = ["Crestron", "Extron", "Q-SYS"]` | Is this list maintained? If a fourth brand is added to the cleanup contract, this constant won't update automatically. | MILD CONCERN. The list is defined once at module level with a clear reference to the cleanup commit. If the BDR brand-safety contract expands, this constant is the single place to update. The risk is forgetting to update it — there is no enforcement mechanism. A comment linking to an authoritative source (e.g., a backlog item or a doc) would reduce drift risk. |
 | `test_prompt_carries_persona_signal` | Asserting `persona in prompt` is a loose check. `"av_director"` would pass even if it appeared only in the transcript content itself. | VALID CONCERN. The test does not strip the transcript before checking. If a fixture happened to mention "av_director" verbatim, the test would pass even if the builder omitted the persona signal. The brand-agnosticism tests do strip the transcript — this test does not. Lower severity because persona names are unlikely to appear verbatim in the synthetic transcripts, but the inconsistency is worth noting. |
+
+---
+
+## DA-R1 (2026-05-09) — Architecture
+
+**Session:** leverage-day +1 / DA-R1 two-pass narrative+schema Forces extraction in `gemini_client.py`.
+**Goal realized:** Phase-1.3 prompt builders (`build_narrative_extraction_prompt`, `build_schema_mapping_prompt`) are now wired into the production `_understand` orchestration loop with a length+confidence trigger.
+
+### Blockers
+None.
+
+### Risks
+None — all risks below are documented in the plan and addressed by the design.
+
+### Smells (log to backlog)
+
+**[SMELL] — `_call_text_model` duplicates dispatch logic that lives inline in `_understand`.**
+
+The new `_call_text_model` (lines 758-772) mirrors the text-path dispatch in `_understand` (lines 853-878 — DeepSeek primary, Gemini if Google API key, DeepSeek fallback). I deliberately did NOT refactor `_understand` to use the new helper because the goal of DA-R1 is the orchestration wiring, not a refactor of the entire client. Forward-debt: when somebody touches the text-path routing rules (e.g., adding Qwen as a third text provider), they'll need to update both call sites or refactor first. Worth a backlog item to consolidate after DA-R1 ships and stabilizes — call it `DA-A3`.
+
+### Contract Compliance
+
+| Contract | Status | Notes |
+|----------|--------|-------|
+| `StoryboardUnderstanding` schema is additive (no required field changes) | ✅ PASS | New fields `forces_of_progress` and `frankenstack` default to `None`. Verified across 16 callsites in `src/` + `tests/`. |
+| Two-pass replaces refinement (no double-burn) | ✅ PASS | `_understand` returns directly from `_extract_via_two_pass` when triggered, skipping `_refine_extraction`. |
+| Mocking discipline (no live LLM in CI) | ✅ PASS | All 14 new tests use `MagicMock(text=...)` with `side_effect`. Zero new `requires_api_keys` markers. |
+| Brand-agnosticism on new fixture | ✅ PASS | 17,074-char fixture contains zero Crestron/Extron/Q-SYS tokens. |
+| Mypy delta | ✅ PASS | 46 errors pre, 46 errors post — exact baseline preserved. |
+| Ruff lint delta on changed files | ✅ PASS | 0 new warnings; 1 pre-existing B904 at line 313 (not my code). |
+
+### Devil's Advocate Challenges
+
+| File | Challenge | Verdict |
+|------|-----------|---------|
+| `_extract_via_two_pass` | Why `max(single, two_pass)` for confidence merge? Could pick the two-pass value directly since it had a richer narrative intermediate. | DEFENSIBLE. Max is the safer choice — if the schema-mapping pass returns a low confidence (parse went OK but the LLM signaled low certainty), we don't want to *downgrade* the single-pass result. The single-pass already had its own confidence signal. Max means "two-pass can only improve, never regress." |
+| Trigger condition `len(content) >= threshold OR conf < threshold` | The OR short-circuits to two-pass on degenerate input (short transcript, parse error → conf=0.0). 2× LLM cost on a malformed input. | DEFENSIBLE BUT INSTRUMENTABLE. Desirable behavior — we want to retry low-confidence regardless of length. If cost dashboards ever show a spike, add a `min_chars_for_two_pass` floor (e.g., 1000) to gate the conf-based trigger. Not a blocker today. |
+| Schema extension via Option B (additive) instead of Option A (rewrite pass-2 prompt) | Option A is "purer" — single source of extraction truth. Option B keeps two flows. | DEFENSIBLE. User picked B explicitly during brainstorming for backwards-compat. Option A would have required prompt-engineering risk (large changes to a tested prompt) and would have made the rollout less safe. B preserves the existing single-pass quality bar and adds richer fields on top. |
+| Why does `build_schema_mapping_prompt` exist if we don't rewrite it? | The prompt was shipped in Phase 1.3 and never invoked. DA-R1 is its first caller. | NOT A CONCERN. This is exactly what DA-R1 was scoped to do — wire the unused infrastructure. The prompts had unit tests already (`test_prompt_builders.py:312-349`). The integration call was the missing piece, and that's what this fix delivers. |
+| Why isn't `meeting_recap.py` also wired? | `meeting_recap.process_meeting_recap` uses its own prompt builder, not `understand_transcript`. Two-pass benefits would compound there too. | LEGITIMATE FOLLOWUP. Out of scope for DA-R1 (which targets `gemini_client.py` per the backlog). Worth a stretch goal in the plan or a follow-up backlog item — `DA-R1.1` to wire two-pass into `process_meeting_recap`. |
+
+### Monitoring Runs
+
+| Date | Session | Findings | Status |
+|------|---------|----------|--------|
+| 2026-05-08 | leverage-day Fix B | 0 blockers / 0 risks / 0 critical | OPEN — see Fix B section |
+| 2026-05-09 | DA-R1 two-pass extraction | 0 blockers / 0 risks / 1 smell (`DA-A3` follow-up) / 0 critical | **🟢 GREEN — ship** |

@@ -1,10 +1,85 @@
 # Project Context: epiphan-storyboard
 
-**Generated:** 2026-05-09 (end-of-day, DA-R1 ship)
-**Branch:** main @ d1d62a6 (DA-R1 two-pass extraction shipped + tagged)
-**Tags:** v1.2-two-pass-extraction (this session) · v1.1-leverage-day (2026-05-08) · v1.0-bdr-workflow (2026-05-07)
-**Production:** https://epiphan-storyboard.vercel.app (main-aligned deploy, all three releases live + smoke-verified)
+**Generated:** 2026-05-09 (end-of-day, DA-R1.1 ship — meeting-recap unblocked)
+**Branch:** main @ ac4a7ac (DA-R1.1 + DA-R1.1.b shipped + tagged)
+**Tags:** v1.3-meeting-recap-unblock (latest) · v1.2-two-pass-extraction (2026-05-09) · v1.1-leverage-day (2026-05-08) · v1.0-bdr-workflow (2026-05-07)
+**Production:** https://epiphan-storyboard.vercel.app (main-aligned deploy, all four releases live + smoke-verified — including the now-unbroken POST /storyboard/meeting-recap)
 **Tech Stack:** Python 3.11+, FastAPI, Pydantic v2, Vercel serverless
+
+---
+
+## 2026-05-09 (later) — DA-R1.1 Meeting-Recap Unblock + Two-Pass Wire
+
+DA-R1.1 from yesterday's backlog turned out to be more than a feature wire — it surfaced and fixed THREE pre-existing production bugs that had been silently 500-ing the `/storyboard/meeting-recap` endpoint. The endpoint had **zero test coverage** before today, which is why the bugs never tripped CI.
+
+### Bugs fixed (in order of discovery)
+
+1. **`extract_content` AttributeError (commit `2e27162`):** `meeting_recap.py:180` was calling a method that does NOT exist on `GeminiStoryboardClient`. Every meeting-recap call was raising AttributeError immediately. Fix: route through `_call_text_model` (the helper DA-R1 added yesterday).
+
+2. **`_parse_json_response` fragile against LLM preamble (commit `ac4a7ac`):** DeepSeek frequently emits `"Here's the structured meeting recap in JSON format:\n\n```json\n{...}\n```"` — preamble before the code fence. The previous parser only stripped a leading triple-backtick, so the function fell into a degraded-response branch. Fix: locate the JSON object by braces (`{...}`) and run through `_repair_json` for robust cleanup.
+
+3. **`summary` returned as JSON array (commit `ac4a7ac`):** Prompt asks for "3-5 bullet executive summary" — DeepSeek interprets as a list. `MeetingRecapResponse.summary: str` rejects with Pydantic ValidationError. Fix: defensive coercion in `process_meeting_recap` joins the list to a multiline string with `•` prefixes.
+
+### Feature wired (the original goal)
+
+**Two-pass narrative+schema augmentation** for long transcripts (≥ 10K chars). After the single-pass parse, runs `build_narrative_extraction_prompt` → `build_schema_mapping_prompt` (the DA-R1 prompt builders) and OVERLAYS the richer `forces_of_progress` and `frankenstack_description` onto the meeting-recap dict. The other 15 keys (job_statement, challenger_reframe, follow_up_email, etc.) come from single-pass and stay untouched. On any failure → graceful degrade to single-pass result with `two_pass_applied=False`.
+
+### Files
+
+| Change | Detail |
+|---|---|
+| `src/tools/storyboard/meeting_recap.py` (+108/-11) | Fixed 3 bugs above + wired two-pass augmentation |
+| `tests/tools/storyboard/test_meeting_recap.py` (new) | 8 tests — net new coverage for `process_meeting_recap` (was 0) |
+| `.claude/Backlog.md` | Closed DA-R1.1; new DA-R1.1.a (`two_pass_applied` flag visibility) and DA-A3 expanded |
+
+### Test / lint / mypy delta
+
+| Metric | Before | After | Delta |
+|---|---|---|---|
+| pytest (excl. live integration) | 1,540 | 1,548 | +8 |
+| Mypy errors (`meeting_recap.py`) | 55 | 54 | **−1** (bug fix silenced a pre-existing error) |
+| Ruff lint | clean | clean | — |
+| Test coverage for `process_meeting_recap` | 0 | 8 mocked + 1 live-LLM round-trip verified | new |
+
+### Live verification — the regression-proof
+
+```bash
+curl -X POST https://epiphan-storyboard.vercel.app/storyboard/meeting-recap \
+  -H "Content-Type: application/json" \
+  -d '{"transcript":"...realistic AV-pain transcript...","audience":"av_director","vertical":"higher_ed"}'
+# Was: 500 "Internal Server Error" (silently for weeks)
+# Now: 200, 3951 bytes, 27.7s
+#   summary: 343-char multiline string with bulleted points
+#   forces_of_progress.push: rich pain language from DeepSeek
+#   frankenstack_description: correctly names the PC layer (not Canvas/Panopto)
+```
+
+### Observer findings
+
+🟢 **GREEN gate** — 0 blockers. Two info-level findings logged as backlog `DA-R1.1.a` (`two_pass_applied` flag visibility) and `DA-A3` (expanded — now covers two trigger-condition duplicates). Audit at `.claude/observers/QUALITY.md` and `ARCH.md` under `## DA-R1.1 (2026-05-09)`.
+
+### New backlog items
+
+- `DA-R1.1.a` — Decide `two_pass_applied` flag visibility (10 min, low). Either expose in `MeetingRecapResponse` or remove from dict and replace with `logger.info`.
+- `DA-A3` (expanded) — Consolidate text-path dispatch + two-pass trigger condition. Two callsites now duplicate the trigger logic (`_understand` and `process_meeting_recap`). Roll into a `_should_two_pass(content, config)` helper.
+
+### Tomorrow's lead candidates
+
+The `meeting-recap` endpoint is now actually usable in production. Natural follow-ups:
+
+1. **`DA-R1.1.a`** (10 min) — pick visibility for `two_pass_applied`. Cheap.
+2. **`DA-A3`** (30 min) — consolidate the two trigger-condition duplicates into `_should_two_pass`.
+3. **`DA-S3`** (1 hr) — Vertical-aware Frankenstack pattern blocks (Higher Ed vs Live Events have different Frankenstacks).
+4. **Tighten the meeting-recap prompt** — the `summary` list-vs-string coercion is a band-aid. Updating the prompt to say `"summary": "single multiline string with bullets separated by \\n"` reduces the chance of needing the coercion at all.
+
+```bash
+# DA-R1.1.a quick fix
+git checkout -b chore/two-pass-applied-visibility main
+```
+
+---
+
+## 2026-05-09 (earlier) — DA-R1 Two-Pass Forces Extraction Ship
 
 ---
 

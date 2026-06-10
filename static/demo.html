@@ -266,8 +266,8 @@ Example:
         <div id="loadingSection" class="bg-white rounded-lg p-10 border border-epiphan-line shadow-[0_2px_6px_rgba(0,0,0,0.06)] hidden animate-fade-in" role="status" aria-live="polite">
             <div class="text-center">
                 <div class="spinner" aria-hidden="true"></div>
-                <p class="text-epiphan-ink font-medium">Generating your storyboard.</p>
-                <p class="text-epiphan-ink3 text-sm mt-2">This usually takes 30 to 60 seconds.</p>
+                <p id="loadingStatus" class="text-epiphan-ink font-medium">Reading the call…</p>
+                <p id="loadingElapsed" class="text-epiphan-ink3 text-sm mt-2 font-mono">0s · usually under 90s</p>
             </div>
         </div>
 
@@ -594,6 +594,28 @@ Example:
             btn.disabled = true;
             btn.textContent = 'Generating…';
 
+            // Live progress so a 40-90s run never looks frozen: an elapsed
+            // counter plus staged status messages. (The work is synchronous on
+            // the server; this is purely client-side reassurance.)
+            const stages = [
+                'Reading the call…',
+                'Finding the angle…',
+                'Designing the storyboard…',
+                'Rendering the image…',
+                'Almost there…',
+            ];
+            let elapsed = 0, stageIdx = 0;
+            $('loadingStatus').textContent = stages[0];
+            $('loadingElapsed').textContent = '0s · usually under 90s';
+            const ticker = setInterval(() => {
+                elapsed += 1;
+                $('loadingElapsed').textContent = elapsed + 's · usually under 90s';
+                if (elapsed % 12 === 0 && stageIdx < stages.length - 1) {
+                    stageIdx += 1;
+                    $('loadingStatus').textContent = stages[stageIdx];
+                }
+            }, 1000);
+
             // Generation runs several model calls and can take ~30-90s. Bound
             // the wait with an AbortController so a slow/stalled request shows a
             // clear message instead of hanging or surfacing an opaque
@@ -640,6 +662,7 @@ Example:
                 }
             } finally {
                 clearTimeout(timer);
+                clearInterval(ticker);
                 hide('loadingSection');
                 btn.disabled = false;
                 btn.textContent = originalLabel;

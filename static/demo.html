@@ -3,23 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Epiphan Storyboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Epiphan Storyboard studio</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%2722%2022%2060%2066%27%3E%3Cpath%20fill%3D%27%2383ce41%27%20d%3D%27M46.8%2C26.8c-16.2%2C2-20.3%2C22.7-20.2%2C33.9c0%2C0%2C0.2%2C0.2%2C0.2-0.1c1.2-8.6%2C7.5-17.6%2C15.5-21c11.1-4.8%2C25.1-1.9%2C24.3%2C11.7c-0.2%2C3.5-1.9%2C4.1-4.2%2C4.1l-20.8%2C0.2c-1.7%2C0-1.8%2C1.6-1.9%2C1.9c-3%2C19.4%2C25.7%2C23.3%2C29.3-5.3C70.5%2C40.2%2C62.3%2C25%2C46.8%2C26.8L46.8%2C26.8z%20M49.9%2C42.1c7-1.4%2C6.7%2C7.2%2C4.4%2C8.4c-2.3%2C1.1-6.4%2C0.9-10.1%2C0.7c-4.3-0.3-2.4-3.1-1.3-4.5C44.6%2C44.3%2C47.3%2C42.6%2C49.9%2C42.1z%27%2F%3E%3C%2Fsvg%3E">
+    <!-- Söhne @font-face served SAME-ORIGIN via our font proxy. The brand
+         host serves the OTFs without CORS headers, so linking them directly
+         fails cross-origin and the page falls back to system fonts. The proxy
+         (src/brand/fonts.py) sidesteps that. Söhne is canonical and must never
+         be substituted; the neutral stack in the Tailwind config is only a
+         last-resort fallback if the proxy upstream is unreachable. -->
+    <link rel="stylesheet" href="/brand/fonts.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
+                        // Epiphan brand tokens (get_style_tokens). Greens, teals
+                        // and indigos lead; coral is auxiliary and never a CTA.
                         epiphan: {
-                            navy: '#1D2B51',
-                            green: '#8CBE3F',
+                            green: '#83ce41',
+                            greenBright: '#9bf445',
+                            greenHover: '#6cb234',
+                            teal: '#0c3d34',
+                            tealDeep: '#0d231f',
+                            indigo: '#4a4aaf',
+                            indigoBright: '#6651fc',
+                            ink: '#111111',
+                            ink3: '#5a5a5a',
+                            line: '#e4e5ea',
+                            surface: '#f1f2f0',
+                            // Legacy aliases kept so existing utility classes
+                            // (and JS-built className strings) stay valid while
+                            // pointing at the correct brand colours.
+                            navy: '#0d231f',
                         },
                     },
                     fontFamily: {
-                        sans: ['Albert Sans', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        // Söhne from the linked design-system stylesheet. The
+                        // tail is a resilience fallback only.
+                        sans: ['Söhne', 'Sohne', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['Söhne Mono', 'Sohne Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
                     },
                     keyframes: {
                         'fade-in': {
@@ -28,47 +51,67 @@
                         },
                     },
                     animation: {
-                        'fade-in': 'fade-in 0.4s ease-out',
+                        // Restrained motion: 200ms, brand standard easing.
+                        'fade-in': 'fade-in 0.24s cubic-bezier(0.2, 0, 0, 1)',
                     },
                 },
             },
         }
     </script>
     <style type="text/tailwindcss">
-        .ai-accent {
-            @apply bg-clip-text text-transparent bg-gradient-to-br from-epiphan-navy to-epiphan-green;
-        }
         @keyframes spin { to { transform: rotate(360deg); } }
         .spinner {
-            @apply w-12 h-12 rounded-full border-4 border-gray-200 border-t-epiphan-navy mx-auto mb-5;
-            animation: spin 1s linear infinite;
+            @apply w-10 h-10 rounded-full border-4 border-epiphan-line border-t-epiphan-indigo mx-auto mb-5;
+            animation: spin 0.9s linear infinite;
         }
         .drop-zone.drag-over {
-            @apply border-epiphan-green bg-green-50;
+            @apply border-epiphan-green bg-epiphan-green/10;
+        }
+        /* Eyebrow: brand kräftig-weight, letter-spaced caps. */
+        .eyebrow {
+            @apply text-xs font-medium tracking-[0.08em] uppercase text-epiphan-indigo;
         }
     </style>
 </head>
-<body class="font-sans bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 min-h-screen p-5 text-gray-800">
+<body class="font-sans min-h-screen p-5 text-epiphan-ink"
+      style="background: radial-gradient(120% 120% at 50% 0%, #ffffff 0%, #f1f2f0 58%, #e4e5ea 100%);">
     <div class="max-w-5xl mx-auto">
 
         <!-- Header -->
-        <header class="text-center mb-10">
-            <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-gray-800 mb-3">
-                Epiphan <span class="ai-accent">Storyboard</span>
+        <header class="text-center mb-10 pt-4">
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 358.2 99.5" role="img" aria-label="Epiphan" style="height:42px;width:auto;display:block;margin:0 auto 1.25rem;">
+                <g>
+                    <path fill="#0d231f" d="M97,62.9c-1.6,1.2-3.5,1.8-5.9,1.8c-1.7,0-3.1-0.3-4.3-0.8c-1.2-0.5-2.2-1.3-3.1-2.3c-0.8-1-1.5-2.1-1.9-3.5c-0.4-1.3-0.7-2.8-0.7-4.4c0-1.6,0.2-3,0.7-4.3c0.5-1.3,1.2-2.5,2-3.4c0.9-1,1.9-1.7,3.1-2.3c1.2-0.5,2.5-0.8,3.9-0.8c1.8,0,3.4,0.4,4.6,1.1c1.2,0.8,2.2,1.7,2.9,2.9c0.7,1.2,1.2,2.5,1.5,3.9c0.3,1.4,0.4,2.7,0.3,4H84.8c0,0.9,0.1,1.8,0.3,2.6c0.2,0.8,0.6,1.5,1.2,2.2c0.5,0.6,1.2,1.1,2.1,1.5c0.8,0.4,1.8,0.6,2.9,0.6c1.4,0,2.6-0.3,3.6-1c0.9-0.7,1.5-1.7,1.8-3.1h3.4C99.5,59.9,98.5,61.7,97,62.9z M96.2,49.5c-0.3-0.7-0.7-1.3-1.2-1.9c-0.5-0.5-1.1-0.9-1.9-1.2c-0.7-0.3-1.5-0.5-2.4-0.5c-0.9,0-1.7,0.2-2.4,0.5c-0.7,0.3-1.3,0.7-1.8,1.3c-0.5,0.5-0.9,1.2-1.2,1.9c-0.3,0.7-0.5,1.5-0.5,2.3h11.9C96.6,51,96.5,50.2,96.2,49.5z"></path>
+                    <path fill="#0d231f" d="M107.4,43.4v2.8h0.1c0.6-1.2,1.4-2,2.7-2.5c1.2-0.5,2.5-0.8,4-0.8c1.6,0,3,0.3,4.2,0.9c1.2,0.6,2.2,1.4,3,2.4c0.8,1,1.4,2.2,1.8,3.5c0.4,1.3,0.6,2.7,0.6,4.2c0,1.5-0.2,2.9-0.6,4.2c-0.4,1.3-1,2.5-1.8,3.4c-0.8,1-1.8,1.7-3,2.3c-1.2,0.6-2.6,0.8-4.2,0.8c-0.5,0-1.1-0.1-1.7-0.2c-0.6-0.1-1.3-0.3-1.9-0.5c-0.6-0.2-1.2-0.6-1.7-1c-0.5-0.4-1-0.9-1.4-1.5h-0.1v10.7H104V43.4H107.4z M119.7,50.8c-0.3-0.9-0.6-1.7-1.2-2.5c-0.5-0.7-1.2-1.3-2-1.7c-0.8-0.4-1.8-0.6-2.9-0.6c-1.2,0-2.1,0.2-2.9,0.7c-0.8,0.5-1.5,1.1-2,1.8c-0.5,0.7-0.9,1.6-1.1,2.5c-0.2,0.9-0.3,1.9-0.3,2.9c0,1,0.1,2,0.4,3c0.2,1,0.6,1.8,1.1,2.5c0.5,0.7,1.2,1.3,2,1.7c0.8,0.4,1.8,0.7,3,0.7s2.2-0.2,3-0.7c0.8-0.5,1.4-1.1,1.9-1.8c0.5-0.8,0.8-1.6,1-2.6c0.2-1,0.3-2,0.3-3C120.1,52.6,119.9,51.7,119.7,50.8z"></path>
+                    <path fill="#0d231f" d="M127.9,39.7v-4.2h3.4v4.2H127.9z M131.3,43.4v20.8h-3.4V43.4H131.3z"></path>
+                    <path fill="#0d231f" d="M140.2,43.4v2.8h0.1c0.6-1.2,1.4-2,2.7-2.5c1.2-0.5,2.5-0.8,4-0.8c1.6,0,3,0.3,4.2,0.9c1.2,0.6,2.2,1.4,3,2.4c0.8,1,1.4,2.2,1.8,3.5c0.4,1.3,0.6,2.7,0.6,4.2c0,1.5-0.2,2.9-0.6,4.2c-0.4,1.3-1,2.5-1.8,3.4c-0.8,1-1.8,1.7-3,2.3c-1.2,0.6-2.6,0.8-4.2,0.8c-0.5,0-1.1-0.1-1.7-0.2c-0.6-0.1-1.3-0.3-1.9-0.5c-0.6-0.2-1.2-0.6-1.7-1c-0.5-0.4-1-0.9-1.4-1.5h-0.1v10.7h-3.4V43.4H140.2z M152.4,50.8c-0.3-0.9-0.6-1.7-1.2-2.5c-0.5-0.7-1.2-1.3-2-1.7c-0.8-0.4-1.8-0.6-2.9-0.6c-1.2,0-2.1,0.2-2.9,0.7c-0.8,0.5-1.5,1.1-2,1.8c-0.5,0.7-0.9,1.6-1.1,2.5c-0.2,0.9-0.3,1.9-0.3,2.9c0,1,0.1,2,0.4,3c0.2,1,0.6,1.8,1.1,2.5c0.5,0.7,1.2,1.3,2,1.7c0.8,0.4,1.8,0.7,3,0.7s2.2-0.2,3-0.7c0.8-0.5,1.4-1.1,1.9-1.8c0.5-0.8,0.8-1.6,1-2.6c0.2-1,0.3-2,0.3-3C152.8,52.6,152.7,51.7,152.4,50.8z"></path>
+                    <path fill="#0d231f" d="M163.9,35.5v11h0.1c0.3-0.6,0.6-1.2,1.1-1.6c0.5-0.4,1-0.8,1.6-1.1c0.6-0.3,1.2-0.5,1.9-0.6c0.7-0.1,1.3-0.2,1.9-0.2c1.4,0,2.5,0.2,3.4,0.6c0.9,0.4,1.6,0.9,2.2,1.6c0.6,0.7,1,1.5,1.2,2.4c0.2,0.9,0.3,1.9,0.3,3.1v13.7h-3.4V50.1c0-1.3-0.4-2.3-1.1-3.1c-0.8-0.8-1.8-1.1-3.1-1.1c-1,0-1.9,0.2-2.7,0.5c-0.8,0.3-1.4,0.8-1.9,1.4c-0.5,0.6-0.9,1.3-1.1,2.1c-0.3,0.8-0.4,1.7-0.4,2.6v11.7h-3.4V35.5H163.9z"></path>
+                    <path fill="#0d231f" d="M198.8,64.6c-0.9,0-1.6-0.2-2.1-0.7c-0.5-0.5-0.8-1.3-0.8-2.4c-0.9,1.1-2,1.9-3.3,2.4c-1.2,0.5-2.6,0.7-4,0.7c-0.9,0-1.8-0.1-2.7-0.3c-0.8-0.2-1.6-0.5-2.2-1c-0.6-0.5-1.1-1.1-1.5-1.8c-0.4-0.7-0.5-1.6-0.5-2.7c0-1.2,0.2-2.1,0.6-2.9c0.4-0.8,0.9-1.4,1.6-1.8c0.7-0.5,1.4-0.8,2.3-1.1c0.8-0.2,1.7-0.4,2.6-0.6c0.9-0.2,1.8-0.3,2.7-0.4c0.8-0.1,1.6-0.2,2.2-0.4c0.6-0.2,1.2-0.4,1.5-0.8c0.4-0.3,0.6-0.8,0.6-1.5c0-0.8-0.1-1.4-0.4-1.8c-0.3-0.5-0.6-0.8-1.1-1c-0.4-0.2-0.9-0.4-1.5-0.5c-0.5-0.1-1.1-0.1-1.6-0.1c-1.4,0-2.7,0.3-3.6,0.8c-1,0.5-1.5,1.6-1.6,3.1h-3.4c0.1-1.3,0.3-2.4,0.8-3.3c0.5-0.9,1.1-1.6,1.9-2.2c0.8-0.5,1.7-0.9,2.8-1.2c1-0.2,2.1-0.4,3.3-0.4c0.9,0,1.9,0.1,2.8,0.2c0.9,0.1,1.8,0.4,2.5,0.8c0.8,0.4,1.4,1,1.8,1.7c0.5,0.8,0.7,1.7,0.7,2.9v10.7c0,0.8,0,1.4,0.1,1.8c0.1,0.4,0.4,0.6,0.9,0.6c0.3,0,0.6-0.1,1-0.2v2.7C200.6,64.4,199.8,64.6,198.8,64.6z M194,54.2c-0.7,0.1-1.4,0.3-2.2,0.4c-0.8,0.1-1.5,0.2-2.3,0.3c-0.8,0.1-1.5,0.3-2.1,0.6c-0.6,0.3-1.1,0.7-1.5,1.1c-0.4,0.5-0.6,1.2-0.6,2c0,0.6,0.1,1,0.3,1.4c0.2,0.4,0.5,0.7,0.9,0.9c0.4,0.2,0.8,0.4,1.3,0.5c0.5,0.1,1,0.2,1.5,0.2c1.1,0,2.1-0.2,2.9-0.5c0.8-0.3,1.5-0.7,2-1.2c0.5-0.5,0.9-1,1.1-1.5s0.4-1.1,0.4-1.5v-3.5C195.3,53.8,194.7,54,194,54.2z"></path>
+                    <path fill="#0d231f" d="M207.6,43.4v3.3h0.1c1.4-2.5,3.7-3.8,6.8-3.8c1.4,0,2.5,0.2,3.4,0.6s1.6,0.9,2.2,1.6c0.6,0.7,1,1.5,1.2,2.4c0.2,0.9,0.3,1.9,0.3,3.1v13.7h-3.4V50.1c0-1.3-0.4-2.3-1.1-3.1c-0.8-0.8-1.8-1.1-3.1-1.1c-1,0-1.9,0.2-2.7,0.5c-0.8,0.3-1.4,0.8-1.9,1.4c-0.5,0.6-0.9,1.3-1.1,2.1c-0.3,0.8-0.4,1.7-0.4,2.6v11.7h-3.4V43.4H207.6z"></path>
+                    <path fill="#0d231f" d="M243.7,64.2l-7.7-20.8h3.8l5.8,17.3h0.1l5.7-17.3h3.6l-7.6,20.8H243.7z"></path>
+                    <path fill="#0d231f" d="M258.2,39.7v-4.2h3.4v4.2H258.2z M261.7,43.4v20.8h-3.4V43.4H261.7z"></path>
+                    <path fill="#0d231f" d="M282.1,64.2v-2.8H282c-0.6,1.2-1.4,2-2.7,2.5c-1.2,0.5-2.5,0.8-4,0.8c-1.6,0-3-0.3-4.2-0.9s-2.2-1.4-3-2.4c-0.8-1-1.4-2.1-1.8-3.5c-0.4-1.3-0.6-2.7-0.6-4.2c0-1.5,0.2-2.9,0.6-4.2c0.4-1.3,1-2.5,1.8-3.4c0.8-1,1.8-1.8,3-2.3c1.2-0.6,2.6-0.9,4.2-0.9c0.5,0,1.1,0.1,1.7,0.2c0.6,0.1,1.2,0.3,1.8,0.5c0.6,0.3,1.2,0.6,1.7,1c0.5,0.4,1,0.9,1.4,1.5h0.1V35.5h3.4v28.7H282.1z M269.8,56.8c0.3,0.9,0.6,1.7,1.2,2.5c0.5,0.7,1.2,1.3,2,1.7c0.8,0.4,1.8,0.6,2.9,0.6c1.2,0,2.1-0.2,2.9-0.7c0.8-0.5,1.5-1.1,2-1.8c0.5-0.7,0.9-1.6,1.1-2.5c0.2-0.9,0.3-1.9,0.3-2.9c0-1-0.1-2-0.4-3c-0.2-1-0.6-1.8-1.1-2.5c-0.5-0.7-1.2-1.3-2-1.7c-0.8-0.4-1.8-0.7-3-0.7c-1.2,0-2.1,0.2-2.9,0.7c-0.8,0.5-1.4,1.1-1.9,1.8c-0.5,0.8-0.8,1.6-1,2.6c-0.2,1-0.3,2-0.3,3C269.5,54.9,269.6,55.9,269.8,56.8z"></path>
+                    <path fill="#0d231f" d="M305.5,62.9c-1.6,1.2-3.5,1.8-5.9,1.8c-1.7,0-3.1-0.3-4.3-0.8c-1.2-0.5-2.2-1.3-3.1-2.3c-0.8-1-1.5-2.1-1.9-3.5c-0.4-1.3-0.7-2.8-0.7-4.4c0-1.6,0.2-3,0.7-4.3c0.5-1.3,1.2-2.5,2-3.4c0.9-1,1.9-1.7,3.1-2.3c1.2-0.5,2.5-0.8,3.9-0.8c1.8,0,3.4,0.4,4.6,1.1c1.2,0.8,2.2,1.7,2.9,2.9c0.7,1.2,1.2,2.5,1.5,3.9c0.3,1.4,0.4,2.7,0.3,4h-15.6c0,0.9,0.1,1.8,0.3,2.6c0.2,0.8,0.6,1.5,1.2,2.2c0.5,0.6,1.2,1.1,2.1,1.5c0.8,0.4,1.8,0.6,2.9,0.6c1.4,0,2.6-0.3,3.6-1c0.9-0.7,1.5-1.7,1.8-3.1h3.4C308.1,59.9,307.1,61.7,305.5,62.9z M304.7,49.5c-0.3-0.7-0.7-1.3-1.2-1.9c-0.5-0.5-1.1-0.9-1.9-1.2c-0.7-0.3-1.5-0.5-2.4-0.5c-0.9,0-1.7,0.2-2.4,0.5c-0.7,0.3-1.3,0.7-1.8,1.3c-0.5,0.5-0.9,1.2-1.2,1.9c-0.3,0.7-0.5,1.5-0.5,2.3h11.9C305.2,51,305,50.2,304.7,49.5z"></path>
+                    <path fill="#0d231f" d="M311.9,49.5c0.4-1.3,1.1-2.5,1.9-3.5c0.9-1,1.9-1.7,3.2-2.3c1.3-0.6,2.7-0.8,4.3-0.8c1.7,0,3.1,0.3,4.4,0.8c1.2,0.6,2.3,1.3,3.2,2.3c0.9,1,1.5,2.1,1.9,3.5c0.4,1.3,0.6,2.8,0.6,4.3c0,1.5-0.2,2.9-0.6,4.3c-0.4,1.3-1.1,2.5-1.9,3.4c-0.9,1-1.9,1.7-3.2,2.3c-1.2,0.5-2.7,0.8-4.4,0.8c-1.6,0-3.1-0.3-4.3-0.8c-1.3-0.5-2.3-1.3-3.2-2.3c-0.9-1-1.5-2.1-1.9-3.4c-0.4-1.3-0.6-2.7-0.6-4.3C311.3,52.3,311.5,50.9,311.9,49.5z M315.4,57.2c0.3,1,0.8,1.8,1.4,2.5c0.6,0.7,1.3,1.2,2.1,1.5c0.8,0.3,1.6,0.5,2.5,0.5c0.9,0,1.7-0.2,2.5-0.5c0.8-0.3,1.5-0.9,2.1-1.5c0.6-0.7,1.1-1.5,1.4-2.5c0.3-1,0.5-2.1,0.5-3.4s-0.2-2.4-0.5-3.4c-0.3-1-0.8-1.8-1.4-2.5c-0.6-0.7-1.3-1.2-2.1-1.5c-0.8-0.3-1.6-0.5-2.5-0.5c-0.9,0-1.7,0.2-2.5,0.5c-0.8,0.3-1.5,0.9-2.1,1.5c-0.6,0.7-1.1,1.5-1.4,2.5c-0.3,1-0.5,2.1-0.5,3.4S315.1,56.2,315.4,57.2z"></path>
+                </g>
+                <path fill="#83ce41" fill-rule="evenodd" clip-rule="evenodd" d="M46.8,26.8c-16.2,2-20.3,22.7-20.2,33.9c0,0,0.2,0.2,0.2-0.1c1.2-8.6,7.5-17.6,15.5-21c11.1-4.8,25.1-1.9,24.3,11.7c-0.2,3.5-1.9,4.1-4.2,4.1l-20.8,0.2c-1.7,0-1.8,1.6-1.9,1.9c-3,19.4,25.7,23.3,29.3-5.3C70.5,40.2,62.3,25,46.8,26.8L46.8,26.8z M49.9,42.1c7-1.4,6.7,7.2,4.4,8.4c-2.3,1.1-6.4,0.9-10.1,0.7c-4.3-0.3-2.4-3.1-1.3-4.5C44.6,44.3,47.3,42.6,49.9,42.1z"></path>
+            </svg>
+            <p class="eyebrow mb-3">Broadcast without barriers.</p>
+            <h1 class="text-4xl md:text-5xl font-semibold tracking-tight text-epiphan-tealDeep mb-3">
+                Storyboard studio
             </h1>
-            <p class="text-lg text-gray-500 max-w-lg mx-auto">
-                Transform transcripts, code, and screenshots into executive-ready visuals
+            <p class="text-base text-epiphan-ink3 max-w-xl mx-auto">
+                Turn call transcripts and screenshots into executive-ready storyboards.
             </p>
         </header>
 
         <!-- Options Bar -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-5 mb-5 shadow-lg border border-white/50">
+        <div class="bg-white rounded-lg p-6 mb-5 border border-epiphan-line shadow-[0_2px_6px_rgba(0,0,0,0.06)]">
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <input type="hidden" id="stageSelect" value="demo">
 
                 <div>
-                    <label for="audienceSelect" class="block text-sm font-semibold text-gray-500 mb-1.5">Persona</label>
-                    <select id="audienceSelect" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
+                    <label for="audienceSelect" class="eyebrow block mb-1.5">Persona</label>
+                    <select id="audienceSelect" class="w-full px-3 py-2.5 border border-epiphan-line rounded-md bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-indigo focus:ring-2 focus:ring-epiphan-indigo/30">
                         <optgroup label="ATL — Decision Makers">
                             <option value="av_director" selected>🎬 AV Director</option>
                             <option value="ld_director">📚 L&D Director</option>
@@ -100,8 +143,8 @@
                 </div>
 
                 <div>
-                    <label for="verticalSelect" class="block text-sm font-semibold text-gray-500 mb-1.5">Vertical</label>
-                    <select id="verticalSelect" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
+                    <label for="verticalSelect" class="eyebrow block mb-1.5">Vertical</label>
+                    <select id="verticalSelect" class="w-full px-3 py-2.5 border border-epiphan-line rounded-md bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-indigo focus:ring-2 focus:ring-epiphan-indigo/30">
                         <option value="">🔍 Auto-detect</option>
                         <option value="higher_ed">🎓 Higher Ed</option>
                         <option value="corporate">🏢 Corporate</option>
@@ -118,16 +161,16 @@
                 </div>
 
                 <div>
-                    <label for="outputFormatSelect" class="block text-sm font-semibold text-gray-500 mb-1.5">Format</label>
-                    <select id="outputFormatSelect" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
-                        <option value="infographic" selected>📐 Infograph</option>
+                    <label for="outputFormatSelect" class="eyebrow block mb-1.5">Format</label>
+                    <select id="outputFormatSelect" class="w-full px-3 py-2.5 border border-epiphan-line rounded-md bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-indigo focus:ring-2 focus:ring-epiphan-indigo/30">
+                        <option value="infographic" selected>📋 Infographic</option>
                         <option value="storyboard">📱 Storyboard</option>
                     </select>
                 </div>
 
                 <div>
-                    <label for="visualStyleSelect" class="block text-sm font-semibold text-gray-500 mb-1.5">Style</label>
-                    <select id="visualStyleSelect" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
+                    <label for="visualStyleSelect" class="eyebrow block mb-1.5">Style</label>
+                    <select id="visualStyleSelect" class="w-full px-3 py-2.5 border border-epiphan-line rounded-md bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-indigo focus:ring-2 focus:ring-epiphan-indigo/30">
                         <option value="polished" selected>✨ Polished</option>
                         <option value="clean">🍎 Clean</option>
                         <option value="photo_realistic">📷 Photo</option>
@@ -141,61 +184,64 @@
                 </div>
 
                 <div>
-                    <label for="artistStyleSelect" class="block text-sm font-semibold text-gray-500 mb-1.5">Artist</label>
-                    <select id="artistStyleSelect" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40">
+                    <label for="artistStyleSelect" class="eyebrow block mb-1.5">Artist</label>
+                    <select id="artistStyleSelect" class="w-full px-3 py-2.5 border border-epiphan-line rounded-md bg-white text-sm cursor-pointer transition-all focus:outline-none focus:border-epiphan-indigo focus:ring-2 focus:ring-epiphan-indigo/30">
                         <option value="none" selected>🎨 None</option>
                         <option value="salvador_dali">🕐 Dali</option>
                         <option value="monet">🌸 Monet</option>
-                        <option value="diego_rivera">🎺 Rivera</option>
+                        <option value="diego_rivera">🖼️ Rivera</option>
                         <option value="warhol">🎯 Warhol</option>
                         <option value="van_gogh">🌻 Van Gogh</option>
                         <option value="picasso">🔺 Picasso</option>
                         <option value="giger">🦾 Giger</option>
                         <option value="frida_kahlo">🌺 Frida Kahlo</option>
-                        <option value="siqueiros">⚡ Siqueiros</option>
+                        <option value="siqueiros">🖌️ Siqueiros</option>
                     </select>
                 </div>
             </div>
+            <p class="text-xs text-epiphan-ink3 mt-4">Combine images and text for a richer storyboard.</p>
         </div>
 
         <!-- Two-column Input Row -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
 
             <!-- Image Input -->
-            <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
-                <h2 class="text-lg font-semibold text-epiphan-navy mb-3 flex items-center gap-2">
-                    <span>Images</span>
-                </h2>
-                <div class="drop-zone border-3 border-dashed border-epiphan-navy rounded-lg py-10 px-4 text-center cursor-pointer bg-gray-50 hover:border-epiphan-green hover:bg-green-50 transition-all" id="dropZone" style="border-width: 3px;">
+            <div class="bg-white rounded-lg p-6 border border-epiphan-line shadow-[0_2px_6px_rgba(0,0,0,0.06)]">
+                <h2 class="text-lg font-semibold text-epiphan-tealDeep mb-3">Images</h2>
+                <div class="drop-zone border-2 border-dashed border-epiphan-indigo/50 rounded-md py-10 px-4 text-center cursor-pointer bg-epiphan-surface hover:border-epiphan-green hover:bg-epiphan-green/10 transition-all" id="dropZone">
                     <div class="pointer-events-none">
-                        <div class="text-3xl mb-2">&#x2B06;&#xFE0F;</div>
-                        <div class="text-sm text-gray-500 mb-1">Drop up to 3 images</div>
-                        <div class="text-xs text-gray-400">Miro &bull; Screenshots &bull; Cmd+V</div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7 mx-auto mb-2 text-epiphan-indigo" aria-hidden="true">
+                            <path d="M12 16V4"></path><path d="m6 10 6-6 6 6"></path><path d="M4 20h16"></path>
+                        </svg>
+                        <div class="text-sm text-epiphan-ink3 mb-1">Drop up to 3 images</div>
+                        <div class="text-xs text-epiphan-ink3/70">Miro &bull; Screenshots &bull; Cmd+V</div>
                     </div>
                 </div>
                 <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
                 <div id="imagePreviewContainer" class="mt-4 text-center hidden">
                     <div id="imagePreviews" class="flex flex-wrap gap-3 justify-center mb-3"></div>
-                    <button onclick="clearAllImages()" class="px-4 py-1.5 text-sm bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors">Clear</button>
+                    <button onclick="clearAllImages()" class="px-4 py-1.5 text-sm font-medium text-white bg-epiphan-tealDeep rounded-md hover:bg-epiphan-teal transition-colors">Clear</button>
                 </div>
             </div>
 
             <!-- Text Input -->
-            <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
-                <h2 class="text-lg font-semibold text-epiphan-navy mb-3 flex items-center gap-2">
-                    <span>Text / Code</span>
-                </h2>
+            <div class="bg-white rounded-lg p-6 border border-epiphan-line shadow-[0_2px_6px_rgba(0,0,0,0.06)]">
+                <h2 class="text-lg font-semibold text-epiphan-tealDeep mb-3">Text or code</h2>
                 <textarea
                     id="codeInput"
                     maxlength="50000"
-                    class="w-full min-h-[140px] p-3 border-2 border-gray-200 rounded-lg font-mono text-sm resize-y transition-all focus:outline-none focus:border-epiphan-navy focus:ring-2 focus:ring-epiphan-green/40"
-                    placeholder="Paste transcript, code, or notes...
+                    aria-label="Transcript, code, or notes"
+                    class="w-full min-h-[140px] p-3 border border-epiphan-line rounded-md font-mono text-sm resize-y transition-all focus:outline-none focus:border-epiphan-indigo focus:ring-2 focus:ring-epiphan-indigo/30"
+                    placeholder="Paste a call transcript, code, or notes.
 
 Example:
-- Pain points from call
+- Pain points from the call
 - Feature code snippets
 - Meeting notes"></textarea>
-                <div id="charCount" class="text-right text-xs text-gray-400 mt-1">0 / 50,000</div>
+                <div class="flex items-center justify-between mt-1">
+                    <span class="text-xs text-epiphan-ink3/70">Up to 50,000 characters</span>
+                    <span id="charCount" class="text-xs font-mono text-epiphan-ink3">0 / 50,000</span>
+                </div>
                 <div id="examplesSection" class="hidden">
                     <div class="flex flex-wrap gap-2 mt-3" id="examplesButtons"></div>
                 </div>
@@ -205,68 +251,66 @@ Example:
         <!-- Generate Button -->
         <div class="text-center my-6">
             <button id="generateBtn" onclick="generate()"
-                class="w-full max-w-md px-10 py-4 text-lg font-bold text-white rounded-xl
-                       bg-gradient-to-r from-epiphan-navy to-epiphan-green
-                       shadow-xl shadow-epiphan-navy/20
-                       hover:shadow-2xl hover:shadow-epiphan-green/30 hover:-translate-y-0.5
+                class="w-full max-w-md px-10 py-4 text-lg font-semibold text-white rounded-md
+                       bg-gradient-to-r from-epiphan-indigo to-epiphan-green
+                       shadow-[0_2px_6px_rgba(74,74,175,0.25)]
+                       hover:shadow-[0_0_40px_rgba(131,206,65,0.35)] hover:-translate-y-0.5
                        active:translate-y-0
-                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-xl
+                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0
                        transition-all duration-200">
-                Generate Storyboard
+                Generate storyboard
             </button>
         </div>
 
         <!-- Loading -->
-        <div id="loadingSection" class="bg-white/80 backdrop-blur-sm rounded-xl p-10 shadow-lg border border-white/50 hidden animate-fade-in">
+        <div id="loadingSection" class="bg-white rounded-lg p-10 border border-epiphan-line shadow-[0_2px_6px_rgba(0,0,0,0.06)] hidden animate-fade-in" role="status" aria-live="polite">
             <div class="text-center">
-                <div class="spinner"></div>
-                <p class="text-gray-700 font-medium">Generating your storyboard...</p>
-                <p class="text-gray-400 text-sm mt-2">This may take 30-60 seconds</p>
+                <div class="spinner" aria-hidden="true"></div>
+                <p class="text-epiphan-ink font-medium">Generating your storyboard.</p>
+                <p class="text-epiphan-ink3 text-sm mt-2">This usually takes 30 to 60 seconds.</p>
             </div>
         </div>
 
         <!-- Error -->
-        <div id="errorSection" class="bg-red-50 text-red-800 p-4 rounded-lg border-l-4 border-red-500 mt-5 hidden"></div>
+        <div id="errorSection" class="bg-[#eddfdd] text-[#7c414c] p-4 rounded-md border-l-4 border-[#7c414c] mt-5 hidden" role="alert"></div>
 
         <!-- Result -->
-        <div id="resultSection" class="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-2xl border border-white/50 mt-5 hidden animate-fade-in">
-            <h2 class="text-xl font-semibold text-epiphan-navy mb-4 flex items-center gap-2">
-                Generated Storyboard
-            </h2>
+        <div id="resultSection" class="bg-white rounded-lg p-6 border border-epiphan-line shadow-[0_10px_24px_rgba(0,0,0,0.10)] mt-5 hidden animate-fade-in">
+            <h2 class="text-xl font-semibold text-epiphan-tealDeep mb-4">Generated storyboard</h2>
             <div class="mt-4">
                 <div class="text-center mb-5">
-                    <img id="resultImg" src="" alt="Generated Storyboard" class="max-w-full rounded-lg shadow-2xl">
+                    <img id="resultImg" src="" alt="Generated storyboard" loading="lazy" class="max-w-full rounded-md shadow-[0_10px_24px_rgba(0,0,0,0.10)] mx-auto">
                 </div>
 
                 <div class="flex flex-wrap gap-3 mt-5">
-                    <button onclick="downloadImage()"
-                        class="flex-1 min-w-[180px] px-6 py-3 text-sm font-semibold text-white bg-gray-800 rounded-lg
-                               hover:bg-gray-900 hover:-translate-y-0.5 hover:shadow-lg
+                    <button onclick="downloadImage()" aria-label="Download storyboard as PNG"
+                        class="flex-1 min-w-[180px] px-6 py-3 text-sm font-semibold text-white bg-epiphan-indigo rounded-md
+                               hover:bg-epiphan-indigoBright hover:-translate-y-0.5
                                transition-all">
                         Download PNG
                     </button>
-                    <button onclick="openInNewTab()"
-                        class="px-6 py-3 text-sm font-semibold text-white bg-gray-500 rounded-lg
-                               hover:bg-gray-600 transition-all">
-                        Open in New Tab
+                    <button onclick="openInNewTab()" aria-label="Open storyboard in a new tab"
+                        class="px-6 py-3 text-sm font-semibold text-epiphan-tealDeep bg-white border border-epiphan-line rounded-md
+                               hover:border-epiphan-indigo hover:text-epiphan-indigo transition-all">
+                        Open in new tab
                     </button>
                 </div>
 
-                <div id="insightsSection" class="mt-5 p-4 bg-gray-50 rounded-lg border-l-4 border-epiphan-green hidden">
-                    <h3 class="text-epiphan-navy font-semibold mb-2">Understanding Insights</h3>
-                    <p id="insightsText" class="text-gray-600 leading-relaxed text-sm"></p>
+                <div id="insightsSection" class="mt-5 p-4 bg-epiphan-surface rounded-md border-l-4 border-epiphan-green hidden">
+                    <h3 class="text-epiphan-tealDeep font-semibold mb-2">Understanding insights</h3>
+                    <p id="insightsText" class="text-epiphan-ink3 leading-relaxed text-sm"></p>
                 </div>
 
-                <div id="collateralSection" class="mt-4 p-4 bg-gray-50 rounded-lg border-l-4 border-epiphan-green hidden">
-                    <h3 class="text-epiphan-navy font-semibold mb-2">Share with Prospect</h3>
+                <div id="collateralSection" class="mt-4 p-4 bg-epiphan-surface rounded-md border-l-4 border-epiphan-green hidden">
+                    <h3 class="text-epiphan-tealDeep font-semibold mb-2">Share with prospect</h3>
                     <div id="collateralLinks" class="text-sm"></div>
                 </div>
             </div>
         </div>
 
         <!-- Footer -->
-        <footer class="text-center mt-12 pb-6 text-xs text-gray-400">
-            Powered by <span class="font-semibold text-epiphan-navy">Epiphan Video</span> &middot; THK Enterprises LLC
+        <footer class="text-center mt-12 pb-6 text-sm text-epiphan-ink3">
+            Powered by <span class="font-medium text-epiphan-tealDeep">Epiphan Video</span> &middot; THK Enterprises LLC
         </footer>
     </div>
 
@@ -302,11 +346,12 @@ Example:
             textarea.addEventListener('input', () => {
                 const len = textarea.value.length;
                 counter.textContent = `${len.toLocaleString()} / 50,000`;
+                // Brand semantic colours: warning (#f5a524), danger (#7c414c).
                 counter.className = len > MAX * 0.9
-                    ? 'text-right text-xs mt-1 text-red-500'
+                    ? 'text-xs font-mono text-[#7c414c]'
                     : len > MAX * 0.7
-                        ? 'text-right text-xs mt-1 text-amber-500'
-                        : 'text-right text-xs mt-1 text-gray-400';
+                        ? 'text-xs font-mono text-[#f5a524]'
+                        : 'text-xs font-mono text-epiphan-ink3';
             });
         }
 
@@ -326,7 +371,7 @@ Example:
                     clearChildren(container);
                     examples.forEach(ex => {
                         const btn = document.createElement('button');
-                        btn.className = 'px-3 py-1.5 text-xs bg-gray-50 text-gray-600 border border-gray-200 rounded-md hover:bg-gray-100 hover:border-epiphan-green transition-all';
+                        btn.className = 'px-3 py-1.5 text-xs font-medium text-epiphan-ink3 bg-epiphan-surface border border-epiphan-line rounded-md hover:border-epiphan-green hover:text-epiphan-tealDeep transition-all';
                         btn.textContent = ex.name;
                         btn.addEventListener('click', () => loadExample(ex.name));
                         container.appendChild(btn);
@@ -432,7 +477,7 @@ Example:
 
             // Count indicator
             const countDiv = document.createElement('div');
-            countDiv.className = 'text-xs text-gray-400 mb-2 w-full';
+            countDiv.className = 'text-xs text-epiphan-ink3 mb-2 w-full';
             countDiv.textContent = `${imagesBase64.length}/${MAX_IMAGES} images`;
             previews.appendChild(countDiv);
 
@@ -443,13 +488,14 @@ Example:
 
                 const img = document.createElement('img');
                 img.src = imgData;
-                img.alt = `Image ${index + 1}`;
-                img.className = 'max-w-[200px] max-h-[150px] rounded-lg shadow-md';
+                img.alt = `Uploaded image ${index + 1}`;
+                img.className = 'max-w-[200px] max-h-[150px] rounded-md shadow-[0_2px_6px_rgba(0,0,0,0.08)]';
                 wrapper.appendChild(img);
 
                 const removeBtn = document.createElement('button');
-                removeBtn.className = 'absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white text-sm flex items-center justify-center transition-colors';
-                removeBtn.textContent = '\u00d7';
+                removeBtn.className = 'absolute -top-2 -right-2 w-6 h-6 rounded-full bg-epiphan-tealDeep hover:bg-[#7c414c] text-white text-sm flex items-center justify-center transition-colors';
+                removeBtn.setAttribute('aria-label', `Remove image ${index + 1}`);
+                removeBtn.textContent = '×';
                 removeBtn.addEventListener('click', () => removeImage(index));
                 wrapper.appendChild(removeBtn);
 
@@ -506,7 +552,8 @@ Example:
         // Build request payload from form state
         function buildPayload() {
             const payload = {
-                stage: $('stageSelect').value,
+                // Stage is always "demo" for this single-purpose tool.
+                stage: 'demo',
                 audience: $('audienceSelect').value,
                 output_format: $('outputFormatSelect').value,
                 visual_style: $('visualStyleSelect').value,
@@ -542,7 +589,10 @@ Example:
             show('loadingSection');
             hide('errorSection');
             hide('resultSection');
-            $('generateBtn').disabled = true;
+            const btn = $('generateBtn');
+            const originalLabel = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Generating…';
 
             try {
                 const payload = buildPayload();
@@ -574,7 +624,8 @@ Example:
                 showError(`Generation failed: ${extractErrorMessage(error)}`);
             } finally {
                 hide('loadingSection');
-                $('generateBtn').disabled = false;
+                btn.disabled = false;
+                btn.textContent = originalLabel;
             }
         }
 
@@ -591,7 +642,7 @@ Example:
                 a.href = item[urlKey];
                 a.target = '_blank';
                 a.rel = 'noopener';
-                a.className = 'text-blue-600 hover:text-blue-800 mr-3 hover:underline';
+                a.className = 'text-epiphan-indigo hover:text-epiphan-indigoBright mr-3 hover:underline';
                 a.textContent = item[textKey];
                 row.appendChild(a);
             });
@@ -631,11 +682,11 @@ Example:
                         a.rel = 'noopener';
                         a.className = key === 'request_demo'
                             ? 'text-epiphan-green font-semibold hover:underline mr-3'
-                            : 'text-blue-600 hover:text-blue-800 hover:underline mr-3';
+                            : 'text-epiphan-indigo hover:text-epiphan-indigoBright hover:underline mr-3';
                         a.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                         row.appendChild(a);
                         if (i < entries.length - 1) {
-                            row.appendChild(document.createTextNode(' \u00b7 '));
+                            row.appendChild(document.createTextNode(' · '));
                         }
                     });
                     collateralLinks.appendChild(row);
@@ -668,7 +719,7 @@ Example:
             win.document.title = 'Storyboard';
 
             const style = win.document.createElement('style');
-            style.textContent = 'body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f0f0f0}';
+            style.textContent = 'body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f1f2f0}';
             win.document.head.appendChild(style);
 
             const img = win.document.createElement('img');

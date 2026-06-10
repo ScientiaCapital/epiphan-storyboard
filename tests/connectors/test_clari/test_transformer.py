@@ -259,3 +259,37 @@ async def test_extract_knowledge_builds_full_context():
     assert "Alice, Bob" in context
     assert "60 minutes" in context
     assert "AE sales call transcript from Clari Copilot" in context
+
+
+class TestTranscriptToTextRobustness:
+    """transcript_to_text must never emit a bare 'None:' or blank turns."""
+
+    def test_falls_back_to_speaker_id_then_generic(self):
+        details = ClariCallDetails(
+            call=ClariCall(id="c1"),
+            transcript=[
+                ClariTranscriptEntry(
+                    speakerId="spk_1", speakerName=None, start=0.0, end=1.0,
+                    text="We had to duct-tape three boxes together.",
+                ),
+                ClariTranscriptEntry(
+                    speakerId="spk_2", speakerName="AV Director", start=1.0, end=2.0,
+                    text="Right, and it still drops frames.",
+                ),
+            ],
+        )
+        out = details.transcript_to_text()
+        assert "None:" not in out
+        assert "spk_1: We had to duct-tape" in out
+        assert "AV Director: Right" in out
+
+    def test_skips_empty_text_turns(self):
+        details = ClariCallDetails(
+            call=ClariCall(id="c2"),
+            transcript=[
+                ClariTranscriptEntry(speakerId="s", start=0.0, end=1.0, text="   "),
+                ClariTranscriptEntry(speakerId="s", start=1.0, end=2.0, text="Real line."),
+            ],
+        )
+        out = details.transcript_to_text()
+        assert out == "s: Real line."

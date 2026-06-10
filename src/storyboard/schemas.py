@@ -514,6 +514,14 @@ class MeetingRecapResponse(BaseModel):
         None,
         description="JTBD Opportunity Index (0-100) — how underserved is this prospect?",
     )
+    extraction_confidence: float | None = Field(
+        None,
+        description=(
+            "0-1 confidence of the two-pass extraction, when it ran. Surfaced "
+            "so a low-confidence recap can be flagged for review before a rep "
+            "acts on it. None when single-pass only."
+        ),
+    )
 
 
 # ── Phase 1.4: Vertical Workflow Surveys ─────────────────────────────────────

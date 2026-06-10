@@ -50,12 +50,19 @@ class ClariCallDetails(BaseModel):
 
         Returns:
             Formatted transcript as "Speaker Name: text\\n..." lines.
-            Uses speaker_name if available, falls back to speaker_id.
+            Uses speaker_name, falls back to speaker_id, then a generic
+            "Speaker" label — never emits a bare "None:" prefix. Utterances
+            with no text are skipped so blank turns don't pollute the prompt.
         """
         lines = []
         for entry in self.transcript:
-            speaker = entry.speaker_name if entry.speaker_name else entry.speaker_id
-            lines.append(f"{speaker}: {entry.text}")
+            text = (entry.text or "").strip()
+            if not text:
+                continue
+            speaker = (entry.speaker_name or "").strip() or (
+                entry.speaker_id or ""
+            ).strip() or "Speaker"
+            lines.append(f"{speaker}: {text}")
         return "\n".join(lines)
 
 

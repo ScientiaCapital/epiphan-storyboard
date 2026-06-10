@@ -346,3 +346,18 @@ class TestTwoPassNarrativeExtraction:
         assert "Return JSON" in prompt or "return json" in prompt.lower()
         assert narrative_marker in prompt  # narrative must be embedded verbatim
         assert "forces_of_progress" in prompt
+
+
+class TestTruncateWithMarker:
+    """The truncation marker must signal partial input to the model."""
+
+    def test_short_text_unchanged(self):
+        text = "short content"
+        assert prompt_builders._truncate_with_marker(text, 8000) == text
+
+    def test_long_text_gets_marker(self):
+        text = "x" * 9000
+        out = prompt_builders._truncate_with_marker(text, 8000)
+        assert out.startswith("x" * 8000)
+        assert "truncated at 8,000" in out
+        assert "partial" in out.lower()

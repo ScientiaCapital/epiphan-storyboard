@@ -27,6 +27,7 @@ env/
 .coverage
 htmlcov/
 .mypy_cache/
+.playwright-mcp/
 
 # Audit output (generated storyboard PNGs)
 audit_output/

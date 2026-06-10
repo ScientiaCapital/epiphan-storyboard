@@ -662,6 +662,9 @@ class TestErrorHandling:
         session = await agent_runner.run(request, org_id="test-org")
 
         assert session.status == SessionStatus.FAILED
+        # The failure reason must be captured, not silently swallowed.
+        assert session.error is not None
+        assert "API Error" in session.error
 
     @pytest.mark.asyncio
     async def test_run_persists_on_failure(self, agent_runner, mock_anthropic_client, mock_supabase):

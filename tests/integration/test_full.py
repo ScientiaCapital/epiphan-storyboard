@@ -46,6 +46,40 @@ skip_no_openrouter = pytest.mark.skipif(
 pytestmark = pytest.mark.integration
 
 
+def _skip_if_llm_unavailable(session) -> None:
+    """Skip when the live LLM call failed for credential/transport reasons.
+
+    These integration tests require *valid* API credentials. The skip guards
+    above only check that a key is present and long enough — a present-but-
+    invalid key (a stale ``.env`` value, an expired key) or a transient
+    provider outage would otherwise surface as a confusing logic failure.
+    Now that the runner captures ``session.error`` instead of swallowing it,
+    we can detect that case and skip cleanly, as the module docstring intends.
+    """
+    if session.status == SessionStatus.FAILED and session.error:
+        err = session.error.lower()
+        markers = (
+            "authentication",
+            "invalid x-api-key",
+            "401",
+            "403",
+            "permission",
+            "connection",
+            "timeout",
+            "unavailable",
+            "rate limit",
+            "429",
+            "overloaded",
+            "529",
+            # httpx raise_for_status phrasing for the OpenRouter path
+            "client error",
+            "server error",
+            "no auth credentials",
+        )
+        if any(m in err for m in markers):
+            pytest.skip(f"LLM unavailable for integration test: {session.error}")
+
+
 # ============================================================================
 # Test Tools
 # ============================================================================
@@ -204,6 +238,7 @@ class TestEndToEndSimple:
         )
 
         session = await runner.run(request, org_id="test-org")
+        _skip_if_llm_unavailable(session)
 
         assert session.status == SessionStatus.COMPLETED
         assert len(session.steps) >= 1
@@ -228,6 +263,7 @@ class TestEndToEndSimple:
         )
 
         session = await runner.run(request, org_id="test-org")
+        _skip_if_llm_unavailable(session)
 
         assert session.status == SessionStatus.COMPLETED
         assert len(session.steps) >= 1
@@ -267,6 +303,7 @@ class TestEndToEndWithTools:
         )
 
         session = await runner.run(request, org_id="test-org")
+        _skip_if_llm_unavailable(session)
 
         assert session.status == SessionStatus.COMPLETED
         # Should have at least one tool call step
@@ -300,6 +337,7 @@ class TestEndToEndWithTools:
         )
 
         session = await runner.run(request, org_id="test-org")
+        _skip_if_llm_unavailable(session)
 
         # Should complete (not fail) even if tool errors
         assert session.status == SessionStatus.COMPLETED
@@ -335,6 +373,7 @@ class TestPollingWorkflow:
 
         # Run and get completed session
         session = await runner.run(request, org_id="test-org")
+        _skip_if_llm_unavailable(session)
 
         # Verify lifecycle
         assert session.session_id is not None
@@ -377,6 +416,7 @@ class TestEdgeCases:
         )
 
         session = await runner.run(request, org_id="test-org")
+        _skip_if_llm_unavailable(session)
 
         # Should stop at max steps
         assert len(session.steps) <= 2
@@ -403,6 +443,7 @@ class TestEdgeCases:
         )
 
         session = await runner.run(request, org_id="test-org")
+        _skip_if_llm_unavailable(session)
 
         # Tokens should be tracked
         assert session.input_tokens > 0
@@ -445,6 +486,7 @@ class TestCostComparison:
             max_steps=1,
         )
         claude_session = await runner.run(claude_request, org_id="test-org")
+        _skip_if_llm_unavailable(claude_session)
 
         # Run with DeepSeek
         deepseek_request = AgentRunRequest(
@@ -453,6 +495,7 @@ class TestCostComparison:
             max_steps=1,
         )
         deepseek_session = await runner.run(deepseek_request, org_id="test-org")
+        _skip_if_llm_unavailable(deepseek_session)
 
         # DeepSeek should be significantly cheaper (at least 10x)
         # Note: Actual ratio depends on token counts and current pricing

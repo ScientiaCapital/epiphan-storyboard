@@ -572,6 +572,7 @@ async def generate_meeting_recap(
         detected_vertical=result.get("detected_vertical"),
         detected_persona=result.get("detected_persona"),
         odi_opportunity_score=result.get("odi_opportunity_score"),
+        extraction_confidence=result.get("extraction_confidence"),
     )
 
 

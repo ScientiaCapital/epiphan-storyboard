@@ -90,7 +90,18 @@ def _safe_parse_understanding(
     try:
         json_str = _repair_json(response_text.strip())
         data = json.loads(json_str)
-        return StoryboardUnderstanding(**data)
+        understanding = StoryboardUnderstanding(**data)
+        # A successful parse can still carry near-zero confidence (the model
+        # found little to work with). Don't let that pass silently — a BDR
+        # would otherwise ship a confidently-formatted but ungrounded asset.
+        if understanding.extraction_confidence < 0.1:
+            logger.warning(
+                "[UNDERSTAND] %s extraction parsed but confidence is %.2f "
+                "(<0.10) — output is likely ungrounded; flag for review.",
+                source,
+                understanding.extraction_confidence,
+            )
+        return understanding
     except json.JSONDecodeError as e:
         logger.error(f"[UNDERSTAND] Failed to parse {source} response: {e}")
         logger.error(
@@ -309,11 +320,11 @@ class GeminiStoryboardClient:
             self._client = genai.Client(api_key=self.config.api_key)
             self._initialized = True
             logger.info("[GEMINI] Client initialized successfully")
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "google-genai package not installed. "
                 "Install with: pip install google-genai"
-            )
+            ) from err
 
     async def _call_openrouter_with_retry(
         self,

@@ -127,6 +127,13 @@ class AgentSession(BaseModel):
         default_factory=lambda: datetime.now(UTC),
         description="Last update time",
     )
+    error: str | None = Field(
+        default=None,
+        description=(
+            "Failure reason when status is FAILED. None on success. "
+            "Captured so a failed run is diagnosable rather than silent."
+        ),
+    )
 
     @field_validator("org_id")
     @classmethod

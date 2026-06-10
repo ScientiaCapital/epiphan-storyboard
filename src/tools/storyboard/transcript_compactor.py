@@ -28,10 +28,13 @@ cheap to run on every request.
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import Final
 
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Public schema
@@ -285,7 +288,16 @@ def compact_transcript(
 
     turns = _segment_into_turns(text)
     if len(turns) <= 2:
-        # Can't segment meaningfully — fall back to truncation.
+        # Can't segment meaningfully (no speaker labels, no paragraph breaks)
+        # — fall back to truncation. Log it: the model is getting a plain
+        # head-slice of a long transcript, so the tail is being dropped.
+        logger.warning(
+            "[COMPACT] Transcript (%d chars) segmented into %d turn(s); "
+            "cannot compact extractively, falling back to head-slice "
+            "truncation — call tail will be dropped.",
+            original_len,
+            len(turns),
+        )
         return _truncate_fallback(text, target_chars, key_moments_chars)
 
     # Edge budget — always retain head + tail for context. Capped at a
@@ -346,6 +358,14 @@ def compact_transcript(
     # Threshold check — if we couldn't meaningfully reduce, fall back.
     achieved_ratio = len(full_context) / max(original_len, 1)
     if (1.0 - achieved_ratio) < fallback_threshold:
+        logger.warning(
+            "[COMPACT] Extractive pass reduced transcript by only %.0f%% "
+            "(<%.0f%% threshold); falling back to head-slice truncation. "
+            "Input is information-dense (%d chars).",
+            (1.0 - achieved_ratio) * 100,
+            fallback_threshold * 100,
+            original_len,
+        )
         return _truncate_fallback(text, target_chars, key_moments_chars)
 
     # Build key_moments from the top-scored turns across ALL selected

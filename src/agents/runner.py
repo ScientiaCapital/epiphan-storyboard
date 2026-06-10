@@ -13,6 +13,7 @@ Supports multiple LLM providers:
 from __future__ import annotations
 
 import json
+import logging
 import os
 from typing import Any
 
@@ -26,6 +27,8 @@ from src.agents.schemas import (
 from src.agents.state import StateManager
 from src.tools.base import ToolResult
 from src.tools.registry import ToolRegistry
+
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # Custom Exceptions
@@ -334,6 +337,11 @@ IMPORTANT:
             },
         )
 
+        # Surface HTTP errors clearly. Without this, a non-200 (e.g. a 401 from
+        # an invalid key) fell through to ``data["choices"]`` and raised a
+        # cryptic ``KeyError: 'choices'`` that hid the real cause.
+        response.raise_for_status()
+
         data = response.json()
         response_text = data["choices"][0]["message"]["content"]
         input_tokens = data["usage"]["prompt_tokens"]
@@ -457,9 +465,18 @@ IMPORTANT:
             await self._state_manager.update_session(session)
             await self._state_manager.persist_to_supabase(session)
 
-        except Exception:
-            # Mark failed
+        except Exception as exc:
+            # Mark failed — and CAPTURE why. A bare ``except Exception: pass``
+            # here used to discard the error entirely, leaving a FAILED session
+            # with no log line and no stored reason (undiagnosable in prod).
             session.status = SessionStatus.FAILED
+            session.error = f"{type(exc).__name__}: {exc}"
+            logger.exception(
+                "Agent run failed (session=%s, model=%s): %s",
+                session.session_id,
+                model,
+                exc,
+            )
             await self._state_manager.update_session(session)
             await self._state_manager.persist_to_supabase(session)
 

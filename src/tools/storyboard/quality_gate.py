@@ -66,6 +66,7 @@ def run_quality_gate(
     vertical: str | None = None,
     collateral_links: dict[str, Any] | None = None,
     email_draft: str | None = None,
+    transcript: str | None = None,
 ) -> QualityReport:
     """
     Run post-generation quality checks on storyboard output.
@@ -76,6 +77,8 @@ def run_quality_gate(
         vertical: Optional vertical
         collateral_links: Links to validate
         email_draft: Follow-up email to check for NSTTD compliance
+        transcript: Optional source transcript, used to verify the output is
+            grounded in what was actually said (frankenstack grounding).
 
     Returns:
         QualityReport with issues and pass/fail status
@@ -89,6 +92,7 @@ def run_quality_gate(
     _check_product_references(understanding, report)
     _check_no_personal_names(understanding, report)
     _check_conciseness(understanding, report)
+    _check_frankenstack_grounding(understanding, report, transcript=transcript)
 
     if collateral_links:
         _check_links(collateral_links, report)
@@ -294,6 +298,73 @@ def _check_product_references(understanding: dict, report: QualityReport) -> Non
                         message=f"Unknown product ID '{pid}' — not in EPIPHAN_PRODUCTS catalog",
                     )
                 )
+
+
+def _check_frankenstack_grounding(
+    understanding: dict,
+    report: QualityReport,
+    transcript: str | None = None,
+) -> None:
+    """Verify the frankenstack reflects the stack actually discussed.
+
+    A common failure mode: the call is full of workaround/pain language, but
+    the extracted ``frankenstack`` comes back empty or generic (no real vendor
+    named). That produces a recap that reads plausibly but isn't grounded in
+    what the prospect said. We reuse the same pain/vendor token lists the
+    transcript compactor scores on, so "what counts as signal" is defined once.
+    """
+    from src.tools.storyboard.transcript_compactor import (
+        _PAIN_PHRASES,
+        _VENDOR_TOKENS,
+    )
+
+    frank = str(
+        understanding.get("frankenstack")
+        or understanding.get("frankenstack_description")
+        or ""
+    ).strip()
+
+    # Source to scan for workaround signals: prefer the real transcript;
+    # otherwise fall back to the extracted pain/context fields.
+    if transcript:
+        source = transcript.lower()
+    else:
+        source = " ".join(
+            str(understanding.get(k, ""))
+            for k in ("raw_extracted_text", "pain_point_addressed", "forces_of_progress")
+        ).lower()
+
+    has_workaround_signal = any(p in source for p in _PAIN_PHRASES)
+    if not has_workaround_signal:
+        return  # No workaround signal to ground against — nothing to flag.
+
+    if not frank:
+        report.add_issue(
+            QualityIssue(
+                category="frankenstack",
+                severity="warning",
+                message=(
+                    "Call shows workaround/pain signals but frankenstack is "
+                    "empty — recap is not grounded in the stack discussed"
+                ),
+            )
+        )
+        return
+
+    names_vendor = any(
+        re.search(rf"\b{re.escape(v)}\b", frank.lower()) for v in _VENDOR_TOKENS
+    )
+    if not names_vendor:
+        report.add_issue(
+            QualityIssue(
+                category="frankenstack",
+                severity="info",
+                message=(
+                    "frankenstack names no specific vendor/product — may be "
+                    "generic rather than grounded in the call"
+                ),
+            )
+        )
 
 
 def _check_no_personal_names(understanding: dict, report: QualityReport) -> None:

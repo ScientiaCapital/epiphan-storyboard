@@ -35,6 +35,7 @@ from src.agents.schemas import (
     SessionStatus,
 )
 from src.agents.state import StateManager
+from src.brand.fonts import router as brand_router
 from src.demo.router import router as demo_router
 from src.knowledge.cache import KnowledgeCache
 from src.router.api import router as agent_router
@@ -85,6 +86,7 @@ app.include_router(demo_router)
 app.include_router(agent_router)
 app.include_router(connectors_router)
 app.include_router(demo_pipeline_router)
+app.include_router(brand_router)
 
 # Serve static files (demo web UI)
 app.mount("/static", StaticFiles(directory="static"), name="static")

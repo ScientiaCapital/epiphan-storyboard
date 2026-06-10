@@ -17,6 +17,21 @@ from src.tools.storyboard import prompts
 from src.tools.storyboard.problem_statements import get_problem_statements
 from src.tools.storyboard.transcript_compactor import compact_transcript
 
+
+def _truncate_with_marker(text: str, limit: int, *, unit: str = "chars") -> str:
+    """Slice ``text`` to ``limit`` chars, appending a visible marker when cut.
+
+    A bare ``text[:limit]`` slice can hand the model a code block that ends
+    mid-function or a transcript cut mid-sentence, with no signal that content
+    is missing — the model then treats the fragment as the whole. The marker
+    tells the model its input was truncated so it doesn't over-conclude from a
+    partial view.
+    """
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit]}\n\n[… input truncated at {limit:,} {unit}; content above is partial …]"
+
+
 # ── Knowledge-enriched builders ──────────────────────────────────────────────
 
 
@@ -417,7 +432,7 @@ REQUEST_ID: {request_id}
 
 CODE:
 ```
-{content[:8000]}
+{_truncate_with_marker(content, 8000)}
 ```
 
 TARGET AUDIENCE: {audience}
@@ -591,7 +606,7 @@ def _build_image_prompt(
 This text is a PRIMARY INPUT with EQUAL weight to the image below.
 Extract insights from THIS TEXT FIRST, then synthesize with the image.
 
-{supplementary_context[:16000]}
+{_truncate_with_marker(supplementary_context, 16000)}
 === END TEXT INPUT ===
 
 """
@@ -677,7 +692,7 @@ def _build_multi_image_prompt(
 This text is a PRIMARY INPUT with EQUAL weight to the images below.
 Extract insights from THIS TEXT FIRST, then synthesize with the images.
 
-{supplementary_context[:16000]}
+{_truncate_with_marker(supplementary_context, 16000)}
 === END TEXT INPUT ===
 
 """

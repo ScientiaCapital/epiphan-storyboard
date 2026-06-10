@@ -29,6 +29,7 @@ from src.tools.storyboard.prompt_builders import (
     build_schema_mapping_prompt,
 )
 from src.tools.storyboard.scenario_library import match_scenarios_by_phrases
+from src.tools.storyboard.transcript_compactor import compact_transcript
 
 logger = logging.getLogger(__name__)
 
@@ -58,11 +59,25 @@ def build_meeting_recap_prompt(
     # Build product context for recommendations
     product_context = _build_product_context()
 
+    # Extractive compaction in place of the old transcript[:50000] hard slice.
+    # A raw 50K slice silently dropped the tail of long calls — exactly where
+    # decisions, next steps, and budget/timeline signals tend to surface.
+    # compact_transcript keeps the head + tail and the highest-signal middle
+    # turns, and exposes key_moments so the model sees JTBD-rich content first.
+    compacted = compact_transcript(transcript, target_chars=24_000)
+    transcript_block = (
+        f"=== KEY MOMENTS (highest-signal turns first) ===\n"
+        f"{compacted.key_moments}\n\n"
+        f"=== FULL CALL (compaction_ratio={compacted.compaction_ratio:.2f}"
+        f"{', fallback_used' if compacted.fallback_used else ''}) ===\n"
+        f"{compacted.full_context}"
+    )
+
     return f"""You are a sales intelligence analyst. Analyze this call transcript and produce
 a structured meeting recap using JTBD, Challenger Sale, and NSTTD frameworks.
 
 CALL TRANSCRIPT:
-{transcript[:50000]}
+{transcript_block}
 
 TARGET PERSONA: {audience}
 PERSONA'S CORE JOB: "{job_statement}"
@@ -104,7 +119,7 @@ Return JSON:
         "fired_for": "Why it fails them",
         "workarounds": "Hacks they've assembled"
     }},
-    "summary": "3-5 bullet executive summary",
+    "summary": "Single STRING (not an array) of 3-5 bullets separated by newlines, each prefixed with '• '",
     "key_topics": ["topic1", "topic2", "topic3"],
     "participants": [{{"role": "AV Director"}}, {{"role": "IT Manager"}}],
     "frankenstack_description": "Their current messy setup — specific vendors/gear mentioned",
@@ -239,6 +254,19 @@ async def process_meeting_recap(
                 result["forces_of_progress"] = two_pass["forces_of_progress"]
             if two_pass.get("frankenstack"):
                 result["frankenstack_description"] = two_pass["frankenstack"]
+            # Surface the extraction confidence so a low-confidence recap can
+            # be flagged before a rep acts on it (rather than passing silently).
+            confidence = two_pass.get("extraction_confidence")
+            if confidence is not None:
+                result["extraction_confidence"] = confidence
+                if isinstance(confidence, int | float) and confidence < 0.1:
+                    logger.warning(
+                        "[MEETING-RECAP] Two-pass extraction confidence is "
+                        "%.2f (<0.10) — recap is likely ungrounded; flag for "
+                        "review (transcript=%d chars).",
+                        confidence,
+                        len(transcript),
+                    )
             result["two_pass_applied"] = True
             logger.info(
                 "[MEETING-RECAP] Two-pass augmentation applied "

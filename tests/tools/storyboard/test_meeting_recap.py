@@ -208,6 +208,9 @@ async def test_long_transcript_triggers_two_pass_overlay() -> None:
     assert result["job_statement"].startswith("When I walk into a courtroom")
     assert result["challenger_reframe"] == "Most courts believe..."
     assert result["follow_up_email"] == "Subject: Court IT recap"
+    # Two-pass extraction confidence is surfaced so a low-confidence recap
+    # can be flagged for review before a rep acts on it.
+    assert result["extraction_confidence"] == 0.9
 
 
 # ---------------------------------------------------------------------------

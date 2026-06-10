@@ -594,12 +594,20 @@ Example:
             btn.disabled = true;
             btn.textContent = 'Generating…';
 
+            // Generation runs several model calls and can take ~30-90s. Bound
+            // the wait with an AbortController so a slow/stalled request shows a
+            // clear message instead of hanging or surfacing an opaque
+            // "Failed to fetch" if the connection is dropped.
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 180000);
+
             try {
                 const payload = buildPayload();
                 const response = await fetch('/demo/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
                 });
 
                 if (!response.ok) {
@@ -621,8 +629,17 @@ Example:
                 displayResult(result);
 
             } catch (error) {
-                showError(`Generation failed: ${extractErrorMessage(error)}`);
+                if (error.name === 'AbortError') {
+                    showError('Generation timed out after 3 minutes. The model may be under heavy load — please try again.');
+                } else if (error instanceof TypeError) {
+                    // Network-level failure (e.g. connection dropped) surfaces
+                    // as "Failed to fetch" — give the user something actionable.
+                    showError('Could not reach the server (the request may have been too slow). Please try again in a moment.');
+                } else {
+                    showError(`Generation failed: ${extractErrorMessage(error)}`);
+                }
             } finally {
+                clearTimeout(timer);
                 hide('loadingSection');
                 btn.disabled = false;
                 btn.textContent = originalLabel;

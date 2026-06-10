@@ -317,7 +317,34 @@ class GeminiStoryboardClient:
         try:
             from google import genai
 
-            self._client = genai.Client(api_key=self.config.api_key)
+            # Bound every genai call (image generation can otherwise hang
+            # indefinitely with no timeout, blocking the request until the
+            # serverless function is killed → opaque "Failed to fetch").
+            # The timeout is in MILLISECONDS; kept under the 300s function
+            # limit. Applied defensively: if this SDK version doesn't accept
+            # http_options/HttpOptions(timeout=...), fall back to the plain
+            # client rather than break image generation entirely.
+            client_kwargs: dict[str, Any] = {"api_key": self.config.api_key}
+            try:
+                from google.genai import types as genai_types
+
+                client_kwargs["http_options"] = genai_types.HttpOptions(
+                    timeout=120_000
+                )
+            except Exception as exc:  # SDK too old / API changed — degrade gracefully
+                logger.warning(
+                    "[GEMINI] Could not set genai HTTP timeout (%s); "
+                    "using SDK default.",
+                    exc,
+                )
+
+            try:
+                self._client = genai.Client(**client_kwargs)
+            except TypeError:
+                # http_options kwarg unsupported on this SDK version — retry plain.
+                client_kwargs.pop("http_options", None)
+                self._client = genai.Client(**client_kwargs)
+
             self._initialized = True
             logger.info("[GEMINI] Client initialized successfully")
         except ImportError as err:

@@ -13,6 +13,10 @@
          last-resort fallback if the proxy upstream is unreachable. -->
     <link rel="stylesheet" href="/brand/fonts.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Rasterizes the brand storyboard card to PNG for download. -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
+            integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H"
+            crossorigin="anonymous"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -275,36 +279,58 @@ Example:
         <div id="errorSection" class="bg-[#eddfdd] text-[#7c414c] p-4 rounded-md border-l-4 border-[#7c414c] mt-5 hidden" role="alert"></div>
 
         <!-- Result -->
-        <div id="resultSection" class="bg-white rounded-lg p-6 border border-epiphan-line shadow-[0_10px_24px_rgba(0,0,0,0.10)] mt-5 hidden animate-fade-in">
-            <h2 class="text-xl font-semibold text-epiphan-tealDeep mb-4">Generated storyboard</h2>
-            <div class="mt-4">
-                <div class="text-center mb-5">
-                    <img id="resultImg" src="" alt="Generated storyboard" loading="lazy" class="max-w-full rounded-md shadow-[0_10px_24px_rgba(0,0,0,0.10)] mx-auto">
+        <div id="resultSection" class="hidden animate-fade-in mt-5">
+            <!-- PRIMARY deliverable: brand storyboard card. All text here is the
+                 LLM-extracted copy rendered as real Söhne type, so spelling is
+                 guaranteed correct (no AI-painted text). This is what downloads. -->
+            <div id="storyboardCard" class="bg-white rounded-lg border border-epiphan-line shadow-[0_10px_24px_rgba(0,0,0,0.10)] overflow-hidden">
+                <div class="p-8" style="background: radial-gradient(130% 130% at 0% 0%, #0d231f 0%, #0c3d34 55%, #316472 100%);">
+                    <p id="cardEyebrow" class="text-xs font-medium tracking-[0.08em] uppercase text-epiphan-greenBright mb-3">Epiphan storyboard</p>
+                    <h2 id="cardHeadline" class="text-3xl md:text-4xl font-semibold tracking-tight text-white leading-tight"></h2>
+                    <p id="cardTagline" class="text-lg text-white/80 mt-3"></p>
                 </div>
+                <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div><h3 class="eyebrow mb-1.5">What it does</h3><p id="cardWhat" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
+                    <div><h3 class="eyebrow mb-1.5">Business value</h3><p id="cardValue" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
+                    <div><h3 class="eyebrow mb-1.5">Who it is for</h3><p id="cardWho" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
+                    <div><h3 class="eyebrow mb-1.5">The differentiator</h3><p id="cardDiff" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
+                    <div class="md:col-span-2"><h3 class="eyebrow mb-1.5">Problem it solves</h3><p id="cardPain" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
+                </div>
+                <div class="px-8 py-4 border-t border-epiphan-line flex items-center justify-between">
+                    <span class="text-sm font-medium text-epiphan-tealDeep">Epiphan Video</span>
+                    <span class="text-xs text-epiphan-ink3">Broadcast without barriers.</span>
+                </div>
+            </div>
 
-                <div class="flex flex-wrap gap-3 mt-5">
-                    <button onclick="downloadImage()" aria-label="Download storyboard as PNG"
-                        class="flex-1 min-w-[180px] px-6 py-3 text-sm font-semibold text-white bg-epiphan-indigo rounded-md
-                               hover:bg-epiphan-indigoBright hover:-translate-y-0.5
-                               transition-all">
-                        Download PNG
+            <div class="flex flex-wrap gap-3 mt-5">
+                <button onclick="downloadCard()" aria-label="Download storyboard as PNG"
+                    class="flex-1 min-w-[180px] px-6 py-3 text-sm font-semibold text-white bg-epiphan-indigo rounded-md
+                           hover:bg-epiphan-indigoBright hover:-translate-y-0.5 transition-all">
+                    Download PNG
+                </button>
+                <button onclick="toggleAiVisual()" aria-label="Show the AI-generated visual"
+                    class="px-6 py-3 text-sm font-semibold text-epiphan-tealDeep bg-white border border-epiphan-line rounded-md
+                           hover:border-epiphan-indigo hover:text-epiphan-indigo transition-all">
+                    View AI visual
+                </button>
+            </div>
+
+            <!-- SECONDARY: the raw AI image. Its text can be garbled (image models
+                 paint text), so it is reference-only behind a toggle. -->
+            <div id="aiVisualSection" class="mt-5 hidden">
+                <p class="text-xs text-epiphan-ink3 mb-2">AI-generated visual — reference only. The card above is the accurate version; image text can contain spelling errors.</p>
+                <img id="resultImg" src="" alt="AI-generated visual" loading="lazy" class="max-w-full rounded-md border border-epiphan-line mx-auto">
+                <div class="mt-3">
+                    <button onclick="openInNewTab()" aria-label="Open the AI visual in a new tab"
+                        class="px-5 py-2 text-sm font-medium text-epiphan-tealDeep bg-white border border-epiphan-line rounded-md hover:border-epiphan-indigo hover:text-epiphan-indigo transition-all">
+                        Open visual in new tab
                     </button>
-                    <button onclick="openInNewTab()" aria-label="Open storyboard in a new tab"
-                        class="px-6 py-3 text-sm font-semibold text-epiphan-tealDeep bg-white border border-epiphan-line rounded-md
-                               hover:border-epiphan-indigo hover:text-epiphan-indigo transition-all">
-                        Open in new tab
-                    </button>
                 </div>
+            </div>
 
-                <div id="insightsSection" class="mt-5 p-4 bg-epiphan-surface rounded-md border-l-4 border-epiphan-green hidden">
-                    <h3 class="text-epiphan-tealDeep font-semibold mb-2">Understanding insights</h3>
-                    <p id="insightsText" class="text-epiphan-ink3 leading-relaxed text-sm"></p>
-                </div>
-
-                <div id="collateralSection" class="mt-4 p-4 bg-epiphan-surface rounded-md border-l-4 border-epiphan-green hidden">
-                    <h3 class="text-epiphan-tealDeep font-semibold mb-2">Share with prospect</h3>
-                    <div id="collateralLinks" class="text-sm"></div>
-                </div>
+            <div id="collateralSection" class="mt-5 p-4 bg-epiphan-surface rounded-md border-l-4 border-epiphan-green hidden">
+                <h3 class="text-epiphan-tealDeep font-semibold mb-2">Share with prospect</h3>
+                <div id="collateralLinks" class="text-sm"></div>
             </div>
         </div>
 
@@ -689,16 +715,40 @@ Example:
             container.appendChild(row);
         }
 
-        // Display result (safe DOM construction throughout)
-        function displayResult(result) {
-            resultImageBase64 = result.storyboard_png;
-            $('resultImg').src = 'data:image/png;base64,' + resultImageBase64;
-            show('resultSection');
+        // Human-readable label for the currently selected dropdown option,
+        // with the leading emoji stripped (the value text after the first space).
+        function selectedLabel(id) {
+            const sel = $(id);
+            const opt = sel && sel.selectedOptions && sel.selectedOptions[0];
+            if (!opt) return '';
+            // Labels look like "🎬 AV Director" — drop the emoji prefix.
+            return opt.textContent.trim().replace(/^\S+\s+/, '').trim();
+        }
 
-            if (result.understanding) {
-                $('insightsText').textContent = result.understanding;
-                show('insightsSection');
+        // Display result. The brand card is populated from the LLM-extracted
+        // `understanding` (real typeset text → spelling is correct). The raw AI
+        // image is kept behind a toggle because its painted text can be garbled.
+        function displayResult(result) {
+            resultImageBase64 = result.storyboard_png || null;
+            if (resultImageBase64) {
+                $('resultImg').src = 'data:image/png;base64,' + resultImageBase64;
             }
+            $('aiVisualSection').classList.add('hidden'); // collapsed by default
+
+            const u = result.understanding || {};
+            const persona = selectedLabel('audienceSelect');
+            const vertical = selectedLabel('verticalSelect');
+            const eyebrow = [persona, vertical].filter(Boolean).join(' · ') || 'Epiphan storyboard';
+            $('cardEyebrow').textContent = eyebrow;
+            $('cardHeadline').textContent = u.headline || 'Epiphan storyboard';
+            $('cardTagline').textContent = u.tagline || '';
+            $('cardWhat').textContent = u.what_it_does || '—';
+            $('cardValue').textContent = u.business_value || '—';
+            $('cardWho').textContent = u.who_benefits || '—';
+            $('cardDiff').textContent = u.differentiator || '—';
+            $('cardPain').textContent = u.pain_point_addressed || '—';
+
+            show('resultSection');
 
             if (result.collateral_links) {
                 const collateralLinks = $('collateralLinks');
@@ -740,13 +790,39 @@ Example:
             $('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        // Download image
-        function downloadImage() {
-            if (!resultImageBase64) return;
-            const link = document.createElement('a');
-            link.href = 'data:image/png;base64,' + resultImageBase64;
-            link.download = `storyboard-${Date.now()}.png`;
-            link.click();
+        // Toggle the reference-only AI visual.
+        function toggleAiVisual() {
+            const sec = $('aiVisualSection');
+            sec.classList.toggle('hidden');
+            if (!sec.classList.contains('hidden')) {
+                sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Download the brand card (with correct text) as a PNG via html2canvas.
+        // Rasterizes the DOM card — text stays crisp and correctly spelled.
+        async function downloadCard() {
+            const card = $('storyboardCard');
+            if (!card || typeof html2canvas === 'undefined') {
+                // Fallback: if html2canvas didn't load, download the AI image.
+                if (resultImageBase64) {
+                    const link = document.createElement('a');
+                    link.href = 'data:image/png;base64,' + resultImageBase64;
+                    link.download = `storyboard-${Date.now()}.png`;
+                    link.click();
+                }
+                return;
+            }
+            try {
+                await (document.fonts && document.fonts.ready);
+                const canvas = await html2canvas(card, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = `storyboard-${Date.now()}.png`;
+                link.click();
+            } catch (e) {
+                showError('Could not export the PNG. Try the "View AI visual" option to save the image instead.');
+            }
         }
 
         // Open in new tab (safe DOM construction via createElement)

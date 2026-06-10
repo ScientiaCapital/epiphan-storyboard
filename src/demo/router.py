@@ -371,6 +371,22 @@ async def generate_storyboard(
     has_code = request.code and request.code.strip()
     supplementary_context = None  # Text context to combine with image
 
+    # Demo guardrail: cap text input below the two-pass extraction threshold
+    # (10K chars). The two-pass narrative+schema path on a long transcript adds
+    # 2-3 extra model calls and a large memory footprint, which pushes
+    # /demo/generate past Vercel's default 60s / 1GB function limits and causes
+    # an opaque 500/timeout. The demo is a quick visual; full-transcript
+    # analysis belongs to POST /storyboard/meeting-recap.
+    DEMO_MAX_TEXT_CHARS = 9000
+    if request.code and len(request.code) > DEMO_MAX_TEXT_CHARS:
+        logger.info(
+            "[DEMO] Capping text input %d -> %d chars to stay within "
+            "serverless limits",
+            len(request.code),
+            DEMO_MAX_TEXT_CHARS,
+        )
+        request.code = request.code[:DEMO_MAX_TEXT_CHARS]
+
     if input_type is None:
         if image_count > 0 and has_code:
             # MIXED INPUT: Image + text/code together

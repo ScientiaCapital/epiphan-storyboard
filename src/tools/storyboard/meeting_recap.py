@@ -190,6 +190,7 @@ async def process_meeting_recap(
     from src.tools.storyboard.gemini_client import (
         GeminiStoryboardClient,
         _repair_json,
+        should_run_two_pass,
     )
 
     # Build the prompt
@@ -231,10 +232,7 @@ async def process_meeting_recap(
     # The other 15 keys (job_statement, challenger_reframe, follow_up_email,
     # etc.) come from the single-pass and are left untouched — that is the
     # contract MeetingRecapResponse depends on.
-    if (
-        client.config.enable_two_pass_extraction
-        and len(transcript) >= client.config.two_pass_threshold_chars
-    ):
+    if should_run_two_pass(transcript, client.config):
         try:
             narrative_prompt = build_narrative_extraction_prompt(
                 transcript=transcript,

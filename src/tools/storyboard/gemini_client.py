@@ -264,6 +264,28 @@ class GeminiConfig:
             ).strip() or None
 
 
+def should_run_two_pass(
+    content: str | None,
+    config: GeminiConfig,
+    *,
+    extraction_confidence: float | None = None,
+) -> bool:
+    """Single source of truth for the two-pass extraction trigger (DA-A3).
+
+    Fires when two-pass is enabled AND the content is long enough to benefit
+    from un-coupling narrative from schema, OR (when a confidence is supplied)
+    the single-pass extraction came back below the refinement threshold.
+    """
+    if not config.enable_two_pass_extraction:
+        return False
+    if len(content or "") >= config.two_pass_threshold_chars:
+        return True
+    return (
+        extraction_confidence is not None
+        and extraction_confidence < config.refinement_threshold
+    )
+
+
 class GeminiStoryboardClient:
     """
     Client for Gemini Vision + Image Generation.
@@ -328,9 +350,7 @@ class GeminiStoryboardClient:
             try:
                 from google.genai import types as genai_types
 
-                client_kwargs["http_options"] = genai_types.HttpOptions(
-                    timeout=120_000
-                )
+                client_kwargs["http_options"] = genai_types.HttpOptions(timeout=120_000)
             except Exception as exc:  # SDK too old / API changed — degrade gracefully
                 logger.warning(
                     "[GEMINI] Could not set genai HTTP timeout (%s); "
@@ -909,28 +929,12 @@ Return ONLY valid JSON matching this exact structure:
                             images_data=images_data,
                         )
             else:
-                # Text path: DeepSeek or Gemini text
-                if self.config.text_provider == "deepseek":
-                    logger.info(
-                        f"[UNDERSTAND] Using DeepSeek ({self.config.deepseek_model}) for {source_label} understanding"
-                    )
-                    response_text = await self._call_deepseek(prompt)
-                elif self._has_google_api_key:
-                    self._ensure_client()
-                    logger.info(
-                        f"[UNDERSTAND] Using Gemini ({self.config.gemini_vision_model}) for {source_label} understanding"
-                    )
-                    response = self._client.models.generate_content(
-                        model=self.config.gemini_vision_model,
-                        contents=prompt,
-                    )
-                    response_text = response.text
-                else:
-                    # Fall back to DeepSeek via OpenRouter when no Google key
-                    logger.info(
-                        f"[UNDERSTAND] Falling back to DeepSeek for {source_label} (no Google key)"
-                    )
-                    response_text = await self._call_deepseek(prompt)
+                # Text path: routed through the shared dispatcher (DA-A3)
+                logger.info(
+                    f"[UNDERSTAND] Dispatching {source_label} understanding via "
+                    f"{self.config.text_provider} text path"
+                )
+                response_text = await self._call_text_model(prompt)
 
             # Parse with safe fallback (consistent for all content types)
             initial_result = _safe_parse_understanding(
@@ -956,14 +960,10 @@ Return ONLY valid JSON matching this exact structure:
             # single-pass came back with low confidence. When two-pass fires,
             # it REPLACES the existing _refine_extraction stage (two-pass IS the
             # refinement — running both would burn cost without quality gain).
-            if (
-                self.config.enable_two_pass_extraction
-                and content_type == "transcript"
-                and (
-                    len(content or "") >= self.config.two_pass_threshold_chars
-                    or initial_result.extraction_confidence
-                    < self.config.refinement_threshold
-                )
+            if content_type == "transcript" and should_run_two_pass(
+                content,
+                self.config,
+                extraction_confidence=initial_result.extraction_confidence,
             ):
                 logger.info(
                     "[UNDERSTAND] Routing transcript through two-pass extraction "

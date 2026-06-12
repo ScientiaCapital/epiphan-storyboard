@@ -1128,3 +1128,52 @@ class TestUnderstandRoutesToTwoPass:
 
         assert mock_genai_client.models.generate_content.call_count == 1
         assert result.forces_of_progress is None
+
+
+class TestShouldRunTwoPass:
+    """DA-A3: single source of truth for the two-pass extraction trigger."""
+
+    def test_long_content_triggers(self):
+        from src.tools.storyboard.gemini_client import should_run_two_pass
+
+        config = GeminiConfig(api_key="test-key")
+        assert should_run_two_pass("x" * config.two_pass_threshold_chars, config)
+
+    def test_short_content_does_not_trigger(self):
+        from src.tools.storyboard.gemini_client import should_run_two_pass
+
+        config = GeminiConfig(api_key="test-key")
+        assert not should_run_two_pass("short transcript", config)
+
+    def test_disabled_flag_wins_even_for_long_content(self):
+        from src.tools.storyboard.gemini_client import should_run_two_pass
+
+        config = GeminiConfig(api_key="test-key", enable_two_pass_extraction=False)
+        assert not should_run_two_pass("x" * 50_000, config)
+
+    def test_low_confidence_triggers_for_short_content(self):
+        from src.tools.storyboard.gemini_client import should_run_two_pass
+
+        config = GeminiConfig(api_key="test-key")
+        assert should_run_two_pass(
+            "short", config, extraction_confidence=config.refinement_threshold - 0.01
+        )
+
+    def test_high_confidence_short_content_does_not_trigger(self):
+        from src.tools.storyboard.gemini_client import should_run_two_pass
+
+        config = GeminiConfig(api_key="test-key")
+        assert not should_run_two_pass("short", config, extraction_confidence=0.99)
+
+    def test_none_content_is_safe(self):
+        from src.tools.storyboard.gemini_client import should_run_two_pass
+
+        config = GeminiConfig(api_key="test-key")
+        assert not should_run_two_pass(None, config)
+
+    def test_demo_text_cap_stays_below_two_pass_threshold(self):
+        """The demo input cap must derive from config, not restate it (DA-A3)."""
+        from src.demo.router import DEMO_MAX_TEXT_CHARS
+
+        config = GeminiConfig(api_key="test-key")
+        assert DEMO_MAX_TEXT_CHARS < config.two_pass_threshold_chars

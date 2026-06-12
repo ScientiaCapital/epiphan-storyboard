@@ -1,12 +1,30 @@
 # Project Context: epiphan-storyboard
 
-**Updated:** 2026-06-12 (/begin state-sync catch-up — previous update 2026-05-08)
-**Branch:** main @ 177b539 (clean, in sync with origin/main)
+**Updated:** 2026-06-12 (end of day — locked via /end workflow)
+**Branch:** main @ 6dc3a32 (clean, pushed; stale feature branch deleted)
 **Tags:** v1.3-meeting-recap-unblock · v1.2-two-pass-extraction · v1.1-leverage-day · v1.0-bdr-workflow (all pushed to origin)
-**Production:** https://epiphan-storyboard.vercel.app — live; demo re-skinned with brand storyboard card (2026-06-10 deploy)
+**Production:** https://epiphan-storyboard.vercel.app — debt-paydown sprint live + smoke-verified (deployed 2026-06-12)
 **Tech Stack:** Python 3.11+, FastAPI, Pydantic v2, Vercel serverless
 
-> 📌 **Current sprint (2026-06-12, approved):** fonts.py hardening (audit CRITICAL) → DA-A3 ×3 (`_should_two_pass` + derive demo 9K cap from config) → DA-R1.1.a (`two_pass_applied` on response) → verify vercel maxDuration plan-gating → stretch SSOT label sync. Est ~2 hr, ~$6–8. Details in `.claude/TASK.md`.
+> 📌 **Tomorrow:** `DA-R2 + DA-A2` (~1.5 hr, ~$5) — DA-R2 is the only medium-impact open item (Phase-2 verticals silently degrade with no UI/log signal); DA-A2 migrates demo dropdowns to fetch `/demo/options`, killing the last drift surface. Stack DA-A1 if energy is high. TDD → observer signoff → single deploy + smoke. | **Observer notes:** 0 blockers; top unresolved flags are DA-B2 (html2canvas may blank card-header gradient in PNG downloads — needs 15-min manual repro) and the **budget config question** ($87.43 day vs $15 cap, $453.66 MTD vs $100/mo — decide whether caps are stale or spend needs reining in).
+
+---
+
+## 2026-06-12 (EOD) — Debt-paydown sprint: all 6 tasks shipped + security gate fully clean
+
+8 commits (`a1df5d0` → `6dc3a32`), all pushed and deployed. Tests 1,548 → **1,574** (+26). Mypy **−1** (373→372). Gitleaks: **"no leaks found"** for the first time (historical placeholder pinned in `.gitleaksignore`).
+
+| Shipped | Commit |
+|---|---|
+| Retroactive observer audit of the un-closed 06-10 session (1C/3W/2I + 0B/3R/5S, all dispositioned) | `a1df5d0` |
+| fonts.py hardening: status-vs-network 502 granularity + per-key asyncio.Lock + 8 tests (was zero coverage) — cleared the CRITICAL | `3187555` |
+| DA-A3 ×3: `should_run_two_pass()` SSOT, demo cap derived from config (was hardcoded 9000), `_understand` text dispatch collapsed into `_call_text_model` | `8d74e24` |
+| DA-R1.1.a: `two_pass_applied` first-class on `MeetingRecapResponse` | `92ff4c8` |
+| DA-A4: SSOT emoji/label sync (🖼️ 🖌️ 📋) | `6544dd7` |
+| Vercel truth: verified via API — plan=Pro, `timeout: 300` IS applied (audit's plan-gating RISK was wrong), memory 1769 rounds to 2048 → config now says 2048 | `7137314` |
+| EOD lockdown: observer archive, doc sync, `.gitleaksignore`, stale branch deleted | `429a167`, `6dc3a32` |
+
+**Key facts for future sessions:** memory file `vercel-pro-function-limits.md` records the verified Pro-plan limits and the applied-config API check (`/v11/deployments/{id}/builds`); installed Vercel CLI 50.4.11 lacks `vercel api` — upgrade recommended. Two-pass threshold logic now lives ONLY in `should_run_two_pass` (gemini_client.py) — never restate the trigger.
 
 ---
 

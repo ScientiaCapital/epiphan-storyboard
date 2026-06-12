@@ -1,8 +1,25 @@
 # Active Tasks
 
-**Updated:** 2026-05-08 (end of day)
+**Updated:** 2026-06-12 (/begin — state sync catch-up)
 
-## Completed today (2026-05-08)
+## Today's sprint (2026-06-12, approved)
+
+1. ✅ State sync catch-up: observer audit of the un-closed 2026-06-10 session written to QUALITY.md/ARCH.md; docs refreshed; metrics ledger corrected
+2. ⬜ fonts.py hardening: narrow exception + asyncio.Lock + `tests/brand/test_fonts.py` (clears audit CRITICAL)
+3. ⬜ DA-A3 (expanded ×3): `_should_two_pass` helper; derive demo 9K cap from `GeminiConfig.two_pass_threshold_chars`
+4. ⬜ DA-R1.1.a: `two_pass_applied: bool = False` on `MeetingRecapResponse`
+5. ⬜ Verify vercel.json maxDuration plan-gating + memory 1769→2048 rounding; single deploy + smoke
+6. ⬜ (stretch) SSOT emoji/label sync in `_dropdowns.py`
+
+## Completed 2026-06-10 (session never closed via /end — reconstructed 2026-06-12)
+
+- ✅ Demo brand re-skin + brand storyboard card with overlay text (commits `c5a4cb1`, `177b539`)
+- ✅ /demo/generate timeout mitigation: vercel maxDuration 300 + live progress UI + 9K input cap (`23386f0`, `18e05ca`, `9236f4c`)
+- ✅ Söhne font same-origin proxy `src/brand/fonts.py` (CORS workaround)
+- ✅ meeting_recap: transcript compaction wired + low-confidence surfacing (inside `c5a4cb1`)
+- ⚠️ Observer audit was skipped that day — run retroactively 2026-06-12: 1C/3W/2I quality, 0 blockers/3 risks/5 smells arch. See `.claude/observers/`.
+
+## Completed 2026-05-08 (end of day)
 
 - ✅ Fix A: SSOT for demo dropdowns — kills schema-drift bug class (commit `cc17762`)
 - ✅ Fix B: End-to-end grounding integration test + 3 fixtures (commit `08e7344`)

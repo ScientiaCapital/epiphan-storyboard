@@ -9,7 +9,32 @@
 
 ## Tech Debt / Architecture
 
-- **DA-A3: Consolidate text-path dispatch into `_call_text_model`** (effort: 30 min, impact: low — code dedup) **[UPDATED 2026-05-09]**
+- **DA-B1: fonts.py — degrade gracefully instead of 502 on upstream failure** (effort: 15 min, impact: low — ops hygiene) **[NEW 2026-06-12]**
+  - `src/brand/fonts.py` raises `HTTPException(502)` when chat.epiphan.com is unreachable. Browser falls back to system fonts fine, but the 5xx pollutes Vercel error metrics and may trigger CDN retries. Consider 200 empty-body with `font/otf` content-type, or a long-cached last-known-good response.
+  - Source: 2026-06-12 arch audit (smell).
+
+- **DA-B2: downloadCard() html2canvas may blank the teal gradient header** (effort: needs repro first, impact: medium if real — broken PNG exports) **[NEW 2026-06-12]**
+  - `static/demo.html` uses `html2canvas(card, { scale: 2, useCORS: true })`; inline-styled gradient + foreignObject rendering is known-flaky with cross-origin stylesheets (Tailwind CDN). Downloaded PNGs may render the header area white while text sections survive. Manually repro before fixing.
+  - Source: 2026-06-12 arch audit (smell).
+
+- **DA-A4: SSOT emoji/label drift in `_dropdowns.py`** (effort: 5 min, impact: cosmetic) **[NEW 2026-06-12 — stretch task today]**
+  - demo.html changed diego_rivera 🎺→🖼️, siqueiros ⚡→🖌️, and `Infograph 📐`→`Infographic 📋` without updating `OUTPUT_FORMAT_OPTIONS`/`ARTIST_STYLE_OPTIONS`. Parity test checks values only, so no functional break. Sync the SSOT and consider extending the parity test to labels/emoji.
+  - Source: 2026-06-12 arch audit (smells ×2, merged).
+
+- **DA-V1: Integration test documenting the maxDuration ↔ 9K-cap coupling** (effort: 30 min, impact: low until someone raises the cap) **[NEW 2026-06-12]**
+  - vercel.json `maxDuration: 300` and the demo 9K input cap jointly prevent /demo/generate timeouts, but nothing tests or documents the coupling. If the cap is raised without revisiting the function limit, timeouts return silently. Blocks on DA-A3 (cap derivation) landing first.
+  - Source: 2026-06-12 quality audit (info).
+
+- **DA-Q1: Structured error codes on `AgentSession`** (effort: 1 hr, impact: medium — test reliability) **[NEW 2026-06-12]**
+  - `tests/integration/test_full.py:49-80` `_skip_if_llm_unavailable()` string-matches `session.error` for "authentication"/"timeout"/"429" — brittle to provider phrasing changes. Add an error-code enum (AUTH_ERROR, RATE_LIMIT, TIMEOUT, …) populated in `runner.py` where the exception is caught.
+  - Source: 2026-06-12 quality audit (info).
+
+- **DA-Q2: `.strip()` sweep on remaining `os.getenv()` callsites** (effort: 10 min, impact: low — known footgun class) **[NEW 2026-06-12]**
+  - `src/api.py:109-111` and `src/storyboard/router.py:56-58` pass raw env values to StateManager without `.strip()`, violating the project rule born from the 2026-02-19 trailing-newline incident. Pre-existing, not from the 06-10 session. Bundle with the next touch of either file.
+  - Source: 2026-06-12 quality audit (warning).
+
+- **DA-A3: Consolidate text-path dispatch into `_call_text_model`** (effort: 45 min, impact: medium — now 3 copies) **[UPDATED 2026-06-12 — in today's sprint]**
+  - **Updated by 2026-06-12 audit**: a THIRD copy of the threshold concept landed in commit `9236f4c` — `src/demo/router.py` hardcodes `DEMO_MAX_TEXT_CHARS = 9000` ("below the two-pass threshold") inside the handler. If `two_pass_threshold_chars` is tuned in config, the demo cap silently diverges. Fix alongside the helper: derive the demo cap from `GeminiConfig.two_pass_threshold_chars` (threshold − margin).
   - DA-R1 added `_call_text_model` (`src/tools/storyboard/gemini_client.py:758-772`) but did not refactor the inline text-path dispatch in `_understand` (lines 853-878). The two now mirror each other. When somebody adds a new text provider (e.g. Qwen-text, Claude-via-OpenRouter), they'll need to update both sites — easy to miss.
   - **Updated by DA-R1.1 audit (2026-05-09)**: a SECOND duplicate of the same trigger condition (`enable_two_pass_extraction AND len(content) >= threshold`) now lives in `meeting_recap.py:182-185`. Same risk class. Roll into a single `_should_two_pass(content, config)` helper when consolidating.
   - Fix: refactor `_understand`'s text branch to call `_call_text_model(prompt)` instead of the inline if/elif AND extract the trigger condition into `_should_two_pass`. Verify all tests still pass; mypy delta zero.

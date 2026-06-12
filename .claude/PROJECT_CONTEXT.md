@@ -1,14 +1,29 @@
 # Project Context: epiphan-storyboard
 
-**Generated:** 2026-05-08 (Fri, end-of-day — locked via /end workflow)
-**Branch:** main @ 89d021d (clean — pushed, working tree empty, feature branch cleaned)
+**Updated:** 2026-06-12 (/begin state-sync catch-up — previous update 2026-05-08)
+**Branch:** main @ 177b539 (clean, in sync with origin/main)
 **Tags:** v1.3-meeting-recap-unblock · v1.2-two-pass-extraction · v1.1-leverage-day · v1.0-bdr-workflow (all pushed to origin)
-**Production:** https://epiphan-storyboard.vercel.app — 4 releases live + smoke-verified, including the now-unbroken `POST /storyboard/meeting-recap`
+**Production:** https://epiphan-storyboard.vercel.app — live; demo re-skinned with brand storyboard card (2026-06-10 deploy)
 **Tech Stack:** Python 3.11+, FastAPI, Pydantic v2, Vercel serverless
 
-> 📌 **Tomorrow:** `DA-R1.1.a + DA-A3` paired sprint via `feature-dev` workflow (Builder + Observer, lightweight) | Est: 40 min, ~$5 | Top unresolved: `_should_two_pass(content, config)` helper (consolidates trigger duplication across 2 callsites). See `.claude/TASK.md` and `Backlog.md` for the full ranked list. If energy is high, stack `DA-S3` (Vertical-aware Frankenstack blocks, +1 hr).
+> 📌 **Current sprint (2026-06-12, approved):** fonts.py hardening (audit CRITICAL) → DA-A3 ×3 (`_should_two_pass` + derive demo 9K cap from config) → DA-R1.1.a (`two_pass_applied` on response) → verify vercel maxDuration plan-gating → stretch SSOT label sync. Est ~2 hr, ~$6–8. Details in `.claude/TASK.md`.
 
-> 🛈 **Date-label note:** internal section headers below say "2026-05-09" — these are writer-error labels added during the late session today (2026-05-08). Git log + archive filenames + tags carry the correct date. All today's work shipped on **2026-05-08**.
+---
+
+## 2026-06-12 — /begin catch-up: retroactive audit of the 2026-06-10 session
+
+The 2026-06-10 session (5 commits, `c5a4cb1` → `177b539`) shipped a demo brand re-skin, the brand storyboard card with overlay text, /demo/generate timeout mitigations (vercel `maxDuration: 300`, live progress UI, 9K input cap), the Söhne font same-origin proxy (`src/brand/fonts.py`), and wired transcript compaction into `meeting_recap.py` — but **skipped /end**: no observer audit, stale docs, and a miscounted metrics entry.
+
+Today's /begin ran the audit retroactively over `HEAD~5..HEAD`:
+
+| Report | Result |
+|---|---|
+| Quality (haiku) | 1 CRITICAL (`fonts.py` broad except masks auth-vs-network) · 3 WARNINGS (`os.getenv` strip rule, fonts.py zero tests, inline 9000 magic number) · 2 INFO |
+| Architecture (sonnet) | 0 BLOCKERS · 3 RISKS (third copy of two-pass threshold in demo router; vercel maxDuration plan-gating + memory 1769→2048 rounding; fonts.py cache race) · 5 SMELLS |
+
+All findings dispositioned in `.claude/observers/QUALITY.md` / `ARCH.md` — fix-now items became today's sprint tasks 2/3/5/6; the rest logged to Backlog (DA-V1, DA-Q1, DA-B1, DA-B2, DA-A4).
+
+**Devil's advocate notes:** the fonts.py CRITICAL is arguably WARNING-grade (error is logged + 502 returned, nothing swallowed). The vercel `maxDuration: 300` may be a silent no-op depending on plan — the timeout "fix" may only appear fixed because the 9K cap independently keeps generations short; verify before trusting. Budget tracker shows $57.87 today / $424 MTD vs $15-day/$100-mo caps — config likely stale, flagged for Tim.
 
 ---
 

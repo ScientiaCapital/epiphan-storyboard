@@ -206,7 +206,7 @@ VERTICAL_OPTIONS: list[Option] = [
 
 
 OUTPUT_FORMAT_OPTIONS: list[Option] = [
-    Option(OutputFormat.INFOGRAPHIC.value, "Infograph", "📐"),
+    Option(OutputFormat.INFOGRAPHIC.value, "Infographic", "📋"),
     Option(OutputFormat.STORYBOARD.value, "Storyboard", "📱"),
 ]
 
@@ -228,13 +228,13 @@ ARTIST_STYLE_OPTIONS: list[Option] = [
     Option(ArtistStyle.NONE.value, "None", "🎨"),
     Option(ArtistStyle.SALVADOR_DALI.value, "Dali", "🕐"),
     Option(ArtistStyle.MONET.value, "Monet", "🌸"),
-    Option(ArtistStyle.DIEGO_RIVERA.value, "Rivera", "🎺"),
+    Option(ArtistStyle.DIEGO_RIVERA.value, "Rivera", "🖼️"),
     Option(ArtistStyle.WARHOL.value, "Warhol", "🎯"),
     Option(ArtistStyle.VAN_GOGH.value, "Van Gogh", "🌻"),
     Option(ArtistStyle.PICASSO.value, "Picasso", "🔺"),
     Option(ArtistStyle.GIGER.value, "Giger", "🦾"),
     Option(ArtistStyle.FRIDA_KAHLO.value, "Frida Kahlo", "🌺"),
-    Option(ArtistStyle.SIQUEIROS.value, "Siqueiros", "⚡"),
+    Option(ArtistStyle.SIQUEIROS.value, "Siqueiros", "🖌️"),
 ]
 
 

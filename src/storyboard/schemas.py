@@ -522,6 +522,15 @@ class MeetingRecapResponse(BaseModel):
             "acts on it. None when single-pass only."
         ),
     )
+    two_pass_applied: bool = Field(
+        False,
+        description=(
+            "True when the two-pass narrative+schema augmentation ran and "
+            "overlaid forces_of_progress / frankenstack_description. False "
+            "for single-pass-only recaps (short transcript, feature disabled, "
+            "or graceful degrade after a two-pass failure)."
+        ),
+    )
 
 
 # ── Phase 1.4: Vertical Workflow Surveys ─────────────────────────────────────

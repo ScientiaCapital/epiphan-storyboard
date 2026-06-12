@@ -408,3 +408,15 @@ async def test_two_pass_overlay_does_not_touch_other_meeting_recap_keys() -> Non
             "Only forces_of_progress and frankenstack_description should be "
             "overlaid; the other 15 keys must stay from single-pass."
         )
+
+
+def test_meeting_recap_response_exposes_two_pass_applied():
+    """DA-R1.1.a: the flag must survive the API boundary, not be silently
+    dropped by Pydantic's extra="ignore" default."""
+    from src.storyboard.schemas import MeetingRecapResponse
+
+    assert MeetingRecapResponse().two_pass_applied is False
+    assert (
+        MeetingRecapResponse.model_validate({"two_pass_applied": True}).two_pass_applied
+        is True
+    )

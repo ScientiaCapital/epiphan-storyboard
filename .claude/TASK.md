@@ -4,12 +4,14 @@
 
 ## Today's sprint (2026-06-12, approved)
 
-1. ✅ State sync catch-up: observer audit of the un-closed 2026-06-10 session written to QUALITY.md/ARCH.md; docs refreshed; metrics ledger corrected
-2. ⬜ fonts.py hardening: narrow exception + asyncio.Lock + `tests/brand/test_fonts.py` (clears audit CRITICAL)
-3. ⬜ DA-A3 (expanded ×3): `_should_two_pass` helper; derive demo 9K cap from `GeminiConfig.two_pass_threshold_chars`
-4. ⬜ DA-R1.1.a: `two_pass_applied: bool = False` on `MeetingRecapResponse`
-5. ⬜ Verify vercel.json maxDuration plan-gating + memory 1769→2048 rounding; single deploy + smoke
-6. ⬜ (stretch) SSOT emoji/label sync in `_dropdowns.py`
+1. ✅ State sync catch-up (commit `a1df5d0`)
+2. ✅ fonts.py hardening: status-vs-network error granularity + per-key asyncio.Lock + 8 new tests (commit `3187555` — cleared audit CRITICAL + cache-race RISK + test-gap WARNING)
+3. ✅ DA-A3 (expanded ×3): `should_run_two_pass()` SSOT + demo cap derived from config + text-path dispatch collapsed into `_call_text_model` (commit `8d74e24`, 7 new tests, mypy −1)
+4. ✅ DA-R1.1.a: `two_pass_applied: bool = False` on `MeetingRecapResponse` (commit `92ff4c8`)
+5. ✅ Vercel verification: plan=Pro, applied lambda = timeout 300 / memory 2048 — maxDuration IS honored (audit RISK cleared as non-issue); vercel.json memory set to actual 2048 (commit `7137314`). Deployed + smoke-verified.
+6. ✅ (stretch) SSOT emoji/label sync (commit `6544dd7`, DA-A4 closed)
+
+**Deploy:** all 6 commits live on https://epiphan-storyboard.vercel.app — /health 200, /demo/options shows synced labels + 17 personas, font proxy 200 font/otf (210KB) / 404 unknown key, /demo/generate 422 enum guard intact. Tests 1,548 → 1,574.
 
 ## Completed 2026-06-10 (session never closed via /end — reconstructed 2026-06-12)
 

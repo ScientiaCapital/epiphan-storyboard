@@ -2,10 +2,7 @@
 
 ## Security / Tooling
 
-- **Add `.gitleaksignore` for historical test fixtures** (effort: 5 min, impact: low)
-  - Gitleaks flags `tests/api/test_connectors.py:499` (commit `fe25349`, 2026-02-19) for `"fireflies_api_key_123"` — a placeholder test string. The file has since been deleted from HEAD but remains in history.
-  - Action: add a `.gitleaksignore` entry pinning that finding so future security gates pass cleanly without manual triage.
-  - Logged: 2026-05-05 · Re-confirmed 2026-05-07 (still the only leak finding)
+- ~~**Add `.gitleaksignore` for historical test fixtures**~~ — **DONE 2026-06-12** during /end security sweep. Fingerprint pinned; `gitleaks detect` now reports "no leaks found".
 
 ## Tech Debt / Architecture
 

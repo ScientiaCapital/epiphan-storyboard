@@ -1,0 +1,4 @@
+# Historical placeholder test string ("fireflies_api_key_123") in a test file
+# deleted from HEAD on 2026-02-19. Not a real credential. Pinned so security
+# gates pass without manual triage. Logged in .claude/Backlog.md 2026-05-05.
+fe2534917c74e86da75aad5883c59dad8e4e28d4:tests/api/test_connectors.py:generic-api-key:499

@@ -20,6 +20,7 @@ the neutral stack declared in ``demo.html`` — the page never breaks.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 import httpx
@@ -43,6 +44,10 @@ _FONTS: dict[str, str] = {
 
 # In-process cache of fetched OTF bytes, keyed by local key.
 _cache: dict[str, bytes] = {}
+
+# Per-key locks so a cold-start stampede collapses to one upstream fetch.
+# dict.setdefault is atomic within the event loop (no await between check/set).
+_locks: dict[str, asyncio.Lock] = {}
 
 _FONT_CSS = "\n".join(
     [
@@ -76,16 +81,26 @@ async def brand_font(key: str) -> Response:
         raise HTTPException(status_code=404, detail=f"Unknown font key: {key}")
 
     if key not in _cache:
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                resp = await client.get(_UPSTREAM.format(key=upstream_key))
-                resp.raise_for_status()
-                _cache[key] = resp.content
-        except Exception as exc:
-            logger.warning("Failed to proxy Söhne font %r: %s", key, exc)
-            raise HTTPException(
-                status_code=502, detail="Font upstream unavailable"
-            ) from exc
+        async with _locks.setdefault(key, asyncio.Lock()):
+            if key not in _cache:
+                try:
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        resp = await client.get(_UPSTREAM.format(key=upstream_key))
+                        resp.raise_for_status()
+                        _cache[key] = resp.content
+                except httpx.HTTPStatusError as exc:
+                    status = exc.response.status_code
+                    logger.warning(
+                        "Söhne font %r upstream returned HTTP %s", key, status
+                    )
+                    raise HTTPException(
+                        status_code=502, detail=f"Font upstream error {status}"
+                    ) from exc
+                except httpx.HTTPError as exc:
+                    logger.warning("Söhne font %r upstream unreachable: %s", key, exc)
+                    raise HTTPException(
+                        status_code=502, detail="Font upstream unavailable"
+                    ) from exc
 
     return Response(
         content=_cache[key],

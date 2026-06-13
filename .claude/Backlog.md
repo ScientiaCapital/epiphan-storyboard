@@ -14,9 +14,7 @@
   - `static/demo.html` uses `html2canvas(card, { scale: 2, useCORS: true })`; inline-styled gradient + foreignObject rendering is known-flaky with cross-origin stylesheets (Tailwind CDN). Downloaded PNGs may render the header area white while text sections survive. Manually repro before fixing.
   - Source: 2026-06-12 arch audit (smell).
 
-- **DA-A4: SSOT emoji/label drift in `_dropdowns.py`** (effort: 5 min, impact: cosmetic) **[NEW 2026-06-12 — stretch task today]**
-  - demo.html changed diego_rivera 🎺→🖼️, siqueiros ⚡→🖌️, and `Infograph 📐`→`Infographic 📋` without updating `OUTPUT_FORMAT_OPTIONS`/`ARTIST_STYLE_OPTIONS`. Parity test checks values only, so no functional break. Sync the SSOT and consider extending the parity test to labels/emoji.
-  - Source: 2026-06-12 arch audit (smells ×2, merged).
+- ~~**DA-A4: SSOT emoji/label drift in `_dropdowns.py`**~~ — **DONE 2026-06-12** (commit `6544dd7`). SSOT emoji/labels synced with demo.html.
 
 - **DA-V1: Integration test documenting the maxDuration ↔ 9K-cap coupling** (effort: 30 min, impact: low until someone raises the cap) **[NEW 2026-06-12]**
   - vercel.json `maxDuration: 300` and the demo 9K input cap jointly prevent /demo/generate timeouts, but nothing tests or documents the coupling. If the cap is raised without revisiting the function limit, timeouts return silently. Blocks on DA-A3 (cap derivation) landing first.

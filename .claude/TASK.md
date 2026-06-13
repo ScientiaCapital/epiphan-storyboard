@@ -1,8 +1,16 @@
 # Active Tasks
 
-**Updated:** 2026-06-12 (/begin — state sync catch-up)
+**Updated:** 2026-06-13 (/end — competitor-as-hero fix merged + deployed)
 
-## Today's sprint (2026-06-12, approved)
+## Today's sprint (2026-06-13, approved)
+
+1. ✅ **Competitor-as-hero quality gate fix** (commit `4a801e5`, merged to main ff) — a Sony-focused source had produced an Epiphan-branded card *selling Sony*. Root causes fixed: (a) `run_quality_gate()` was dead code → now wired into `UnifiedStoryboardTool` with a one-shot corrective reframe retry; (b) all 4 extraction prompts now carry `_COMPETITOR_RULES_BLOCK` (competitor = before-state only) + `corrective_instruction` threaded through `gemini_client`; (c) `COMPETITOR_TOKENS` SSOT in `epiphan_presets.py` (28 vendors, CMS/LMS publish partners excluded) replaces the 4-name list; field-aware (hero=critical, contrast=allowed). Plus brand-voice check (hype words/exclamations), role-aware personal-name fix, demo copy polish (Production/Technical Director labels, "Who it's for", footer → THK ProAV). Tests **1,574 → 1,600** (+26). Quality report surfaced through `/demo/generate` → demo UI banner. See memory `competitor-as-hero-gate.md`.
+
+**Deploy:** force-redeployed to https://epiphan-storyboard.vercel.app on 2026-06-13.
+
+---
+
+## Sprint (2026-06-12, approved)
 
 1. ✅ State sync catch-up (commit `a1df5d0`)
 2. ✅ fonts.py hardening: status-vs-network error granularity + per-key asyncio.Lock + 8 new tests (commit `3187555` — cleared audit CRITICAL + cache-race RISK + test-gap WARNING)

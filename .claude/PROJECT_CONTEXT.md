@@ -1,12 +1,27 @@
 # Project Context: epiphan-storyboard
 
-**Updated:** 2026-06-12 (end of day — locked via /end workflow)
-**Branch:** main @ 6dc3a32 (clean, pushed; stale feature branch deleted)
+**Updated:** 2026-06-13 (end of day — locked via /end workflow)
+**Branch:** main @ 4a801e5 (clean, pushed; feature branch merged ff + deleted)
 **Tags:** v1.3-meeting-recap-unblock · v1.2-two-pass-extraction · v1.1-leverage-day · v1.0-bdr-workflow (all pushed to origin)
-**Production:** https://epiphan-storyboard.vercel.app — debt-paydown sprint live + smoke-verified (deployed 2026-06-12)
+**Production:** https://epiphan-storyboard.vercel.app — competitor-as-hero fix live (force-redeployed 2026-06-13)
 **Tech Stack:** Python 3.11+, FastAPI, Pydantic v2, Vercel serverless
 
-> 📌 **Tomorrow:** `DA-R2 + DA-A2` (~1.5 hr, ~$5) — DA-R2 is the only medium-impact open item (Phase-2 verticals silently degrade with no UI/log signal); DA-A2 migrates demo dropdowns to fetch `/demo/options`, killing the last drift surface. Stack DA-A1 if energy is high. TDD → observer signoff → single deploy + smoke. | **Observer notes:** 0 blockers; top unresolved flags are DA-B2 (html2canvas may blank card-header gradient in PNG downloads — needs 15-min manual repro) and the **budget config question** ($87.43 day vs $15 cap, $453.66 MTD vs $100/mo — decide whether caps are stale or spend needs reining in).
+> 📌 **Tomorrow:** `DA-R2 + DA-A2` (~1.5 hr, ~$5) — DA-R2 is the only medium-impact open item (Phase-2 verticals silently degrade with no UI/log signal); DA-A2 migrates demo dropdowns to fetch `/demo/options`, killing the last drift surface. Stack DA-A1 if energy is high. TDD → observer signoff → single deploy + smoke. | **Observer notes:** 0 blockers; no observer daemon ran for the 06-13 fix (single TDD'd commit, 1,600 tests green, mypy delta −1, gitleaks clean). Top unresolved flags unchanged: DA-B2 (html2canvas may blank card-header gradient in PNG downloads — needs 15-min manual repro) and the **budget config question** (MTD $491.47 vs $100/mo cap — decide whether caps are stale or spend needs reining in).
+
+---
+
+## 2026-06-13 (EOD) — Competitor-as-hero fix: wired the quality gate, shipped to prod
+
+1 commit (`4a801e5`), fast-forward merged to main and force-redeployed. Tests **1,574 → 1,600** (+26). Mypy −1 on touched files (57→56). Gitleaks: "no leaks found".
+
+**The bug:** a generated card was Epiphan-branded but sold **Sony** ("Sony's seamless proxy workflow revolutionizes live production"). Three compounding causes, all fixed in one commit:
+- `run_quality_gate()` was **dead code** (defined, never called) → wired into `UnifiedStoryboardTool.run()` between extraction and rendering, with **one** corrective reframe retry when a competitor lands in a hero field. Gate errors never break generation (try/except → render without report).
+- Extraction prompts never told the model how to treat competitor-focused sources → shared `_COMPETITOR_RULES_BLOCK` in all 4 builders (competitor = before-state only) + new `corrective_instruction` param threaded through `gemini_client`'s 4 `understand_*` methods.
+- Competitor list was 4 names (no Sony) → `COMPETITOR_TOKENS` SSOT in `epiphan_presets.py` (28 vendors; CMS/LMS publish partners deliberately excluded). Check is now **field-aware**: hero fields critical, contrast fields (pain_point/frankenstack/raw_text) allowed.
+
+Also: brand-voice gate check (hype words `revolutioniz*`/`game-chang*`, exclamation points → warning); role-aware fix to `_check_no_personal_names` (was flagging "Production Directors" as a person); demo copy polish (full "Production Director"/"Technical Director" labels, "Who it's for" contraction, footer **THK ProAV**). `quality` report now flows through `/demo/generate` to a demo-UI banner.
+
+**Key fact for future sessions:** the quality gate is now LIVE on the generation path. Competitor blocklist SSOT = `COMPETITOR_TOKENS` (epiphan_presets.py); do NOT re-add Panopto/Kaltura/YuJa/Echo360 (publish partners). See memory `competitor-as-hero-gate.md`. **Not done:** live end-to-end regeneration of the Sony card needs real API keys (retry logic covered by mocked tests only).
 
 ---
 

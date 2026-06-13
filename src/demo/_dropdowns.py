@@ -163,14 +163,14 @@ PERSONA_OPTIONS: list[Option] = [
     ),
     Option(
         AudiencePersona.PRODUCTION_DIRECTOR.value,
-        "Production Dir",
+        "Production Director",
         "🎥",
         "ATL — Live Events",
     ),
     # BTL — Operators
     Option(
         AudiencePersona.TECHNICAL_DIRECTOR.value,
-        "Technical Dir",
+        "Technical Director",
         "🔧",
         "BTL — Operators",
     ),

@@ -34,6 +34,11 @@ from src.tools.storyboard.epiphan_presets import (
 )
 from src.tools.storyboard.gemini_client import (
     GeminiStoryboardClient,
+    StoryboardUnderstanding,
+)
+from src.tools.storyboard.quality_gate import (
+    find_hero_competitors,
+    run_quality_gate,
 )
 
 logger = logging.getLogger(__name__)
@@ -296,7 +301,17 @@ class UnifiedStoryboardTool(BaseTool):
 
         # Check for speaker patterns like "Name:" at line starts
         # Exclude lines that look like code (type annotations, dicts, imports)
-        code_line_markers = ("def ", "class ", "import ", "from ", "->", "=>", "= ", "]: ", '": ')
+        code_line_markers = (
+            "def ",
+            "class ",
+            "import ",
+            "from ",
+            "->",
+            "=>",
+            "= ",
+            "]: ",
+            '": ',
+        )
         lines = content[:2000].split("\n")
         speaker_lines = sum(
             1
@@ -491,8 +506,8 @@ class UnifiedStoryboardTool(BaseTool):
                     is_image = True
                     is_image_file_flag = True
                 else:
-                    with open(input_value) as f:
-                        content = f.read()
+                    with open(input_value) as text_file:
+                        content = text_file.read()
 
             else:  # code
                 content = input_value
@@ -508,51 +523,111 @@ class UnifiedStoryboardTool(BaseTool):
                 else ""
             )
             logger.info(f"Stage 1: Understanding content...{context_msg}")
-            if is_image:
-                if isinstance(content, list):
-                    # Multiple images - understand all of them together
-                    logger.info(
-                        f"Understanding {len(content)} images together{context_msg}..."
-                    )
-                    understanding = await self.gemini_client.understand_multiple_images(
-                        images_data=content,
-                        icp_preset=icp,
-                        audience=audience,
-                        vertical=vertical,
-                        supplementary_context=supplementary_context,
-                    )
-                else:
+
+            async def extract(
+                corrective_instruction: str | None = None,
+            ) -> StoryboardUnderstanding:
+                """Run stage-1 extraction; re-callable for the reframe retry."""
+                if is_image:
+                    if isinstance(content, list):
+                        # Multiple images - understand all of them together
+                        logger.info(
+                            f"Understanding {len(content)} images together{context_msg}..."
+                        )
+                        return await self.gemini_client.understand_multiple_images(
+                            images_data=content,
+                            icp_preset=icp,
+                            audience=audience,
+                            vertical=vertical,
+                            supplementary_context=supplementary_context,
+                            corrective_instruction=corrective_instruction,
+                        )
                     assert isinstance(content, bytes)
-                    understanding = await self.gemini_client.understand_image(
+                    return await self.gemini_client.understand_image(
                         image_data=content,
                         icp_preset=icp,
                         audience=audience,
                         vertical=vertical,
                         supplementary_context=supplementary_context,
+                        corrective_instruction=corrective_instruction,
                     )
-            else:
                 assert isinstance(content, str)
                 # Auto-detect: is this code or a transcript?
                 if self.is_transcript(content):
                     logger.info(
                         "Detected TRANSCRIPT input - using transcript understanding"
                     )
-                    understanding = await self.gemini_client.understand_transcript(
+                    return await self.gemini_client.understand_transcript(
                         transcript=content,
                         icp_preset=icp,
                         audience=audience,
                         vertical=vertical,
+                        corrective_instruction=corrective_instruction,
                     )
-                else:
-                    logger.info("Detected CODE input - using code understanding")
-                    # Sanitize code content
-                    sanitized = sanitize_content(content, icp)
-                    understanding = await self.gemini_client.understand_code(
-                        code_content=sanitized,
-                        icp_preset=icp,
-                        audience=audience,
-                        vertical=vertical,
+                logger.info("Detected CODE input - using code understanding")
+                # Sanitize code content
+                sanitized = sanitize_content(content, icp)
+                return await self.gemini_client.understand_code(
+                    code_content=sanitized,
+                    icp_preset=icp,
+                    audience=audience,
+                    vertical=vertical,
+                    corrective_instruction=corrective_instruction,
+                )
+
+            understanding = await extract()
+
+            # Stage 1.5: quality gate. A competitor positioned as the hero
+            # (e.g. a Sony-focused source becoming a Sony-branded card) gets
+            # ONE corrective reframe retry; remaining issues ship in the
+            # `quality` payload so the UI can badge the card. The gate must
+            # never break generation — on any gate error we render without a
+            # quality report.
+            quality: dict | None = None
+            try:
+                report = run_quality_gate(
+                    understanding.model_dump(), audience, vertical=vertical
+                )
+                reframe_applied = False
+                hero_hits = find_hero_competitors(understanding.model_dump())
+                if hero_hits:
+                    vendors = sorted({v for vs in hero_hits.values() for v in vs})
+                    logger.warning(
+                        "Quality gate: competitor-as-hero %s — corrective reframe retry",
+                        vendors,
                     )
+                    corrective = (
+                        "PREVIOUS ATTEMPT REJECTED by the brand quality gate: "
+                        f"it positioned the competitor(s) {', '.join(vendors)} "
+                        "as the solution. Rewrite so headline, tagline, "
+                        "what_it_does, business_value, and differentiator sell "
+                        "EPIPHAN products only. The competitor workflow may "
+                        "appear ONLY as the current/'before' state in "
+                        "pain_point_addressed, frankenstack, or "
+                        "forces_of_progress.push."
+                    )
+                    understanding = await extract(corrective_instruction=corrective)
+                    report = run_quality_gate(
+                        understanding.model_dump(), audience, vertical=vertical
+                    )
+                    reframe_applied = True
+                quality = {
+                    "passed": report.passed,
+                    "score": report.score,
+                    "reframe_applied": reframe_applied,
+                    "issues": [
+                        {
+                            "category": i.category,
+                            "severity": i.severity,
+                            "message": i.message,
+                        }
+                        for i in report.issues
+                    ],
+                }
+            except Exception:
+                logger.exception(
+                    "Quality gate failed — rendering without a quality report"
+                )
 
             # Stage 2: Generate storyboard
             artist_msg = f", artist_style={artist_style}" if artist_style else ""
@@ -596,6 +671,7 @@ class UnifiedStoryboardTool(BaseTool):
                     "raw_extracted_text": understanding.raw_extracted_text,
                     "extraction_confidence": understanding.extraction_confidence,
                 },
+                "quality": quality,
                 "file_path": file_path,
                 "input_type": input_type,
                 "output_format": output_format,
@@ -623,9 +699,7 @@ class UnifiedStoryboardTool(BaseTool):
             return ToolResult(
                 tool_name=self.definition.name,
                 success=False,
-                result={
-                    "input_type": locals().get("input_type", "unknown")
-                },
+                result={"input_type": locals().get("input_type", "unknown")},
                 error=str(e),
                 execution_time_ms=int((perf_counter() - start_time) * 1000),
             )

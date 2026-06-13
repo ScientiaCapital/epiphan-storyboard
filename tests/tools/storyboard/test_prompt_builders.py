@@ -361,3 +361,59 @@ class TestTruncateWithMarker:
         assert out.startswith("x" * 8000)
         assert "truncated at 8,000" in out
         assert "partial" in out.lower()
+
+
+class TestCompetitorHandling:
+    """All extraction prompts must tell the model how to handle competitor
+    source material: never the hero, always the before-state.
+
+    Regression: a Sony-focused source produced an Epiphan-branded card with
+    Sony positioned as the solution.
+    """
+
+    KEY_PHRASE = "NEVER position the competitor as the solution"
+
+    def test_code_prompt_has_competitor_rules(self):
+        prompt = prompt_builders.build_extraction_prompt(
+            "code", audience="av_director", content="def foo(): pass"
+        )
+        assert self.KEY_PHRASE in prompt
+
+    def test_transcript_prompt_has_competitor_rules(self):
+        prompt = prompt_builders.build_extraction_prompt(
+            "transcript", audience="av_director", content="Speaker 1: hello"
+        )
+        assert self.KEY_PHRASE in prompt
+
+    def test_image_prompt_has_competitor_rules(self):
+        prompt = prompt_builders.build_extraction_prompt(
+            "image", audience="av_director"
+        )
+        assert self.KEY_PHRASE in prompt
+
+    def test_multi_image_prompt_has_competitor_rules(self):
+        prompt = prompt_builders.build_extraction_prompt(
+            "images", audience="av_director", num_images=2
+        )
+        assert self.KEY_PHRASE in prompt
+
+
+class TestCorrectiveInstruction:
+    """The reframe-retry path prepends a corrective instruction so it is the
+    first thing the model reads."""
+
+    def test_corrective_instruction_prepended(self):
+        corrective = "PREVIOUS ATTEMPT REJECTED: you positioned sony as the hero."
+        prompt = prompt_builders.build_extraction_prompt(
+            "code",
+            audience="av_director",
+            content="def foo(): pass",
+            corrective_instruction=corrective,
+        )
+        assert prompt.startswith(corrective)
+
+    def test_no_corrective_instruction_by_default(self):
+        prompt = prompt_builders.build_extraction_prompt(
+            "code", audience="av_director", content="def foo(): pass"
+        )
+        assert "PREVIOUS ATTEMPT REJECTED" not in prompt

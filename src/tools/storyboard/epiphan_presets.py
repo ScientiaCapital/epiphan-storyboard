@@ -13,11 +13,46 @@ Golden Rule: If a competitor could use the info to copy us, strip it.
 """
 
 from enum import Enum
-from typing import Any
+from typing import Any, Final
 
 # =============================================
 # Epiphan Brand Identity
 # =============================================
+
+# Competitor vendors that must never be positioned as the hero/solution in
+# generated content. SSOT consumed by the quality gate's brand-consistency
+# check. Deliberately separate from transcript_compactor._VENDOR_TOKENS,
+# which mixes in protocols (NDI/SRT/RTMP) and Epiphan's own names for
+# signal scoring. CMS/LMS platforms (Panopto, Kaltura, YuJa, Echo360) are
+# excluded: they are publish-integration partners, so naming them in hero
+# copy ("Pearl publishes directly to Panopto") is legitimate.
+# Lowercase; matched with word boundaries.
+COMPETITOR_TOKENS: Final[tuple[str, ...]] = (
+    "sony",
+    "panasonic",
+    "canon",
+    "blackmagic",
+    "atem",
+    "aja",
+    "magewell",
+    "matrox",
+    "extron",
+    "crestron",
+    "mediasite",
+    "vmix",
+    "wirecast",
+    "tricaster",
+    "newtek",
+    "vizrt",
+    "teradek",
+    "liveu",
+    "kiloview",
+    "birddog",
+    "vaddio",
+    "datavideo",
+    "roland",
+    "yolobox",
+)
 
 EPIPHAN_BRAND = {
     "company": "Epiphan Video",

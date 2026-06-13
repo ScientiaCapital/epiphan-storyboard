@@ -841,6 +841,7 @@ Return ONLY valid JSON matching this exact structure:
         file_name: str | None = None,
         context: str | None = None,
         supplementary_context: str | None = None,
+        corrective_instruction: str | None = None,
     ) -> StoryboardUnderstanding:
         """
         Unified understanding engine for all content types.
@@ -861,6 +862,8 @@ Return ONLY valid JSON matching this exact structure:
             file_name: Optional file name (code only)
             context: Optional context string (transcript only)
             supplementary_context: Optional text to combine with images
+            corrective_instruction: Optional quality-gate feedback from a
+                rejected previous attempt (reframe retry)
         """
         num_images = len(images_data) if images_data else 1
 
@@ -874,6 +877,7 @@ Return ONLY valid JSON matching this exact structure:
             context=context,
             supplementary_context=supplementary_context,
             num_images=num_images,
+            corrective_instruction=corrective_instruction,
         )
 
         is_vision = content_type in ("image", "images")
@@ -1001,6 +1005,7 @@ Return ONLY valid JSON matching this exact structure:
         audience: str = "av_director",
         vertical: str | None = None,
         file_name: str | None = None,
+        corrective_instruction: str | None = None,
     ) -> StoryboardUnderstanding:
         """Stage 1: Analyze code and extract business value."""
         return await self._understand(
@@ -1009,6 +1014,7 @@ Return ONLY valid JSON matching this exact structure:
             audience=audience,
             vertical=vertical,
             file_name=file_name,
+            corrective_instruction=corrective_instruction,
         )
 
     async def understand_transcript(
@@ -1018,6 +1024,7 @@ Return ONLY valid JSON matching this exact structure:
         audience: str = "av_director",
         vertical: str | None = None,
         context: str | None = None,
+        corrective_instruction: str | None = None,
     ) -> StoryboardUnderstanding:
         """Stage 1: Extract insights from transcript."""
         return await self._understand(
@@ -1026,6 +1033,7 @@ Return ONLY valid JSON matching this exact structure:
             audience=audience,
             vertical=vertical,
             context=context,
+            corrective_instruction=corrective_instruction,
         )
 
     async def understand_image(
@@ -1036,6 +1044,7 @@ Return ONLY valid JSON matching this exact structure:
         vertical: str | None = None,
         sanitize_ip: bool = True,
         supplementary_context: str | None = None,
+        corrective_instruction: str | None = None,
     ) -> StoryboardUnderstanding:
         """Stage 1: Analyze image and extract business value."""
         # Handle base64 string input
@@ -1052,6 +1061,7 @@ Return ONLY valid JSON matching this exact structure:
             audience=audience,
             vertical=vertical,
             supplementary_context=supplementary_context,
+            corrective_instruction=corrective_instruction,
         )
 
     async def understand_multiple_images(
@@ -1062,6 +1072,7 @@ Return ONLY valid JSON matching this exact structure:
         vertical: str | None = None,
         sanitize_ip: bool = True,
         supplementary_context: str | None = None,
+        corrective_instruction: str | None = None,
     ) -> StoryboardUnderstanding:
         """Stage 1: Analyze multiple images and extract combined business value."""
         if len(images_data) > 3:
@@ -1074,6 +1085,7 @@ Return ONLY valid JSON matching this exact structure:
             audience=audience,
             vertical=vertical,
             supplementary_context=supplementary_context,
+            corrective_instruction=corrective_instruction,
         )
 
     def _build_generation_content_section(

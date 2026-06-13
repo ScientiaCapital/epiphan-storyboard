@@ -133,10 +133,10 @@
                         </optgroup>
                         <optgroup label="ATL — Live Events">
                             <option value="venue_manager">🏟️ Venue Manager</option>
-                            <option value="production_director">🎥 Production Dir</option>
+                            <option value="production_director">🎥 Production Director</option>
                         </optgroup>
                         <optgroup label="BTL — Operators">
-                            <option value="technical_director">🔧 Technical Dir</option>
+                            <option value="technical_director">🔧 Technical Director</option>
                         </optgroup>
                         <optgroup label="CHANNEL — Partners">
                             <option value="dealer_dave">🤝 Dealer Dave</option>
@@ -280,6 +280,12 @@ Example:
 
         <!-- Result -->
         <div id="resultSection" class="hidden animate-fade-in mt-5">
+            <!-- Quality gate report: shown when the extraction was reframed
+                 (competitor-as-hero retry) or has unresolved issues. -->
+            <div id="qualitySection" class="hidden mb-4 p-4 rounded-md border-l-4" role="status">
+                <h3 id="qualityTitle" class="font-semibold mb-1 text-sm"></h3>
+                <ul id="qualityIssues" class="text-sm list-disc ml-5"></ul>
+            </div>
             <!-- PRIMARY deliverable: brand storyboard card. All text here is the
                  LLM-extracted copy rendered as real Söhne type, so spelling is
                  guaranteed correct (no AI-painted text). This is what downloads. -->
@@ -292,7 +298,7 @@ Example:
                 <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div><h3 class="eyebrow mb-1.5">What it does</h3><p id="cardWhat" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
                     <div><h3 class="eyebrow mb-1.5">Business value</h3><p id="cardValue" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
-                    <div><h3 class="eyebrow mb-1.5">Who it is for</h3><p id="cardWho" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
+                    <div><h3 class="eyebrow mb-1.5">Who it's for</h3><p id="cardWho" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
                     <div><h3 class="eyebrow mb-1.5">The differentiator</h3><p id="cardDiff" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
                     <div class="md:col-span-2"><h3 class="eyebrow mb-1.5">Problem it solves</h3><p id="cardPain" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
                 </div>
@@ -336,7 +342,7 @@ Example:
 
         <!-- Footer -->
         <footer class="text-center mt-12 pb-6 text-sm text-epiphan-ink3">
-            Powered by <span class="font-medium text-epiphan-tealDeep">Epiphan Video</span> &middot; THK Enterprises LLC
+            Powered by <span class="font-medium text-epiphan-tealDeep">Epiphan Video</span> &middot; THK ProAV
         </footer>
     </div>
 
@@ -748,6 +754,8 @@ Example:
             $('cardDiff').textContent = u.differentiator || '—';
             $('cardPain').textContent = u.pain_point_addressed || '—';
 
+            renderQuality(result.quality);
+
             show('resultSection');
 
             if (result.collateral_links) {
@@ -788,6 +796,37 @@ Example:
             }
 
             $('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Quality gate banner. Hidden when the gate passed without a reframe.
+        // Amber (#f5a524) = reframed or warnings; danger tint = unresolved
+        // critical issues (e.g. competitor still positioned as the hero).
+        function renderQuality(quality) {
+            const section = $('qualitySection');
+            const title = $('qualityTitle');
+            const list = $('qualityIssues');
+            clearChildren(list);
+            section.classList.add('hidden');
+            if (!quality) return;
+
+            const criticals = (quality.issues || []).filter(i => i.severity === 'critical');
+            if (quality.passed && !quality.reframe_applied) return;
+
+            if (!quality.passed) {
+                section.className = 'mb-4 p-4 rounded-md border-l-4 bg-[#eddfdd] border-[#7c414c] text-[#7c414c]';
+                title.textContent = 'Quality gate: review before sending';
+            } else {
+                section.className = 'mb-4 p-4 rounded-md border-l-4 bg-[#fdf3df] border-[#f5a524] text-epiphan-ink';
+                title.textContent = 'Quality gate: source was competitor-focused — card reframed around Epiphan';
+            }
+
+            const toShow = quality.passed ? [] : criticals;
+            toShow.forEach(issue => {
+                const li = document.createElement('li');
+                li.textContent = issue.message;
+                list.appendChild(li);
+            });
+            section.classList.remove('hidden');
         }
 
         // Toggle the reference-only AI visual.

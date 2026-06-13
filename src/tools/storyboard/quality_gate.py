@@ -20,11 +20,34 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.tools.storyboard.epiphan_presets import (
+    COMPETITOR_TOKENS,
     EPIPHAN_PRODUCTS,
 )
 from src.tools.storyboard.prompts import get_persona_job_statement
 
 logger = logging.getLogger(__name__)
+
+# Fields where the generated copy positions the SOLUTION. A competitor named
+# here means the card is selling someone else's product under Epiphan
+# branding — critical, fails the gate.
+_HERO_FIELDS: tuple[str, ...] = (
+    "headline",
+    "tagline",
+    "what_it_does",
+    "differentiator",
+    "business_value",
+)
+
+# Fields that describe the prospect's CURRENT state. Competitors here are the
+# Challenger before/after contrast — expected, never flagged.
+_CONTRAST_FIELDS: tuple[str, ...] = (
+    "pain_point_addressed",
+    "frankenstack",
+    "frankenstack_description",
+    "raw_extracted_text",
+    "forces_of_progress",
+    "buyer_signals",
+)
 
 
 @dataclass
@@ -59,6 +82,13 @@ class QualityReport:
             self.score -= 5
         self.score = max(0.0, self.score)
 
+    def has_critical(self, category: str | None = None) -> bool:
+        """True when any critical issue exists (optionally in one category)."""
+        return any(
+            i.severity == "critical" and (category is None or i.category == category)
+            for i in self.issues
+        )
+
 
 def run_quality_gate(
     understanding: dict[str, Any],
@@ -86,6 +116,7 @@ def run_quality_gate(
     report = QualityReport()
 
     _check_brand_consistency(understanding, report)
+    _check_brand_voice(understanding, report)
     _check_jtbd_alignment(understanding, audience, report)
     _check_challenger_narrative(understanding, report)
     _check_nsttd_email(email_draft, report)
@@ -107,21 +138,66 @@ def run_quality_gate(
     return report
 
 
-def _check_brand_consistency(understanding: dict, report: QualityReport) -> None:
-    """Check for incorrect product names or competitor mentions in output."""
-    text = str(understanding).lower()
+def _competitors_in(text: str) -> list[str]:
+    """Competitor tokens present in *text* (word-boundary match)."""
+    lower = text.lower()
+    return [
+        comp
+        for comp in COMPETITOR_TOKENS
+        if re.search(rf"\b{re.escape(comp)}\b", lower)
+    ]
 
-    # Check for competitor product names (shouldn't appear in output)
-    competitors = ["extron", "crestron capture", "mediasite", "matrox"]
-    for comp in competitors:
-        if comp in text:
+
+def find_hero_competitors(understanding: dict[str, Any]) -> dict[str, list[str]]:
+    """Map each hero field to the competitors it names (empty dict = clean).
+
+    Exposed so the generation pipeline can name the offending vendor in the
+    corrective reframe-retry prompt.
+    """
+    hits: dict[str, list[str]] = {}
+    for fld in _HERO_FIELDS:
+        found = _competitors_in(str(understanding.get(fld) or ""))
+        if found:
+            hits[fld] = found
+    return hits
+
+
+def _check_brand_consistency(understanding: dict, report: QualityReport) -> None:
+    """Check for incorrect product names or competitor mentions in output.
+
+    Field-aware: a competitor in a hero field is the competitor-as-hero
+    failure (critical). Competitors in contrast fields are the Challenger
+    before-state and are fine. Anywhere else is a warning.
+    """
+    for fld, vendors in find_hero_competitors(understanding).items():
+        for vendor in vendors:
             report.add_issue(
                 QualityIssue(
                     category="brand",
-                    severity="warning",
-                    message=f"Competitor '{comp}' mentioned in output — reframe around Epiphan",
+                    severity="critical",
+                    message=(
+                        f"Competitor '{vendor}' positioned as hero in "
+                        f"'{fld}' — content must sell Epiphan; the "
+                        "competitor belongs only in the before-state"
+                    ),
                 )
             )
+
+    other_text = " ".join(
+        str(value)
+        for key, value in understanding.items()
+        if key not in _HERO_FIELDS and key not in _CONTRAST_FIELDS
+    )
+    for comp in _competitors_in(other_text):
+        report.add_issue(
+            QualityIssue(
+                category="brand",
+                severity="warning",
+                message=f"Competitor '{comp}' mentioned in output — reframe around Epiphan",
+            )
+        )
+
+    text = str(understanding).lower()
 
     # Check for wrong Epiphan product names
     wrong_names = {
@@ -138,6 +214,48 @@ def _check_brand_consistency(understanding: dict, report: QualityReport) -> None
                     message=f"Outdated name '{wrong}' — should be '{correct}'",
                     auto_fixable=True,
                     fix_suggestion=f"Replace '{wrong}' with '{correct}'",
+                )
+            )
+
+
+# Hype vocabulary forbidden in Epiphan voice (brand guidelines: these words
+# appear only inside customer quotes, never in our own copy).
+_HYPE_PATTERNS: tuple[str, ...] = (
+    r"revolutioni[sz]",
+    r"game[\s-]chang",
+    r"\bdisrupt",
+    r"\bbreathtaking\b",
+)
+
+
+def _check_brand_voice(understanding: dict, report: QualityReport) -> None:
+    """Flag hype words and exclamation points in hero copy (Epiphan voice)."""
+    for fld in _HERO_FIELDS:
+        text = str(understanding.get(fld) or "")
+        if not text:
+            continue
+        lower = text.lower()
+        for pattern in _HYPE_PATTERNS:
+            match = re.search(pattern, lower)
+            if match:
+                report.add_issue(
+                    QualityIssue(
+                        category="voice",
+                        severity="warning",
+                        message=(
+                            f"Hype word '{match.group(0)}' in '{fld}' — "
+                            "Epiphan voice forbids it outside customer quotes"
+                        ),
+                    )
+                )
+        if "!" in text:
+            report.add_issue(
+                QualityIssue(
+                    category="voice",
+                    severity="warning",
+                    message=f"Exclamation point in '{fld}' — Epiphan voice forbids them",
+                    auto_fixable=True,
+                    fix_suggestion="Replace '!' with '.'",
                 )
             )
 
@@ -331,7 +449,11 @@ def _check_frankenstack_grounding(
     else:
         source = " ".join(
             str(understanding.get(k, ""))
-            for k in ("raw_extracted_text", "pain_point_addressed", "forces_of_progress")
+            for k in (
+                "raw_extracted_text",
+                "pain_point_addressed",
+                "forces_of_progress",
+            )
         ).lower()
 
     has_workaround_signal = any(p in source for p in _PAIN_PHRASES)
@@ -367,6 +489,21 @@ def _check_frankenstack_grounding(
         )
 
 
+# Words that mark a capitalized two-word phrase as a job role, not a person
+# ("Production Directors", "Operations Team"). Without this, the John-Smith
+# pattern below flags nearly every who_benefits value.
+_ROLE_WORDS: frozenset[str] = frozenset(
+    """
+    director directors manager managers team teams tech techs engineer
+    engineers admin admins administrator administrators coordinator
+    coordinators producer producers production specialist specialists
+    officer officers analyst analysts operator operators staff crew
+    faculty instructor instructors professor professors technician
+    technicians lead leads supervisor supervisors department departments
+    """.split()
+)
+
+
 def _check_no_personal_names(understanding: dict, report: QualityReport) -> None:
     """Check that output uses roles, not personal names."""
     who_benefits = understanding.get("who_benefits", "")
@@ -377,9 +514,12 @@ def _check_no_personal_names(understanding: dict, report: QualityReport) -> None
         ]
         for pattern in name_patterns:
             matches = re.findall(pattern, who_benefits)
-            # Filter out role-like patterns
-            roles = {"AV Director", "IT Manager", "Field Tech", "Project Manager"}
-            real_names = [m for m in matches if m not in roles]
+            # A phrase containing a role word is a job title, not a person
+            real_names = [
+                m
+                for m in matches
+                if not any(word.lower() in _ROLE_WORDS for word in m.split())
+            ]
             if real_names:
                 report.add_issue(
                     QualityIssue(

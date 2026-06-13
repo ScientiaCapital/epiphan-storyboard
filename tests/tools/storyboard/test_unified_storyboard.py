@@ -759,3 +759,115 @@ class TestDirBugFix:
 
         assert "input_type" in result.result
         assert result.result["input_type"] == "code"
+
+
+_TINY_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+)
+
+
+def _sony_hero_understanding() -> StoryboardUnderstanding:
+    return StoryboardUnderstanding(
+        headline="Sony's seamless proxy workflow wins live production",
+        what_it_does="Sony cameras upload proxies straight to the cloud.",
+        business_value="Cuts post-production by 4 hours per event",
+        who_benefits="Production Directors",
+        differentiator="Only Sony offers simultaneous proxy upload and streaming",
+        pain_point_addressed="Rental equipment shortages",
+        suggested_icon="camera",
+    )
+
+
+def _epiphan_hero_understanding() -> StoryboardUnderstanding:
+    return StoryboardUnderstanding(
+        headline="Stop renting your way around proxy failures",
+        what_it_does="Pearl Mini captures and streams every feed in one box.",
+        business_value="Cuts 12 truck rolls per month",
+        who_benefits="Production Directors",
+        differentiator="Only Pearl pairs capture with Epiphan Edge fleet management",
+        pain_point_addressed="Sony proxy workflows drop files mid-event",
+        suggested_icon="video",
+    )
+
+
+class TestQualityGateWiring:
+    """The quality gate runs on every generation; a competitor-as-hero
+    extraction triggers exactly one corrective reframe retry."""
+
+    def _tool_with_client(self, understand_side_effect):
+        tool = UnifiedStoryboardTool()
+        mock_client = MagicMock()
+        mock_client.understand_code = AsyncMock(side_effect=understand_side_effect)
+        mock_client.generate_storyboard = AsyncMock(return_value=_TINY_PNG)
+        tool._gemini_client = mock_client
+        return tool, mock_client
+
+    @pytest.mark.asyncio
+    async def test_clean_extraction_runs_once_and_reports_quality(self):
+        tool, mock_client = self._tool_with_client([_epiphan_hero_understanding()])
+
+        with patch("webbrowser.open"):
+            result = await tool.run({"input": "def foo(): pass", "open_browser": False})
+
+        assert result.success is True
+        assert mock_client.understand_code.call_count == 1
+        quality = result.result["quality"]
+        assert quality["passed"] is True
+        assert quality["reframe_applied"] is False
+
+    @pytest.mark.asyncio
+    async def test_competitor_hero_triggers_one_reframe_retry(self):
+        tool, mock_client = self._tool_with_client(
+            [_sony_hero_understanding(), _epiphan_hero_understanding()]
+        )
+
+        with patch("webbrowser.open"):
+            result = await tool.run({"input": "def foo(): pass", "open_browser": False})
+
+        assert result.success is True
+        assert mock_client.understand_code.call_count == 2
+        # The retry call must carry a corrective instruction naming the competitor
+        retry_kwargs = mock_client.understand_code.call_args_list[1].kwargs
+        corrective = retry_kwargs.get("corrective_instruction") or ""
+        assert "sony" in corrective.lower()
+
+        quality = result.result["quality"]
+        assert quality["reframe_applied"] is True
+        assert quality["passed"] is True
+        # The rendered card must be the reframed (Epiphan-hero) copy
+        assert "Sony" not in result.result["understanding"]["headline"]
+
+    @pytest.mark.asyncio
+    async def test_failed_reframe_surfaces_failed_quality(self):
+        tool, mock_client = self._tool_with_client(
+            [_sony_hero_understanding(), _sony_hero_understanding()]
+        )
+
+        with patch("webbrowser.open"):
+            result = await tool.run({"input": "def foo(): pass", "open_browser": False})
+
+        assert result.success is True  # still renders — UI shows the warning badge
+        assert mock_client.understand_code.call_count == 2
+        quality = result.result["quality"]
+        assert quality["passed"] is False
+        assert quality["reframe_applied"] is True
+        assert any(
+            i["severity"] == "critical" and i["category"] == "brand"
+            for i in quality["issues"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_gate_crash_never_blocks_generation(self):
+        tool, mock_client = self._tool_with_client([_epiphan_hero_understanding()])
+
+        with (
+            patch("webbrowser.open"),
+            patch(
+                "src.tools.storyboard.unified_storyboard.run_quality_gate",
+                side_effect=RuntimeError("gate exploded"),
+            ),
+        ):
+            result = await tool.run({"input": "def foo(): pass", "open_browser": False})
+
+        assert result.success is True
+        assert result.result.get("quality") is None

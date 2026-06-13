@@ -166,6 +166,18 @@ def build_problem_statement_anchor(
     )
 
 
+# Shared CRITICAL RULES block: how to treat competitor products found in the
+# source material. Interpolated into every extraction prompt. Regression
+# guard: a Sony-focused source once produced an Epiphan-branded card with
+# Sony positioned as the hero.
+_COMPETITOR_RULES_BLOCK: str = """\
+COMPETITOR HANDLING:
+- The source may describe a COMPETITOR's product or workflow (Sony, Panasonic, Blackmagic, vMix, etc.)
+- NEVER position the competitor as the solution. headline, tagline, what_it_does, business_value, and differentiator must sell EPIPHAN products only
+- Treat the competitor's workflow as the CURRENT/'before' state: it belongs in pain_point_addressed, frankenstack, and forces_of_progress.push
+- Avoid hype words: revolutionary, revolutionizes, game-changing, disruptive. No exclamation points."""
+
+
 # Frankenstack patterns — implicit workaround language we want the LLM to
 # detect. The current jtbd_instructions only lists explicit competitor names;
 # this block adds the linguistic patterns that signal a workaround even when
@@ -317,6 +329,7 @@ def build_extraction_prompt(
     context: str | None = None,
     supplementary_context: str | None = None,
     num_images: int = 1,
+    corrective_instruction: str | None = None,
 ) -> str:
     """
     Build the extraction prompt for any content type.
@@ -330,6 +343,8 @@ def build_extraction_prompt(
         context: Optional context string (transcript only)
         supplementary_context: Optional text to combine with images
         num_images: Number of images (images only)
+        corrective_instruction: Optional quality-gate feedback from a rejected
+            previous attempt; prepended so the model reads it first
 
     Returns:
         Complete prompt string ready to send to an LLM
@@ -357,7 +372,7 @@ def build_extraction_prompt(
     frankenstack_patterns = _FRANKENSTACK_PATTERN_BLOCK
 
     if content_type == "code":
-        return _build_code_prompt(
+        prompt = _build_code_prompt(
             content=content or "",
             audience=audience,
             file_name=file_name,
@@ -370,7 +385,7 @@ def build_extraction_prompt(
             jtbd_instructions=jtbd_instructions,
         )
     elif content_type == "transcript":
-        return _build_transcript_prompt(
+        prompt = _build_transcript_prompt(
             content=content or "",
             audience=audience,
             context=context,
@@ -385,7 +400,7 @@ def build_extraction_prompt(
             frankenstack_patterns=frankenstack_patterns,
         )
     elif content_type == "image":
-        return _build_image_prompt(
+        prompt = _build_image_prompt(
             audience=audience,
             supplementary_context=supplementary_context,
             request_id=request_id,
@@ -397,7 +412,7 @@ def build_extraction_prompt(
             jtbd_instructions=jtbd_instructions,
         )
     elif content_type == "images":
-        return _build_multi_image_prompt(
+        prompt = _build_multi_image_prompt(
             audience=audience,
             supplementary_context=supplementary_context,
             num_images=num_images,
@@ -411,6 +426,10 @@ def build_extraction_prompt(
         )
     else:
         raise ValueError(f"Unknown content_type: {content_type}")
+
+    if corrective_instruction:
+        prompt = f"{corrective_instruction}\n\n{prompt}"
+    return prompt
 
 
 def _build_code_prompt(
@@ -461,6 +480,8 @@ CRITICAL RULES:
 - CMS/LMS BRAND AGNOSTIC: Never favor one platform. Say "your CMS/LMS" or list multiple (Panopto, Kaltura, YuJa, etc.)
 - Highlight: All-in-one streaming, recording, switching, multicasting in one box
 - Highlight when relevant: Dante audio, direct CMS/LMS publish, EC20 at $1,899 vs $7-8K competitors
+
+{_COMPETITOR_RULES_BLOCK}
 
 Return JSON:
 {{
@@ -557,6 +578,8 @@ CRITICAL RULES:
 - NEVER include personal names - use titles/roles/personas instead (e.g., "Operations Team" not "John and Sarah")
 - If value isn't explicit, INFER it from the problem being solved
 
+{_COMPETITOR_RULES_BLOCK}
+
 Return JSON:
 {{
     "raw_extracted_text": "Key quotes, numbers, specifics from content",
@@ -647,6 +670,8 @@ CRITICAL RULES:
 - ALWAYS derive business value and problem solved - infer from what you see
 - If something isn't explicit, INFER it from the context
 
+{_COMPETITOR_RULES_BLOCK}
+
 Return JSON:
 {{
     "raw_extracted_text": "Everything visible: labels, names, numbers",
@@ -733,6 +758,8 @@ CRITICAL RULES:
 - NEVER output "Not mentioned" - always INFER from context
 - NEVER include personal names - use roles/personas
 - ALWAYS derive business value and problem solved
+
+{_COMPETITOR_RULES_BLOCK}
 
 Return JSON:
 {{

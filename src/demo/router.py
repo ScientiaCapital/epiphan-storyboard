@@ -193,6 +193,14 @@ class GenerateResponse(BaseModel):
         None,
         description="Curated links to product pages, case studies, and resources for BDR follow-up",
     )
+    quality: dict[str, Any] | None = Field(
+        None,
+        description=(
+            "Quality gate report: passed, score, reframe_applied, and issues. "
+            "reframe_applied=True means the first extraction positioned a "
+            "competitor as the hero and was regenerated."
+        ),
+    )
     error: str | None = None
 
 
@@ -504,6 +512,7 @@ async def generate_storyboard(
             icp_preset=request.icp_preset,
             execution_time_ms=result.execution_time_ms,
             collateral_links=collateral,
+            quality=(result.result or {}).get("quality"),
         )
     else:
         return GenerateResponse(
@@ -517,5 +526,7 @@ async def generate_storyboard(
             audience=request.audience,
             icp_preset=request.icp_preset,
             execution_time_ms=result.execution_time_ms,
+            collateral_links=None,
+            quality=None,
             error=result.error,
         )

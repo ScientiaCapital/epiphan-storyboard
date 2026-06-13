@@ -1,6 +1,5 @@
 """Tests for demo router endpoints."""
 
-import base64
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -593,3 +592,50 @@ def test_integration_read_real_file(client):
         data = response.json()
         assert len(data["code"]) > 100  # Real file should be substantial
         assert "Gemini" in data["code"] or "gemini" in data["code"]
+
+
+def test_generate_passes_quality_through(client):
+    """The quality gate report from the tool must reach the API response."""
+    mock_result = ToolResult(
+        tool_name="unified_storyboard",
+        success=True,
+        result={
+            "storyboard_png": "fake_base64_png",
+            "understanding": {"headline": "Test"},
+            "input_type": "code",
+            "quality": {
+                "passed": False,
+                "score": 85.0,
+                "reframe_applied": True,
+                "issues": [
+                    {
+                        "category": "brand",
+                        "severity": "critical",
+                        "message": "Competitor 'sony' positioned as hero in headline",
+                    }
+                ],
+            },
+        },
+        execution_time_ms=1000,
+    )
+
+    with patch("src.demo.router.UnifiedStoryboardTool") as MockTool:
+        mock_instance = AsyncMock()
+        mock_instance.run.return_value = mock_result
+        MockTool.return_value = mock_instance
+
+        response = client.post(
+            "/demo/generate",
+            json={
+                "input_type": "code",
+                "code": "def foo(): pass",
+                "stage": "preview",
+                "audience": "av_director",
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["quality"]["passed"] is False
+    assert data["quality"]["reframe_applied"] is True
+    assert data["quality"]["issues"][0]["category"] == "brand"

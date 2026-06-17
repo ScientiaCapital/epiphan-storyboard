@@ -30,7 +30,8 @@
 - src/storyboard/ — Storyboard state, schemas, router
 
 ## Epiphan Context
-- Products: Pearl Mini ($3,750), Pearl Nano ($1,999), Pearl Nexus ($3,899), Pearl-2 ($8,999), EC20 PTZ ($1,899), AV.io 4K ($579.95), AV.io HD+ ($449.95), AV.io SDI+ ($579.95)
+- Products: Pearl Mini ($3,750), Pearl Nano ($1,999), Pearl Nexus ($3,899), Pearl-2 ($8,999), Pearl Duo (dual-channel; ships Dec 2026), EC20 PTZ ($1,899), AV.io 4K ($579.95), AV.io HD+ ($449.95), AV.io SDI+ ($579.95)
+  - Pearl Duo: dual-channel record/stream, dual front touchscreens, on-device control; NO CMS/lecture-capture (unlike Mini/Nano/Nexus). Source: marketing doc (not yet in Knowledge MCP).
 - Verticals (10): Higher Ed, Corporate, Live Events, Government, Houses of Worship, Healthcare, Industrial, Legal, UX Research, K-12
 - Personas (8 BDR Playbook):
   - ATL Decision Makers (7): AV Director, L&D Director, Sim Center Director, Court Admin, Corp Comms, EHS Manager, Law Firm IT

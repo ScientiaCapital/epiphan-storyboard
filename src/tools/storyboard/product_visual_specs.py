@@ -30,7 +30,7 @@ from pydantic import BaseModel
 from .epiphan_presets import EPIPHAN_PRODUCTS
 
 # Bump whenever the seed data below changes. See module docstring + regen script.
-SPECS_VERSION: str = "2026.06.17"
+SPECS_VERSION: str = "2026.06.17b"
 
 
 class ProductVisualSpec(BaseModel):
@@ -154,6 +154,48 @@ PRODUCT_VISUAL_SPECS: dict[str, ProductVisualSpec] = {
         do_not_depict=[
             "a tiny/handheld device (it is a larger pro appliance)",
             "4K without the 4K feature add-on",
+        ],
+    ),
+    "pearl_duo": ProductVisualSpec(
+        product_id="pearl_duo",
+        display_name="Pearl Duo",
+        visual_description=(
+            "Compact, rack-friendly charcoal metal appliance with 'epiphan "
+            "video' + 'PEARL DUO' branding at top-left and a signature "
+            "lime-green accent panel with a vent grille on the right. Its "
+            "front face has TWO side-by-side touchscreen displays (Channel 1 "
+            "and Channel 2 confidence monitoring) plus a large circular "
+            "push/jog control knob."
+        ),
+        key_visual_traits=[
+            "charcoal metal rack-friendly chassis with a green right-side accent panel",
+            "TWO side-by-side front touchscreens (Channel 1 / Channel 2, dual confidence monitoring)",
+            "large circular push/jog knob with a touch indicator",
+            "CH1/CH2 Record (red) + Stream (blue) + two Scene buttons, plus a Back button",
+            "front headphone jack, volume keys, and USB-C port",
+        ],
+        technical_facts=[
+            "dual-channel encode/record/stream; single-channel 4K; H.264 and H.265",
+            "12G-SDI + HDMI with passthrough; pro audio inputs; internal SSD recording",
+            "PoE+ network interface; USB-C file transfer",
+            "SRT, HLS, RTMP(S), RTSP, NDI|HX",
+            "on-device control via the dual front touchscreens (no laptop or browser needed)",
+            "Epiphan Edge cloud fleet management + open APIs (Stream Deck, Companion, Skaarhoj, Crestron, Q-SYS, Extron)",
+            "optional 1RU shelf holds two Duo units (four channels per rack unit)",
+            "pre-launch: ships December 2026",
+        ],
+        # Gate-matching signal phrases: ONLY the false-attribute words, no
+        # product name and no true-Duo vocabulary (two/channels/Edge/etc.) —
+        # otherwise legitimate Duo copy collides with the avoid-phrase. The
+        # full positive context lives in visual_description / key_visual_traits.
+        # Pearl Duo, unlike Pearl Mini/Nano/Nexus, does NOT do lecture capture
+        # or CMS/LMS integration.
+        do_not_depict=[
+            "a single-screen device",
+            "lecture capture or CMS/LMS integration",
+            "a broadcast production switcher",
+            "a local on-device dashboard",
+            "a playback or scrubbing recorder",
         ],
     ),
     "ec20_ptz": ProductVisualSpec(

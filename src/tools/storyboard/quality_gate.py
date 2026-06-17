@@ -200,7 +200,7 @@ _TECH_STOPWORDS: frozenset[str] = frozenset(
     record records recording recorded cms lms network support supports
     supported source sources input inputs output outputs stream streams
     streaming over your you our them they into via more than
-    camera cameras ptz zoom pan tilt motorized lens
+    camera cameras ptz zoom pan tilt motorized lens capture captures
     """.split()
 )
 

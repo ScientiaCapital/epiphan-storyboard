@@ -173,6 +173,41 @@ EPIPHAN_PRODUCTS = {
         ],
         "verticals": ["higher_ed", "healthcare", "live_events", "corporate"],
     },
+    # Pearl Duo: pre-launch dual-channel device. Source of truth = marketing doc
+    # (ephiphan-docs/Marketing/Pearl+Duo.doc, Confluence export 2026-06) + hero
+    # render. NOT yet in the Epiphan Knowledge MCP corpus. Ships December 2026 —
+    # no public price; do NOT invent one. NOTE: unlike other Pearls, Duo has NO
+    # CMS/LMS integration and is NOT a lecture-capture device.
+    "pearl_duo": {
+        "name": "Pearl Duo",
+        "price": "TBA — ships December 2026",
+        "availability": "December 2026",
+        "tagline": "Confident control, professional results — dual-channel recording and streaming for modern video workflows",
+        "form_factor": "Compact, rack-friendly (optional 1RU shelf holds two)",
+        "key_specs": [
+            "Dual-channel encoding (single-channel 4K)",
+            "H.264 + H.265",
+            "12G-SDI + HDMI with passthrough",
+            "Internal SSD recording + USB-C file transfer",
+            "PoE+ network interface",
+            "SRT, HLS, RTMP(S), RTSP, NDI|HX",
+            "On-device control via dual front touchscreens (no laptop)",
+            "Epiphan Edge fleet management + open APIs (Stream Deck, Companion, Crestron, Q-SYS, Extron)",
+        ],
+        "best_for": [
+            "Program + ISO recording",
+            "Camera + presentation capture",
+            "Multi-stream contribution encoding",
+            "Portable rack / fleet deployments",
+        ],
+        "verticals": [
+            "live_events",
+            "corporate",
+            "houses_of_worship",
+            "government",
+            "healthcare",
+        ],
+    },
     # EC20 specs from: BR181-1 brochure (2025) + EC20_Panopto_Value_Proposition_v3.pptx (2026)
     # Dante audio + direct CMS record: confirmed in Panopto Value Prop deck slide 3
     # NDI|HX3: confirmed in brochure p2 spec table
@@ -432,7 +467,7 @@ EPIPHAN_VERTICALS = {
             "Executives expect broadcast-quality from every room",
             "Remote employees feel like second-class citizens in hybrid meetings",
         ],
-        "recommended_products": ["pearl_mini", "pearl_nexus", "ec20_ptz"],
+        "recommended_products": ["pearl_duo", "pearl_mini", "pearl_nexus", "ec20_ptz"],
     },
     "live_events": {
         "name": "Live Events / Production",
@@ -458,7 +493,7 @@ EPIPHAN_VERTICALS = {
             "Client expects broadcast quality from a portable rig",
             "Rental houses need gear that any operator can run without training",
         ],
-        "recommended_products": ["pearl_2", "pearl_mini", "ec20_ptz"],
+        "recommended_products": ["pearl_duo", "pearl_2", "pearl_mini", "ec20_ptz"],
     },
     "government": {
         "name": "Government / Municipal",
@@ -480,7 +515,7 @@ EPIPHAN_VERTICALS = {
             "Security compliance — FISMA/FedRAMP considerations",
             "Staff turnover means AV must be foolproof",
         ],
-        "recommended_products": ["pearl_mini", "pearl_nexus", "ec20_ptz"],
+        "recommended_products": ["pearl_duo", "pearl_mini", "pearl_nexus", "ec20_ptz"],
     },
     "houses_of_worship": {
         "name": "Houses of Worship",
@@ -499,7 +534,7 @@ EPIPHAN_VERTICALS = {
             "Congregation expects professional-quality stream",
             "Multi-campus needs synchronized content distribution",
         ],
-        "recommended_products": ["pearl_nano", "pearl_mini", "ec20_ptz"],
+        "recommended_products": ["pearl_duo", "pearl_nano", "pearl_mini", "ec20_ptz"],
     },
     "healthcare": {
         "name": "Healthcare / Medical Simulation",

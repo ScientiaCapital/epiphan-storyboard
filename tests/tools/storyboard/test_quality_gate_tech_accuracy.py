@@ -149,3 +149,36 @@ class TestEpiphanEdgeExemption:
             for i in report.issues
             if i.category == "brand" and "Unknown product" in i.message
         ]
+
+
+class TestPearlDuoTechAccuracy:
+    """Pearl Duo has NO CMS/lecture-capture — the #1 false-claim trap for Duo."""
+
+    def test_lecture_capture_claim_flagged(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                headline="Pearl Duo: the easiest lecture capture device for classrooms",
+                recommended_products=["pearl_duo"],
+            )
+        )
+        assert "headline" in hits
+
+    def test_broadcast_switcher_claim_flagged(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                differentiator="A full broadcast production switcher in one box",
+                recommended_products=["pearl_duo"],
+            )
+        )
+        assert "differentiator" in hits
+
+    def test_clean_dual_channel_copy_passes(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                headline="Record program and ISO with confident on-device control",
+                what_it_does="Pearl Duo records and streams two channels at once.",
+                differentiator="Dual-channel recording managed via Epiphan Edge",
+                recommended_products=["pearl_duo"],
+            )
+        )
+        assert hits == {}

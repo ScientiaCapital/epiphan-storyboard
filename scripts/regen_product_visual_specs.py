@@ -68,6 +68,15 @@ PRODUCT_QUERIES: dict[str, list[str]] = {
         "Epiphan Edge fleet management remote reboot stream record grouping",
         "Epiphan Edge side navigation device menu batch operations Premium",
     ],
+    # Pearl Duo is PRE-LAUNCH (ships December 2026) and not yet in the Epiphan
+    # Knowledge MCP corpus. Its current spec was sourced from the marketing doc
+    # (ephiphan-docs/Marketing/Pearl+Duo.doc) + hero render. Re-run these once
+    # the Duo wiki pages land in the Knowledge MCP to replace the doc-sourced data.
+    "pearl_duo": [
+        "Pearl Duo dual-channel encoder form factor touchscreens front panel",
+        "Pearl Duo 4K H.265 12G-SDI HDMI passthrough SSD PoE USB-C protocols",
+        "Pearl Duo Epiphan Edge open APIs Stream Deck Crestron Q-SYS boundaries no CMS",
+    ],
 }
 
 

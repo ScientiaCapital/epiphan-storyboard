@@ -172,6 +172,43 @@ class TestPearlDuoTechAccuracy:
         )
         assert "differentiator" in hits
 
+    def test_classroom_recording_claim_flagged(self):
+        # Evasion of "lecture": implies CMS/lecture use without the word "lecture".
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                what_it_does="A classroom recording and CMS publishing solution",
+                recommended_products=["pearl_duo"],
+            )
+        )
+        assert "what_it_does" in hits
+
+    def test_single_screen_claim_flagged(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                headline="A sleek single screen at the operator's fingertips",
+                recommended_products=["pearl_duo"],
+            )
+        )
+        assert "headline" in hits
+
+    def test_local_dashboard_claim_flagged(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                differentiator="Manage the whole fleet from a local on-device dashboard",
+                recommended_products=["pearl_duo"],
+            )
+        )
+        assert "differentiator" in hits
+
+    def test_playback_scrubbing_claim_flagged(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                what_it_does="Full playback and scrubbing of every recording on the device",
+                recommended_products=["pearl_duo"],
+            )
+        )
+        assert "what_it_does" in hits
+
     def test_clean_dual_channel_copy_passes(self):
         hits = find_tech_accuracy_violations(
             _understanding(

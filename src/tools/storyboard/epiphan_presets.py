@@ -200,12 +200,12 @@ EPIPHAN_PRODUCTS = {
             "Multi-stream contribution encoding",
             "Portable rack / fleet deployments",
         ],
+        # Keep in sync with the verticals whose recommended_products list Duo.
         "verticals": [
             "live_events",
             "corporate",
             "houses_of_worship",
             "government",
-            "healthcare",
         ],
     },
     # EC20 specs from: BR181-1 brochure (2025) + EC20_Panopto_Value_Proposition_v3.pptx (2026)

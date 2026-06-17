@@ -115,3 +115,101 @@ Suggested fix: also check a forward window of 1-2 tokens after the signal word f
 | 2026-05-08 | leverage-day Fix A + Fix B + DA-R1 + DA-R1.1 + DA-R1.1.b | 4 sequential audits across the day | 14 cumulative | 12 cumulative (0C/2W/10I) — all dispositioned, none silently dropped | archived to `.claude/archive/2026-05-08-OBSERVER-QUALITY.md` |
 | 2026-06-12 | catch-up audit of 2026-06-10 session + debt-paydown sprint | /begin Phase 2 audit → all 6 findings resolved or backlogged same day (CRITICAL fixed in 3187555) | 24 | 6 (1C/3W/2I) | archived to `.claude/archive/2026-06-12-OBSERVER-QUALITY.md` |
 | 2026-06-17 | feature/product-grounded-image-gen | merge gate review: product visual specs SSOT, image-to-image wiring, tech-accuracy gate | 9 | 5 (0C/3W/2I) | OPEN |
+
+---
+
+## pearl-duo 2026-06-17
+
+### Tech Debt Accumulation (Pattern 2)
+
+Zero TODO/FIXME/HACK/XXX/TEMP markers introduced across all changed files (confirmed by diff inspection of epiphan_presets.py, product_visual_specs.py, quality_gate.py, both test files). The source comments in epiphan_presets.py:176-180 are deliberate spec-citation notes, not debt markers. Clean.
+
+---
+
+### Test Gaps (Pattern 3)
+
+New test coverage for Pearl Duo additions:
+
+| Component | Tested? | Notes |
+|-----------|---------|-------|
+| `pearl_duo` in EPIPHAN_PRODUCTS catalog | Yes | `TestPearlDuo::test_in_catalog_and_ssot` |
+| `availability` key value | Yes | `TestPearlDuo::test_availability_captured` |
+| Visual block contains dual-screen signal words | Yes | `TestPearlDuo::test_visual_block_shows_dual_screens` |
+| `do_not_depict` blocks lecture capture and switcher | Yes | `TestPearlDuo::test_do_not_depict_blocks_lecture_capture_and_switcher` |
+| Tech gate flags lecture-capture copy | Yes | `TestPearlDuoTechAccuracy::test_lecture_capture_claim_flagged` |
+| Tech gate flags broadcast-switcher copy | Yes | `TestPearlDuoTechAccuracy::test_broadcast_switcher_claim_flagged` |
+| Clean dual-channel copy passes gate | Yes | `TestPearlDuoTechAccuracy::test_clean_dual_channel_copy_passes` |
+
+[WARNING] — `tests/tools/storyboard/test_quality_gate_tech_accuracy.py` — No test covers the "single-screen device" or "local on-device dashboard" or "playback or scrubbing recorder" do_not_depict phrases for Pearl Duo. Only lecture-capture and broadcast-switcher are exercised. If those three phrases have signal-word collisions with legitimate Duo copy (e.g. "local" in "local SSD recording" for the dashboard phrase, or "device" in standard copy for "a local on-device dashboard"), the gate behavior is unverified. Low risk given the phrases are multi-word and distinctive, but the test surface is incomplete.
+
+Suggested fix: add two cases to `TestPearlDuoTechAccuracy` — one asserting "a local on-device dashboard" phrase fires on dashboard copy, one asserting "playback or scrubbing recorder" fires on scrubbing copy.
+
+[INFO] — No test asserts that `pearl_duo` appears in the recommended_products lists of the four modified verticals (live_events, corporate, government, houses_of_worship). The vertical wiring is structural data with no runtime guard other than `_check_product_references`; the gate test for that check (`TestEpiphanEdgeExemption`) does not include a pearl_duo recommendation flow. Acceptable — the product id is now in EPIPHAN_PRODUCTS so the gate would pass — but explicit coverage would be cleaner.
+
+---
+
+### Import Bloat (Pattern 5)
+
+No new imports or dependencies. `product_visual_specs.py` already imports from `epiphan_presets.py`; the Pearl Duo entry follows the exact same pattern as existing entries. Clean.
+
+---
+
+### Silent Failures (Pattern 6)
+
+`product_visual_specs.py:295-297` — The stub backfill loop calls `_stub_spec(product_id)` which accesses `EPIPHAN_PRODUCTS[product_id]["name"]` (line 272) with a hard key lookup, not `.get()`. If a catalog entry ever omits the `"name"` key it raises `KeyError` at import time. Pearl Duo has a `"name"` key, so this is not introduced by this diff — it is pre-existing and pearl_duo does not worsen it.
+
+No new silent failure patterns introduced. Clean.
+
+---
+
+### "capture" / "captures" Stopword Addition — Collateral Damage Check
+
+The diff adds `camera cameras ptz zoom pan tilt motorized lens capture captures` to `_TECH_STOPWORDS` in `quality_gate.py`.
+
+Checked every `do_not_depict` entry across all products in `product_visual_specs.py` for phrases whose signal depends on "capture" or "captures" surviving the stopword filter:
+
+| Product | do_not_depict phrase | "capture" token present? | Signal surviving after stopword removal |
+|---------|---------------------|-------------------------|----------------------------------------|
+| pearl_mini | "a rack-only/1RU appliance..." | No | Unaffected |
+| pearl_mini | "a screen on the rear..." | No | Unaffected |
+| pearl_nano | "NDI or NDI|HX support..." | No | Unaffected |
+| pearl_nano | "Dante audio (not supported)" | No | Unaffected |
+| pearl_nano | "multi-channel or live switching..." | No | Unaffected |
+| pearl_nano | "capturing HDCP-encrypted sources" | YES — "capturing" | "capturing" is tokenized as "capturing" (10 chars, not in stopwords — stopwords list "capture captures" not "capturing") |
+| pearl_nexus | (3 phrases) | No | Unaffected |
+| pearl_2 | (2 phrases) | No | Unaffected |
+| pearl_duo | "lecture capture or CMS/LMS integration" | YES — "capture" | "capture" is now a stopword. Signal words remaining: "lecture", "cms", "lms", "integration" — but "cms" and "lms" are ALSO stopwords. Net surviving signals: {"lecture", "integration"}. Gate still fires on "lecture" alone. See [WARNING] below. |
+| ec20_ptz | (3 phrases) | No | Unaffected |
+
+[WARNING] — `quality_gate.py` / `product_visual_specs.py:195` — The Pearl Duo do_not_depict phrase "lecture capture or CMS/LMS integration" loses "capture", "cms", and "lms" to stopwords. The remaining distinctive signals are "lecture" and "integration". "lecture" is strong and distinctive; it will fire the gate on "lecture" copy. "integration" is present in many legitimate Duo copy contexts (e.g. "Epiphan Edge integration", "API integration"). This means the gate now relies entirely on "lecture" as the signal for this Duo false-claim phrase. If generated copy uses the concept without the word "lecture" — for example "classroom recording" or "CMS publishing workflow" — the gate will not catch it.
+
+This is not a regression introduced by adding "capture" to stopwords — the phrase was always fragile without "capture" (since "cms" and "lms" were already stopworded in the original list). But the stopword addition does confirm that "lecture" is the sole load-bearing signal, and that is worth documenting.
+
+Mitigation: either split into two separate do_not_depict phrases ("lecture capture" and "CMS/LMS integration"), or add a dedicated second phrase "CMS or LMS publishing" using a non-stopworded signal word. Alternatively, accept the current behavior and note in a comment that "lecture" is the sole firing signal.
+
+[INFO] — Pearl Nano do_not_depict phrase "capturing HDCP-encrypted sources" — the word "capturing" (gerund, 10 chars) survives the stopword filter because the stopwords list contains "capture" and "captures" but not "capturing". The gate behavior for this phrase is unchanged. However, if "capturing" is ever added to stopwords, the phrase degrades to {"hdcp", "encrypted"} which remains distinctive. No action needed.
+
+---
+
+## Code Quality Metrics (cumulative after pearl-duo session)
+
+| Metric | Value |
+|--------|-------|
+| Files scanned (this session) | 5 (src) + 2 (tests) = 7 |
+| Critical findings | 0 |
+| Warnings | 2 (new this session) |
+| Info items | 2 (new this session) |
+| Tech debt markers introduced | 0 |
+| New dependencies | 0 |
+
+---
+
+## Monitoring Runs
+
+| Date | Session | Task | Files Checked | Findings | Status |
+|------|---------|------|--------------|----------|--------|
+| 2026-05-07 | feature/bdr-call-brief-and-surveys | DA audit Phase 1.1–1.3 | 6 | 7 (0C/4W/3I) | archived to `.claude/archive/2026-05-07-OBSERVER-QUALITY.md` |
+| 2026-05-08 | leverage-day Fix A + Fix B + DA-R1 + DA-R1.1 + DA-R1.1.b | 4 sequential audits across the day | 14 cumulative | 12 cumulative (0C/2W/10I) — all dispositioned, none silently dropped | archived to `.claude/archive/2026-05-08-OBSERVER-QUALITY.md` |
+| 2026-06-12 | catch-up audit of 2026-06-10 session + debt-paydown sprint | /begin Phase 2 audit → all 6 findings resolved or backlogged same day (CRITICAL fixed in 3187555) | 24 | 6 (1C/3W/2I) | archived to `.claude/archive/2026-06-12-OBSERVER-QUALITY.md` |
+| 2026-06-17 | feature/product-grounded-image-gen | merge gate review: product visual specs SSOT, image-to-image wiring, tech-accuracy gate | 9 | 5 (0C/3W/2I) | OPEN |
+| 2026-06-17 | feature/pearl-duo | Pearl Duo catalog addition merge gate | 7 | 4 (0C/2W/2I) | OPEN |

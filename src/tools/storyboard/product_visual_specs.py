@@ -193,6 +193,7 @@ PRODUCT_VISUAL_SPECS: dict[str, ProductVisualSpec] = {
         do_not_depict=[
             "a single-screen device",
             "lecture capture or CMS/LMS integration",
+            "classroom recording or CMS publishing",
             "a broadcast production switcher",
             "a local on-device dashboard",
             "a playback or scrubbing recorder",

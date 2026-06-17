@@ -1,8 +1,23 @@
 # Active Tasks
 
-**Updated:** 2026-06-13 (/end — competitor-as-hero fix merged + deployed)
+**Updated:** 2026-06-17 (/end — product-grounded image gen + Pearl Duo shipped)
 
-## Today's sprint (2026-06-13, approved)
+## Today's sprint (2026-06-17, approved) — 2 PRs, 6 commits, both deployed
+
+1. ✅ **Product-grounded, reference-aware image generation** (PR #1, `4e5658c`). Three relevance fixes + a tech-accuracy gate, built via a 3-agent team:
+   - `recommended_products` field added to `StoryboardUnderstanding` (it was silently dropped on parse — also reactivated already-waiting reads in `quality_gate.py` + `demo/router.py`).
+   - New `product_visual_specs.py` SSOT (verbatim Epiphan Knowledge MCP truth for 6 core products) injected into the image prompt so generated images depict the real hardware.
+   - Image-to-image: uploaded reference photos now condition generation on both genai + OpenRouter paths (mime-sniffed).
+   - New technical-accuracy quality gate (`find_tech_accuracy_violations`) flags false product claims with a one-shot corrective retry sharing the competitor gate's budget.
+2. ✅ **Pearl Duo** (PR #2, `d60516d`) — new dual-channel product (InfoComm "Agent-ready AV" booth; ships Dec 2026) added to catalog + visual SSOT, wired into live_events/corporate/government/houses_of_worship, with tech-accuracy guards for its "no CMS/lecture-capture" boundary. PR #2 also **recovered the PR#1 observer fixes that `gh pr merge` dropped** at the pre-fix head (cherry-picked).
+
+**Tests:** 1,600 → **1,658** (+58). mypy 372 baseline (0 new). gitleaks: no leaks.
+**Deploy:** both live on https://epiphan-storyboard.vercel.app — /health 200, /demo/options 200.
+**Observers:** 0 blockers across both PRs; all fixable RISK/WARNING items fixed in-sprint, INFO items → Backlog (DA-IMG1-3, DA-PD1-4).
+
+---
+
+## Sprint (2026-06-13, approved)
 
 1. ✅ **Competitor-as-hero quality gate fix** (commit `4a801e5`, merged to main ff) — a Sony-focused source had produced an Epiphan-branded card *selling Sony*. Root causes fixed: (a) `run_quality_gate()` was dead code → now wired into `UnifiedStoryboardTool` with a one-shot corrective reframe retry; (b) all 4 extraction prompts now carry `_COMPETITOR_RULES_BLOCK` (competitor = before-state only) + `corrective_instruction` threaded through `gemini_client`; (c) `COMPETITOR_TOKENS` SSOT in `epiphan_presets.py` (28 vendors, CMS/LMS publish partners excluded) replaces the 4-name list; field-aware (hero=critical, contrast=allowed). Plus brand-voice check (hype words/exclamations), role-aware personal-name fix, demo copy polish (Production/Technical Director labels, "Who it's for", footer → THK ProAV). Tests **1,574 → 1,600** (+26). Quality report surfaced through `/demo/generate` → demo UI banner. See memory `competitor-as-hero-gate.md`.
 

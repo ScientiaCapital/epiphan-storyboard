@@ -136,3 +136,10 @@
 - DA-IMG2 (INFO) — Triple `[:3]` reference-image cap (demo/router, unified_storyboard, gemini_client) is redundant; consolidate to one SSOT cap. Low.
 - DA-IMG3 (WARNING, partial) — No feature contract doc; create `.claude/contracts/product-grounded-image-gen.md` if the quality pipeline gets further gate work. Low.
 - NOTE: observer RISK1 (mime sniff), RISK2 (budget-blocked log), WARNING1 (forward-negation), WARNING2 (integration tests) were FIXED in this sprint, not deferred.
+
+## pearl-duo (2026-06-17) — deferred observer items (all INFO/low)
+- DA-PD1 (INFO) — Add a Pearl Duo URL to `SALES_COLLATERAL["product_pages"]` once the public product page goes live (pre-launch; ships Dec 2026).
+- DA-PD2 (INFO) — Harden `_stub_spec` (product_visual_specs.py): use `.get("name")` instead of a hard `EPIPHAN_PRODUCTS[id]["name"]` lookup (pre-existing; pearl_duo doesn't worsen it).
+- DA-PD3 (INFO) — Add a test asserting `pearl_duo` appears in the 4 wired verticals' `recommended_products` (structural data, currently only guarded by `_check_product_references`).
+- DA-PD4 (INFO) — genai exception branch (`gemini_client.py` image-gen `except Exception: raise`) is untested. Low.
+- NOTE: pearl-duo observer WARNINGs (healthcare bidirectional inconsistency, fragile lecture/CMS signal, do_not_depict test gaps) were ALL FIXED this sprint (commit 28f5cd9), not deferred.

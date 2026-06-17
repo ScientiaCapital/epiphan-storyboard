@@ -1,12 +1,12 @@
 # Project Context: epiphan-storyboard
 
-**Updated:** 2026-06-13 (end of day — locked via /end workflow)
-**Branch:** main @ 4a801e5 (clean, pushed; feature branch merged ff + deleted)
+**Updated:** 2026-06-17 (end of day — locked via /end workflow)
+**Branch:** main @ d60516d (clean, pushed; both feature branches merged + deleted)
 **Tags:** v1.3-meeting-recap-unblock · v1.2-two-pass-extraction · v1.1-leverage-day · v1.0-bdr-workflow (all pushed to origin)
-**Production:** https://epiphan-storyboard.vercel.app — competitor-as-hero fix live (force-redeployed 2026-06-13)
+**Production:** https://epiphan-storyboard.vercel.app — product-grounded image gen + Pearl Duo live (deployed 2026-06-17, /health 200)
 **Tech Stack:** Python 3.11+, FastAPI, Pydantic v2, Vercel serverless
 
-> 📌 **Tomorrow:** `DA-R2 + DA-A2` (~1.5 hr, ~$5) — DA-R2 is the only medium-impact open item (Phase-2 verticals silently degrade with no UI/log signal); DA-A2 migrates demo dropdowns to fetch `/demo/options`, killing the last drift surface. Stack DA-A1 if energy is high. TDD → observer signoff → single deploy + smoke. | **Observer notes:** 0 blockers; no observer daemon ran for the 06-13 fix (single TDD'd commit, 1,600 tests green, mypy delta −1, gitleaks clean). Top unresolved flags unchanged: DA-B2 (html2canvas may blank card-header gradient in PNG downloads — needs 15-min manual repro) and the **budget config question** (MTD $491.47 vs $100/mo cap — decide whether caps are stale or spend needs reining in).
+> 📌 **Tomorrow:** No medium+ item is forced. Strongest candidate: **DA-IMG3** — write `.claude/contracts/product-grounded-image-gen.md` (the quality pipeline is now production-critical with two gates — competitor + tech-accuracy — and has no contract; ~45 min, ~$3). Cheap stackables: **DA-IMG1** (surface dropped oversized reference images in the `/demo/generate` response — currently silent text-to-image fallback) and **DA-PD1** (add Pearl Duo product URL to `SALES_COLLATERAL` when the public page goes live). | **Observer notes:** 0 blockers across both 2026-06-17 PRs; every fixable RISK/WARNING was fixed in-sprint and verified in deployed main (mime sniff, tech-reframe skip log, classroom-evasion signal, healthcare vertical consistency, 4 new gate tests). Remaining are all INFO → Backlog (DA-IMG1-3, DA-PD1-4). 1,658 tests green, mypy 372 baseline (0 new), gitleaks clean (86 commits). | ⚠️ **Two carry-over flags for Tim:** (1) the InfoComm **Netlify** booth site (`spectacular-halva-d089ee.netlify.app`) is a SEPARATE repo — if it needs Pearl Duo, that's a different codebase. (2) **Budget:** MTD **$918.94 vs $100/mo cap** — the stale-caps-vs-real-spend decision is now 5+ days unresolved and growing; needs a call. (3) `gh pr merge` dropped a follow-up commit from PR#1 (merged at pre-fix head) — recovered via cherry-pick in PR#2, but **commit fixes before the first push** next time.
 
 ---
 

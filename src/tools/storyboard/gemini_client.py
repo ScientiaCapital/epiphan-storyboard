@@ -78,6 +78,22 @@ def _repair_json(json_str: str) -> str:
     return json_str
 
 
+def _sniff_image_mime(data: bytes) -> str:
+    """Best-effort image MIME from magic bytes; defaults to image/png.
+
+    Reference uploads may be JPEG/WEBP/GIF (the demo accepts all of them);
+    labeling everything image/png can cause silent degradation or refusals
+    at the image model. Cheap header sniff, no Pillow dependency.
+    """
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    if data[:4] == b"GIF8":
+        return "image/gif"
+    return "image/png"
+
+
 def _safe_parse_understanding(
     response_text: str,
     source: str = "unknown",
@@ -478,10 +494,11 @@ class GeminiStoryboardClient:
             message_content = []
             for img_bytes in reference_images[:3]:
                 img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+                mime = _sniff_image_mime(img_bytes)
                 message_content.append(
                     {
                         "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{img_b64}"},
+                        "image_url": {"url": f"data:{mime};base64,{img_b64}"},
                     }
                 )
             message_content.append({"type": "text", "text": prompt})
@@ -1339,7 +1356,9 @@ DESIGN PRINCIPLES:
                     contents: Any = [prompt]
                     for img in reference_images[:3]:
                         contents.append(
-                            types.Part.from_bytes(data=img, mime_type="image/png")
+                            types.Part.from_bytes(
+                                data=img, mime_type=_sniff_image_mime(img)
+                            )
                         )
                 else:
                     contents = prompt

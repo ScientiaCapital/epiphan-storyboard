@@ -20,7 +20,25 @@ from src.tools.storyboard.gemini_client import (
     GeminiConfig,
     GeminiStoryboardClient,
     StoryboardUnderstanding,
+    _sniff_image_mime,
 )
+
+
+class TestSniffImageMime:
+    def test_png(self):
+        assert _sniff_image_mime(b"\x89PNG\r\n\x1a\n") == "image/png"
+
+    def test_jpeg(self):
+        assert _sniff_image_mime(b"\xff\xd8\xff\xe0abc") == "image/jpeg"
+
+    def test_webp(self):
+        assert _sniff_image_mime(b"RIFF\x00\x00\x00\x00WEBPVP8 ") == "image/webp"
+
+    def test_gif(self):
+        assert _sniff_image_mime(b"GIF89a...") == "image/gif"
+
+    def test_unknown_defaults_png(self):
+        assert _sniff_image_mime(b"random-bytes") == "image/png"
 
 
 def _fake_genai_modules():

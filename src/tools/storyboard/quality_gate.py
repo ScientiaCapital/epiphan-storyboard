@@ -200,6 +200,7 @@ _TECH_STOPWORDS: frozenset[str] = frozenset(
     record records recording recorded cms lms network support supports
     supported source sources input inputs output outputs stream streams
     streaming over your you our them they into via more than
+    camera cameras ptz zoom pan tilt motorized lens
     """.split()
 )
 
@@ -212,6 +213,9 @@ _NEGATION_TOKENS: frozenset[str] = frozenset(
 
 # How far back (in tokens) we look for a negation that flips a signal word.
 _NEGATION_WINDOW: int = 3
+# How far forward we look, to catch post-positional negators in hyphen
+# compounds ("NDI-free", "encoder-free") that tokenize as signal-then-negator.
+_NEGATION_WINDOW_FWD: int = 2
 
 
 def _raw_tokens(text: str) -> list[str]:
@@ -259,8 +263,11 @@ def _asserts_phrase(field_text: str, phrase: str) -> bool:
     for idx, token in enumerate(field_tokens):
         if token not in shared:
             continue
-        window = field_tokens[max(0, idx - _NEGATION_WINDOW) : idx]
-        if any(w in _NEGATION_TOKENS for w in window):
+        before = field_tokens[max(0, idx - _NEGATION_WINDOW) : idx]
+        after = field_tokens[idx + 1 : idx + 1 + _NEGATION_WINDOW_FWD]
+        if any(w in _NEGATION_TOKENS for w in before) or any(
+            w in _NEGATION_TOKENS for w in after
+        ):
             return False  # a shared signal is negated → true Epiphan claim
 
     return True  # every shared signal stated affirmatively → false assertion

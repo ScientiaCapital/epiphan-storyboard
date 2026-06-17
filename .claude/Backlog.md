@@ -130,3 +130,9 @@
 - **Workflow Surveys for the remaining 6 verticals** — Government, Corporate AV, Healthcare, Houses of Worship, K-12, Channel/Integrators. Same JTBD job-map structure; mine personas from the BDR playbook. (Effort: 1–2 days)
 - **Outbound HubSpot webhook** — attach the BDRCallBrief to the contact record automatically when a brief is generated for a known prospect. (Effort: 4 hr)
 - **Survey response persistence** — Supabase / Redis storage so a BDR can come back to a partial survey or share a link with a prospect. (Effort: 1 day)
+
+## product-grounded-image-gen (2026-06-17) — deferred observer items
+- DA-IMG1 (INFO) — Surface dropped oversized reference images in the /demo/generate API response (currently silent → user gets text-to-image with no signal). Low.
+- DA-IMG2 (INFO) — Triple `[:3]` reference-image cap (demo/router, unified_storyboard, gemini_client) is redundant; consolidate to one SSOT cap. Low.
+- DA-IMG3 (WARNING, partial) — No feature contract doc; create `.claude/contracts/product-grounded-image-gen.md` if the quality pipeline gets further gate work. Low.
+- NOTE: observer RISK1 (mime sniff), RISK2 (budget-blocked log), WARNING1 (forward-negation), WARNING2 (integration tests) were FIXED in this sprint, not deferred.

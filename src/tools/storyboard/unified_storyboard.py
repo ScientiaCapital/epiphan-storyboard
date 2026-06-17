@@ -38,6 +38,7 @@ from src.tools.storyboard.gemini_client import (
 )
 from src.tools.storyboard.quality_gate import (
     find_hero_competitors,
+    find_tech_accuracy_violations,
     run_quality_gate,
 )
 
@@ -589,6 +590,7 @@ class UnifiedStoryboardTool(BaseTool):
                     understanding.model_dump(), audience, vertical=vertical
                 )
                 reframe_applied = False
+                tech_reframe_applied = False
                 hero_hits = find_hero_competitors(understanding.model_dump())
                 if hero_hits:
                     vendors = sorted({v for vs in hero_hits.values() for v in vs})
@@ -611,10 +613,44 @@ class UnifiedStoryboardTool(BaseTool):
                         understanding.model_dump(), audience, vertical=vertical
                     )
                     reframe_applied = True
+
+                # Technical-accuracy reframe. Copy that makes a technically
+                # false product claim (e.g. "EC20 needs a separate encoder")
+                # gets ONE corrective retry — but the reframe budget is SHARED
+                # with the competitor gate, so we only fire if no reframe has
+                # run yet. Remaining tech issues still surface in the report.
+                tech_hits = find_tech_accuracy_violations(understanding.model_dump())
+                if tech_hits and not reframe_applied:
+                    bad_fields = sorted(tech_hits)
+                    bad_claims = sorted(
+                        {p for ps in tech_hits.values() for p in ps}
+                    )
+                    logger.warning(
+                        "Quality gate: technically false claim in %s — "
+                        "corrective reframe retry",
+                        bad_fields,
+                    )
+                    corrective = (
+                        "PREVIOUS ATTEMPT REJECTED by the technical-accuracy "
+                        "gate: the copy made false claims about the Epiphan "
+                        f"product in {', '.join(bad_fields)}. Specifically it "
+                        f"asserted: {'; '.join(bad_claims)}. Rewrite the hero "
+                        "fields to respect the real product facts — for "
+                        "example, the EC20 PTZ records DIRECT to the CMS/LMS "
+                        "with NO separate encoder; never claim it needs one. "
+                        "State only capabilities the product actually has."
+                    )
+                    understanding = await extract(corrective_instruction=corrective)
+                    report = run_quality_gate(
+                        understanding.model_dump(), audience, vertical=vertical
+                    )
+                    reframe_applied = True
+                    tech_reframe_applied = True
                 quality = {
                     "passed": report.passed,
                     "score": report.score,
                     "reframe_applied": reframe_applied,
+                    "tech_accuracy_reframe_applied": tech_reframe_applied,
                     "issues": [
                         {
                             "category": i.category,
@@ -634,6 +670,15 @@ class UnifiedStoryboardTool(BaseTool):
             logger.info(
                 f"Stage 2: Generating {output_format} ({visual_style}{artist_msg}) for audience={audience}..."
             )
+            # Forward the user's uploaded reference photo(s) into generation as
+            # image-to-image conditioning so the result depicts THEIR scene.
+            # Only for image inputs (text/code → None = text-to-image); cap 3.
+            reference_images: list[bytes] | None = None
+            if is_image:
+                if isinstance(content, list):
+                    reference_images = [c for c in content if isinstance(c, bytes)][:3]
+                elif isinstance(content, bytes):
+                    reference_images = [content]
             png_bytes = await self.gemini_client.generate_storyboard(
                 understanding=understanding,
                 icp_preset=icp,
@@ -643,6 +688,7 @@ class UnifiedStoryboardTool(BaseTool):
                 output_format=output_format,
                 visual_style=visual_style,
                 artist_style=artist_style,
+                reference_images=reference_images,
             )
 
             # Save and optionally open in browser

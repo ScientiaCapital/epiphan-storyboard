@@ -23,6 +23,7 @@ from src.tools.storyboard.epiphan_presets import (
     COMPETITOR_TOKENS,
     EPIPHAN_PRODUCTS,
 )
+from src.tools.storyboard.product_visual_specs import collect_do_not_depict
 from src.tools.storyboard.prompts import get_persona_job_statement
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,12 @@ _CONTRAST_FIELDS: tuple[str, ...] = (
     "forces_of_progress",
     "buyer_signals",
 )
+
+# Synthetic product ids that are valid recommendations but have no catalog
+# entry in EPIPHAN_PRODUCTS (so _check_product_references must not flag them).
+# ``epiphan_edge`` is the cloud fleet-management service (see
+# product_visual_specs.py).
+_NON_CATALOG_PRODUCT_IDS: frozenset[str] = frozenset({"epiphan_edge"})
 
 
 @dataclass
@@ -124,6 +131,7 @@ def run_quality_gate(
     _check_no_personal_names(understanding, report)
     _check_conciseness(understanding, report)
     _check_frankenstack_grounding(understanding, report, transcript=transcript)
+    _check_technical_accuracy(understanding, report)
 
     if collateral_links:
         _check_links(collateral_links, report)
@@ -160,6 +168,154 @@ def find_hero_competitors(understanding: dict[str, Any]) -> dict[str, list[str]]
         if found:
             hits[fld] = found
     return hits
+
+
+# ----------------------------------------------------------------------------
+# Technical-accuracy gate
+# ----------------------------------------------------------------------------
+#
+# Mirrors the competitor-as-hero gate: it inspects the HERO fields (where the
+# generated copy makes claims ABOUT the Epiphan product) and flags any field
+# that ASSERTS a "do NOT depict" limitation from product_visual_specs.py — the
+# authoritative SSOT of false claims to block (e.g. "EC20 needs a separate
+# encoder to record to a CMS").
+#
+# Matching is keyword-overlap, not regex: each do_not_depict phrase is reduced
+# to its salient content words, and a hero field is flagged when it shares
+# enough of those words AND is not simply negating the limitation. The negation
+# guard is what keeps the TRUE Epiphan claim ("records direct — no encoder
+# required") from tripping the gate on the EC20's encoder phrase.
+
+# Words too generic to carry a technical signal on their own. Includes the
+# connector/plumbing nouns that show up in clean hero copy ("record to your
+# CMS", "stream to the network") so they don't count as overlap — the signal
+# lives in the distinctive exclusion terms (encoder, ndi, nvme, dante, hdcp,
+# switching, alpha) that survive this filter.
+_TECH_STOPWORDS: frozenset[str] = frozenset(
+    """
+    a an and or but the to of in on at for with without no not never needing
+    need needs needed using use uses used it its this that these those
+    is are was were be been being do does has have had as by only direct
+    directly piece thing device box claim false separate require requires
+    record records recording recorded cms lms network support supports
+    supported source sources input inputs output outputs stream streams
+    streaming over your you our them they into via more than
+    """.split()
+)
+
+# Tokens that negate a limitation — when one sits just before a matched signal
+# word, the copy is making the TRUE claim ("no separate encoder", "without an
+# encoder"), which must NOT be flagged.
+_NEGATION_TOKENS: frozenset[str] = frozenset(
+    {"no", "not", "never", "without", "zero", "no-", "free"}
+)
+
+# How far back (in tokens) we look for a negation that flips a signal word.
+_NEGATION_WINDOW: int = 3
+
+
+def _raw_tokens(text: str) -> list[str]:
+    """Lowercase alphanumeric tokens, in order, nothing dropped.
+
+    Negation words must survive here so the negation guard can see them in the
+    window before a signal word (``_content_words`` drops them as stop-words).
+    """
+    return re.findall(r"[A-Za-z][A-Za-z0-9]+", text.lower())
+
+
+def _content_words(text: str) -> set[str]:
+    """Salient content words: lowercase, >2 chars, tech stop-words dropped."""
+    return {t for t in _raw_tokens(text) if len(t) > 2 and t not in _TECH_STOPWORDS}
+
+
+def _asserts_phrase(field_text: str, phrase: str) -> bool:
+    """True when *field_text* asserts the false claim described by *phrase*.
+
+    Conservative keyword-overlap with a negation guard:
+      * The field must share at least one *distinctive* content word with the
+        phrase. Generic plumbing nouns (cms/record/stream/network/...) are
+        stop-worded out, so what remains overlapping is a real exclusion term
+        (encoder, ndi, nvme, dante, hdcp, switching, alpha).
+      * The copy is flagged only when EVERY shared signal word is asserted
+        affirmatively. If any shared signal word is negated (a negation token
+        within the preceding ``_NEGATION_WINDOW`` tokens), the copy is making
+        the TRUE, negated claim ("...CMS — no encoder required") and is NOT
+        flagged. Biasing toward "any negation clears it" keeps clean copy from
+        tripping the gate, at the cost of occasionally missing a violation
+        that also happens to contain an unrelated negation.
+    """
+    phrase_words = _content_words(phrase)
+    if not phrase_words:
+        return False
+
+    field_tokens = _raw_tokens(field_text)
+    shared = phrase_words & set(field_tokens)
+    if not shared:
+        return False  # no distinctive overlap → not an assertion of this claim
+
+    # Walk the raw token stream (negations preserved) and check the window
+    # immediately before each shared signal word. Any negated signal clears
+    # the whole field — the copy is contradicting the limitation, not asserting it.
+    for idx, token in enumerate(field_tokens):
+        if token not in shared:
+            continue
+        window = field_tokens[max(0, idx - _NEGATION_WINDOW) : idx]
+        if any(w in _NEGATION_TOKENS for w in window):
+            return False  # a shared signal is negated → true Epiphan claim
+
+    return True  # every shared signal stated affirmatively → false assertion
+
+
+def find_tech_accuracy_violations(
+    understanding: dict[str, Any],
+) -> dict[str, list[str]]:
+    """Map each hero field to the false product claims it asserts.
+
+    Mirror of :func:`find_hero_competitors`. Uses the recommended products to
+    look up their authoritative ``do_not_depict`` phrases (the SSOT of false
+    claims) and flags any hero field that asserts one. Empty dict = clean.
+
+    Exposed so the generation pipeline can name the offending claim/field in a
+    corrective reframe-retry prompt.
+    """
+    products = understanding.get("recommended_products", [])
+    if not isinstance(products, list) or not products:
+        return {}
+
+    phrases = collect_do_not_depict([p for p in products if isinstance(p, str)])
+    if not phrases:
+        return {}
+
+    hits: dict[str, list[str]] = {}
+    for fld in _HERO_FIELDS:
+        field_text = str(understanding.get(fld) or "")
+        if not field_text:
+            continue
+        matched = [p for p in phrases if _asserts_phrase(field_text, p)]
+        if matched:
+            hits[fld] = matched
+    return hits
+
+
+def _check_technical_accuracy(understanding: dict, report: QualityReport) -> None:
+    """Flag hero copy that makes a technically false claim about a product.
+
+    Critical — a card that says the EC20 needs a separate encoder (when it
+    records direct) is selling a fiction and must not ship.
+    """
+    for fld, phrases in find_tech_accuracy_violations(understanding).items():
+        for phrase in phrases:
+            report.add_issue(
+                QualityIssue(
+                    category="tech_accuracy",
+                    severity="critical",
+                    message=(
+                        f"'{fld}' makes a technically false product claim — "
+                        f"copy asserts something the product facts exclude: "
+                        f"{phrase}"
+                    ),
+                )
+            )
 
 
 def _check_brand_consistency(understanding: dict, report: QualityReport) -> None:
@@ -408,6 +564,8 @@ def _check_product_references(understanding: dict, report: QualityReport) -> Non
     products = understanding.get("recommended_products", [])
     if isinstance(products, list):
         for pid in products:
+            if pid in _NON_CATALOG_PRODUCT_IDS:
+                continue  # synthetic id (e.g. Epiphan Edge cloud) — no catalog entry
             if isinstance(pid, str) and pid not in EPIPHAN_PRODUCTS:
                 report.add_issue(
                     QualityIssue(

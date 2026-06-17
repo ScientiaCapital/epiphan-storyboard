@@ -201,6 +201,15 @@ class StoryboardUnderstanding(BaseModel):
         default=None,
         description="Two-pass-only: description of the buyer's current workaround stack",
     )
+    # Epiphan product ids the extraction judged relevant to this scenario
+    # (e.g. ["pearl_mini", "ec20_ptz"]). Populated straight from the extraction
+    # JSON via StoryboardUnderstanding(**data); used to ground the generated
+    # image in the right hardware and to drive the technical-accuracy gate.
+    # Empty list = no specific product → generation/gate degrade gracefully.
+    recommended_products: list[str] = Field(
+        default_factory=list,
+        description="Epiphan product ids relevant to this scenario (visual grounding)",
+    )
 
 
 @dataclass
@@ -433,7 +442,11 @@ class GeminiStoryboardClient:
 
         raise Exception("Max retries exceeded for OpenRouter API")
 
-    async def _generate_image_via_openrouter(self, prompt: str) -> bytes:
+    async def _generate_image_via_openrouter(
+        self,
+        prompt: str,
+        reference_images: list[bytes] | None = None,
+    ) -> bytes:
         """
         Generate image via OpenRouter using Gemini image model (Nano Banana).
 
@@ -442,6 +455,8 @@ class GeminiStoryboardClient:
 
         Args:
             prompt: Image generation prompt
+            reference_images: Optional reference image bytes for image-to-image
+                conditioning, attached as data-URL image parts (capped at 3).
 
         Returns:
             PNG image bytes
@@ -456,9 +471,26 @@ class GeminiStoryboardClient:
             "X-Title": "Epiphan Storyboard Generator",
         }
 
+        # Multimodal message when reference photos are supplied (same shape as
+        # _call_qwen_vision); otherwise keep the prior text-only content.
+        message_content: Any
+        if reference_images:
+            message_content = []
+            for img_bytes in reference_images[:3]:
+                img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+                message_content.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{img_b64}"},
+                    }
+                )
+            message_content.append({"type": "text", "text": prompt})
+        else:
+            message_content = prompt
+
         payload = {
             "model": self.config.openrouter_image_model,
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": [{"role": "user", "content": message_content}],
             "max_tokens": 4096,
             "temperature": 0.9,
         }
@@ -1095,6 +1127,10 @@ Return ONLY valid JSON matching this exact structure:
         persona: dict,
     ) -> str:
         """Build audience-specific content section for image generation prompt."""
+        from src.tools.storyboard.product_visual_specs import (
+            build_product_visual_block,
+        )
+
         knowledge_context = prompt_builders.build_knowledge_context(audience)
         persona_context = prompts.get_persona_generation_context(audience, persona)
 
@@ -1105,6 +1141,15 @@ Return ONLY valid JSON matching this exact structure:
 RAW EXTRACTION (for context):
 {understanding.raw_extracted_text[:500]}
 """
+
+        # Ground the image in the ACTUAL Epiphan hardware the extraction picked.
+        # Empty when no product was recommended → byte-identical to prior prompt.
+        product_visual_block = build_product_visual_block(
+            understanding.recommended_products
+        )
+        product_section = (
+            f"\n{product_visual_block}\n" if product_visual_block else ""
+        )
 
         return f"""CONTENT TO DISPLAY:
 
@@ -1118,7 +1163,7 @@ EXTRACTED DATA (organize visually - create your own section headers based on the
 • {understanding.pain_point_addressed}
 
 {raw_context}
-
+{product_section}
 {knowledge_context if knowledge_context else ""}
 
 VISUAL DESIGN FREEDOM:
@@ -1153,6 +1198,7 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
         artist_style: str | None = None,
         icp_preset: dict[str, Any] | None = None,
         custom_style: dict[str, Any] | None = None,
+        reference_images: list[bytes] | None = None,
     ) -> bytes:
         """
         Stage 2: Generate beautiful PNG storyboard.
@@ -1169,6 +1215,8 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
             visual_style: "clean", "polished", "photo_realistic", or "minimalist"
             icp_preset: Optional ICP preset for visual style
             custom_style: Optional custom style overrides
+            reference_images: Optional user-uploaded reference image bytes used as
+                image-to-image conditioning (depict THIS room/scene). Capped at 3.
 
         Returns:
             PNG image bytes
@@ -1205,8 +1253,22 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
             understanding.tagline if understanding.tagline else understanding.headline
         )
 
+        # When the user supplied reference photos, tell the model to treat them
+        # as the real-world scene to honour (room, layout, existing gear) and to
+        # place the recommended Epiphan products accurately into THAT context.
+        reference_image_instruction = ""
+        if reference_images:
+            reference_image_instruction = """
+REFERENCE IMAGES (CRITICAL):
+- One or more reference photos of the user's actual environment are attached.
+- Use them as visual ground truth for the room/scene/layout — match the space.
+- Depict the recommended Epiphan products (described below) accurately placed
+  into THIS environment. Do NOT invent a generic stock room.
+"""
+
         # Build the image generation prompt
         prompt = f"""Create a UNIQUE professional one-page executive storyboard infographic.
+{reference_image_instruction}
 
 ANTI-CANNED-COPY RULE (CRITICAL):
 - DO NOT use generic marketing phrases like "streamline operations", "get paid faster", "one platform"
@@ -1270,9 +1332,20 @@ DESIGN PRINCIPLES:
                 from google.genai import types
 
                 temperature = 0.9 + random.uniform(0, 0.1)
+                # Image-to-image: attach reference photos as inline image Parts
+                # alongside the text prompt. No references → keep the prior
+                # text-only `contents=prompt` shape unchanged.
+                if reference_images:
+                    contents: Any = [prompt]
+                    for img in reference_images[:3]:
+                        contents.append(
+                            types.Part.from_bytes(data=img, mime_type="image/png")
+                        )
+                else:
+                    contents = prompt
                 response = self._client.models.generate_content(
                     model=self.config.image_model,
-                    contents=prompt,
+                    contents=contents,
                     config=types.GenerateContentConfig(
                         response_modalities=["IMAGE", "TEXT"],
                         temperature=temperature,
@@ -1288,7 +1361,9 @@ DESIGN PRINCIPLES:
                 logger.info(
                     f"[GENERATE] Using OpenRouter ({self.config.openrouter_image_model}) — no Google API key"
                 )
-                return await self._generate_image_via_openrouter(prompt)
+                return await self._generate_image_via_openrouter(
+                    prompt, reference_images=reference_images
+                )
 
         except Exception as e:
             logger.error(f"[GENERATE] Image generation failed: {e}")

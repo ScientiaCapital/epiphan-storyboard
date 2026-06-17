@@ -44,6 +44,12 @@ DEMO_MAX_TEXT_CHARS = (
     GeminiConfig().two_pass_threshold_chars - _TWO_PASS_SAFETY_MARGIN_CHARS
 )
 
+# Per-image base64 ceiling. Reference images now flow into image-to-image
+# generation (not just extraction), so an oversized payload can 413 on the
+# serverless function. ~7M base64 chars ≈ ~5 MB decoded per image; images
+# above this are dropped (with a log) rather than risking a hard request fail.
+DEMO_MAX_IMAGE_B64_CHARS = 7_000_000
+
 # ============================================================================
 # Router Setup
 # ============================================================================
@@ -383,6 +389,20 @@ async def generate_storyboard(
         # Single image provided
         images_list = [request.image_base64]
         image_count = 1
+
+    # Drop any image whose base64 payload exceeds the serverless ceiling — these
+    # now reach image-to-image generation, so an oversized one could 413.
+    if images_list:
+        kept = [img for img in images_list if len(img) <= DEMO_MAX_IMAGE_B64_CHARS]
+        if len(kept) != len(images_list):
+            logger.warning(
+                "[DEMO] Dropped %d oversized image(s) (>%d b64 chars) to stay "
+                "within serverless limits",
+                len(images_list) - len(kept),
+                DEMO_MAX_IMAGE_B64_CHARS,
+            )
+        images_list = kept
+        image_count = len(images_list)
 
     # Auto-infer input_type if not provided
     # NEW: When BOTH image AND text are provided, use image as primary with text as context

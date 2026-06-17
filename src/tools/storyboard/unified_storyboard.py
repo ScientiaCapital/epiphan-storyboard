@@ -646,6 +646,16 @@ class UnifiedStoryboardTool(BaseTool):
                     )
                     reframe_applied = True
                     tech_reframe_applied = True
+                elif tech_hits:
+                    # Budget already spent on the competitor reframe; the false
+                    # claim ships flagged in the report but un-retried. Log it so
+                    # the skip isn't silent.
+                    logger.warning(
+                        "Quality gate: technically false claim in %s but reframe "
+                        "budget already used by competitor gate — issue surfaced, "
+                        "not retried",
+                        sorted(tech_hits),
+                    )
                 quality = {
                     "passed": report.passed,
                     "score": report.score,

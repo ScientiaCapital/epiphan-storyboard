@@ -94,6 +94,27 @@ class TestDoNotDepict:
         assert flat == []
 
 
+class TestPearlDuo:
+    """Pearl Duo (pre-launch dual-channel device) — catalog + visual truth."""
+
+    def test_in_catalog_and_ssot(self):
+        assert "pearl_duo" in EPIPHAN_PRODUCTS
+        assert get_visual_spec("pearl_duo") is not None
+
+    def test_availability_captured(self):
+        assert EPIPHAN_PRODUCTS["pearl_duo"].get("availability") == "December 2026"
+
+    def test_visual_block_shows_dual_screens(self):
+        block = build_product_visual_block(["pearl_duo"]).lower()
+        assert "two" in block or "dual" in block
+        assert "touchscreen" in block
+
+    def test_do_not_depict_blocks_lecture_capture_and_switcher(self):
+        joined = " ".join(get_visual_spec("pearl_duo").do_not_depict).lower()
+        assert "lecture" in joined
+        assert "switcher" in joined
+
+
 class TestGetVisualSpec:
     def test_known(self):
         assert get_visual_spec("pearl_mini") is not None

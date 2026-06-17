@@ -871,3 +871,110 @@ class TestQualityGateWiring:
 
         assert result.success is True
         assert result.result.get("quality") is None
+
+
+def _ec20_false_encoder_understanding() -> StoryboardUnderstanding:
+    """Hero copy asserting the #1 false EC20 claim (needs a separate encoder)."""
+    return StoryboardUnderstanding(
+        headline="EC20 plus a separate encoder records to your CMS",
+        what_it_does="The EC20 requires an encoder to push to the CMS.",
+        business_value="Cuts setup time",
+        who_benefits="AV directors",
+        differentiator="Pairs with any encoder",
+        pain_point_addressed="Manual uploads",
+        suggested_icon="camera",
+        recommended_products=["ec20_ptz"],
+    )
+
+
+def _ec20_clean_understanding() -> StoryboardUnderstanding:
+    return StoryboardUnderstanding(
+        headline="EC20 records straight to your CMS — no encoder required",
+        what_it_does="The EC20 PTZ uploads direct to the CMS, no encoder PC.",
+        business_value="Cuts setup time",
+        who_benefits="AV directors",
+        differentiator="Only fleet-managed PTZ out of the box",
+        pain_point_addressed="Manual uploads",
+        suggested_icon="camera",
+        recommended_products=["ec20_ptz"],
+    )
+
+
+class TestTechAccuracyGateWiring:
+    """The technical-accuracy gate fires one corrective retry for a false
+    product claim, sharing the single reframe budget with the competitor gate."""
+
+    def _tool_with_client(self, understand_side_effect):
+        tool = UnifiedStoryboardTool()
+        mock_client = MagicMock()
+        mock_client.understand_code = AsyncMock(side_effect=understand_side_effect)
+        mock_client.generate_storyboard = AsyncMock(return_value=_TINY_PNG)
+        tool._gemini_client = mock_client
+        return tool, mock_client
+
+    @pytest.mark.asyncio
+    async def test_false_claim_triggers_one_corrective_retry(self):
+        tool, mock_client = self._tool_with_client(
+            [_ec20_false_encoder_understanding(), _ec20_clean_understanding()]
+        )
+
+        with patch("webbrowser.open"):
+            result = await tool.run({"input": "def foo(): pass", "open_browser": False})
+
+        assert result.success is True
+        # extraction re-called exactly once for the corrective reframe
+        assert mock_client.understand_code.call_count == 2
+        quality = result.result["quality"]
+        assert quality["tech_accuracy_reframe_applied"] is True
+        assert quality["reframe_applied"] is True
+
+    @pytest.mark.asyncio
+    async def test_clean_claim_runs_once(self):
+        tool, mock_client = self._tool_with_client([_ec20_clean_understanding()])
+
+        with patch("webbrowser.open"):
+            result = await tool.run({"input": "def foo(): pass", "open_browser": False})
+
+        assert result.success is True
+        assert mock_client.understand_code.call_count == 1
+        assert result.result["quality"]["tech_accuracy_reframe_applied"] is False
+
+
+class TestReferenceImageThreading:
+    """Uploaded reference photos flow from run() into generate_storyboard for
+    image-to-image conditioning; text/code inputs pass reference_images=None."""
+
+    @pytest.mark.asyncio
+    async def test_image_input_threads_reference_bytes(self):
+        tool = UnifiedStoryboardTool()
+        mock_client = MagicMock()
+        mock_client.understand_image = AsyncMock(
+            return_value=_epiphan_hero_understanding()
+        )
+        mock_client.generate_storyboard = AsyncMock(return_value=_TINY_PNG)
+        tool._gemini_client = mock_client
+
+        data_url = "data:image/png;base64," + base64.b64encode(_TINY_PNG).decode()
+        with patch("webbrowser.open"):
+            result = await tool.run({"input": data_url, "open_browser": False})
+
+        assert result.success is True
+        kwargs = mock_client.generate_storyboard.call_args.kwargs
+        assert kwargs["reference_images"] == [_TINY_PNG]
+
+    @pytest.mark.asyncio
+    async def test_code_input_passes_no_reference_images(self):
+        tool = UnifiedStoryboardTool()
+        mock_client = MagicMock()
+        mock_client.understand_code = AsyncMock(
+            return_value=_epiphan_hero_understanding()
+        )
+        mock_client.generate_storyboard = AsyncMock(return_value=_TINY_PNG)
+        tool._gemini_client = mock_client
+
+        with patch("webbrowser.open"):
+            result = await tool.run({"input": "def foo(): pass", "open_browser": False})
+
+        assert result.success is True
+        kwargs = mock_client.generate_storyboard.call_args.kwargs
+        assert kwargs["reference_images"] is None

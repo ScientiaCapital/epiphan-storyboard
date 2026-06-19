@@ -1,5 +1,13 @@
 # Backlog
 
+## Feature — designed, ready to implement
+
+- **DA-TXT1: Track C — deterministic text layer for storyboard art** (effort: multi-session, impact: HIGH — exec-grade output) **[NEW 2026-06-19]**
+  - Full approved design at `docs/plans/2026-06-19-deterministic-text-layer-design.md`. Diffusion renders a TEXT-FREE hero illustration only; the infographic layout + crisp Söhne copy + stat + CTA + SVG icons composite client-side on a `<canvas>` from a fixed brand template, exported as PNG. Text never touches the diffusion model → garble/dup failure modes become structurally impossible.
+  - Anticipated files: `gemini_client.py` (text-free hero prompt), new `storyboard_layout.py` (`StoryboardLayout`/`build_layout`/`resolve_icon`), new `icons/` SVG set, `demo/router.py` (response → `{hero_png_b64, layout}`), `static/demo.html` (canvas renderer). Tests: `test_storyboard_layout.py` + Playwright E2E.
+  - Next step: `superpowers:writing-plans` from the design doc, then implement on a fresh branch.
+  - Tech-accuracy note to honor: Pearl Nexus Dante is licensed but NOT functional until ~fall 2026 — copy must not claim Dante works today.
+
 ## Security / Tooling
 
 - ~~**Add `.gitleaksignore` for historical test fixtures**~~ — **DONE 2026-06-12** during /end security sweep. Fingerprint pinned; `gitleaks detect` now reports "no leaks found".

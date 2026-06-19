@@ -1,6 +1,24 @@
 # Active Tasks
 
-**Updated:** 2026-06-17 (/end — product-grounded image gen + Pearl Duo shipped)
+**Updated:** 2026-06-19 (/end — quality-gate false-positives + image text polish shipped; Track C designed)
+
+## Today's sprint (2026-06-19) — 2 commits, deployed
+
+Debug-led session (started via `/begin` with an error report, not a planned sprint).
+
+1. ✅ **Killed quality-gate false-positives + image text garbling** (commit `0b1000e`, ff-merged to main, force-redeployed). Root causes traced via 4 parallel Explore agents + systematic-debugging:
+   - **Product-ID warnings** (`pearl-nexus`/`ec20-ptz`): catalog keys on snake_case, LLM emitted kebab slugs, no normalization layer (also silently broke `product_visual_specs` injection). Fix: `normalize_product_id()` SSOT in `epiphan_presets.py` (+ `_PRODUCT_ID_ALIASES`, `NON_CATALOG_PRODUCT_IDS`) applied via a Pydantic `@field_validator` on `StoryboardUnderstanding.recommended_products`; gate reuses it as defense-in-depth.
+   - **"Media Services" name flag**: `_check_no_personal_names` flagged any two Title-Case words; now filters against `_ROLE_WORDS ∪ _ORG_UNIT_WORDS ∪ vertical tokens` (derived from `EPIPHAN_VERTICALS`).
+   - **Garbled/duplicate text in art** (Track B): dropped debug-only `raw_extracted_text` from the image prompt; `_dedupe_and_cap` the copy fields; generation temperature 0.9 → 0.4 on both backends.
+   - Product facts verified against the live Epiphan AI catalog MCP (Pearl Nexus ESP1948, EC20 PTZ ESP1899/slug `ec20`).
+2. ✅ **Track C design** (commit `815dbfb`) — `docs/plans/2026-06-19-deterministic-text-layer-design.md`. Approved design for crisp client-side canvas text layer (diffusion = text-free hero only). Implementation deferred.
+
+**Tests:** 1,658 → **1,679** (+21, all green). mypy 46-baseline on touched file (0 new). gitleaks: no leaks (88 commits).
+**Deploy:** force-redeployed to https://epiphan-storyboard.vercel.app — verified `/`, `/demo/examples`, `/demo/generate` reachable; user confirmed storyboard generation works ("worked great"). The earlier "couldn't reach api" was a stale pre-fix deploy.
+
+---
+
+## Prior — 2026-06-17 sprint
 
 ## Today's sprint (2026-06-17, approved) — 2 PRs, 6 commits, both deployed
 

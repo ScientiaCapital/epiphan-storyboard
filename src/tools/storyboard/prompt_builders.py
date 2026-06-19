@@ -503,7 +503,7 @@ Return JSON:
         "habit": "Comfort of current state"
     }},
     "frankenstack": "Description of current messy setup (if detectable from code)",
-    "recommended_products": ["product_id_1", "product_id_2"],
+    "recommended_products": ["snake_case_catalog_id"],
     "challenger_reframe": "The insight: Most [audience]s believe X, but Y shows Z"
 }}"""
 
@@ -600,7 +600,7 @@ Return JSON:
         "habit": "Current comfort / status quo"
     }},
     "frankenstack": "Their current messy setup from transcript",
-    "recommended_products": ["product_id_1", "product_id_2"],
+    "recommended_products": ["snake_case_catalog_id"],
     "challenger_reframe": "The insight: Most [audience]s believe X, but Y shows Z",
     "buyer_signals": {{
         "timeline": "Budget cycle, event date, mandate",
@@ -692,7 +692,7 @@ Return JSON:
         "habit": "Current comfort"
     }},
     "frankenstack": "Current messy setup visible in image (if applicable)",
-    "recommended_products": ["product_id_1", "product_id_2"],
+    "recommended_products": ["snake_case_catalog_id"],
     "challenger_reframe": "The insight: Most [audience]s believe X, but Y shows Z"
 }}"""
 
@@ -781,6 +781,6 @@ Return JSON:
         "habit": "Current comfort"
     }},
     "frankenstack": "Current messy setup visible across images",
-    "recommended_products": ["product_id_1", "product_id_2"],
+    "recommended_products": ["snake_case_catalog_id"],
     "challenger_reframe": "The insight: Most [audience]s believe X, but Y shows Z"
 }}"""

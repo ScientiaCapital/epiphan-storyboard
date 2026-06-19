@@ -27,11 +27,59 @@ from datetime import datetime
 from typing import Any, Literal
 
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from src.tools.storyboard import prompt_builders, prompts
 
 logger = logging.getLogger(__name__)
+
+
+def _cap_words(text: str, max_words: int) -> str:
+    """Trim *text* to *max_words* words (ellipsis if cut). Diffusion models
+    garble long strings, so per-section copy is capped before it reaches the
+    image prompt."""
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+    return " ".join(words[:max_words]) + "…"
+
+
+def _dedupe_and_cap(values: list[str], max_words: int = 14) -> list[str]:
+    """De-duplicate overlapping copy fields and cap each to *max_words*.
+
+    The diffusion model renders whatever text it's handed; when
+    ``business_value``/``differentiator``/``pain_point_addressed`` overlap, the
+    same phrase ("Fewer truck rolls. Managed remotely") gets drawn twice. We
+    collapse exact/substring duplicates (keeping the richer line) and trim
+    length before building the bullet list.
+    """
+    kept: list[str] = []
+    kept_norm: list[str] = []
+    for value in values:
+        text = " ".join(str(value or "").split())
+        if not text:
+            continue
+        norm = re.sub(r"[^a-z0-9 ]", "", text.lower()).strip()
+        if not norm:
+            continue
+        # Skip when this line is already represented by a kept (richer) line.
+        if any(norm == k or norm in k for k in kept_norm):
+            continue
+        # Drop any kept line that this richer line fully contains.
+        survivors = [
+            (t, k) for t, k in zip(kept, kept_norm, strict=True) if k not in norm
+        ]
+        kept = [t for t, _ in survivors]
+        kept_norm = [k for _, k in survivors]
+        kept.append(_cap_words(text, max_words))
+        kept_norm.append(norm)
+    return kept
+
+
+# Storyboard outputs are all text-bearing. High temperature buys layout variety
+# at the cost of spelling — at 0.9 the model garbles baked-in copy. Keep it low;
+# the per-request random seed already supplies layout variation.
+_TEXT_FIDELITY_TEMPERATURE: float = 0.4
 
 
 def _repair_json(json_str: str) -> str:
@@ -226,6 +274,31 @@ class StoryboardUnderstanding(BaseModel):
         default_factory=list,
         description="Epiphan product ids relevant to this scenario (visual grounding)",
     )
+
+    @field_validator("recommended_products", mode="before")
+    @classmethod
+    def _canonicalize_product_ids(cls, value: Any) -> Any:
+        """Map LLM-emitted product ids (often kebab slugs like ``pearl-nexus``)
+        to canonical catalog ids, dropping any that don't resolve.
+
+        Done at the schema boundary so every consumer — the quality gate AND
+        product_visual_specs visual injection — only sees canonical ids.
+        """
+        from src.tools.storyboard.epiphan_presets import normalize_product_id
+
+        if not isinstance(value, list):
+            return value
+        canonical: list[str] = []
+        for raw in value:
+            pid = normalize_product_id(raw) if isinstance(raw, str) else None
+            if pid is None:
+                logger.warning(
+                    "Dropping unrecognized product id from extraction: %r", raw
+                )
+                continue
+            if pid not in canonical:
+                canonical.append(pid)
+        return canonical
 
 
 @dataclass
@@ -462,6 +535,7 @@ class GeminiStoryboardClient:
         self,
         prompt: str,
         reference_images: list[bytes] | None = None,
+        temperature: float = _TEXT_FIDELITY_TEMPERATURE,
     ) -> bytes:
         """
         Generate image via OpenRouter using Gemini image model (Nano Banana).
@@ -509,7 +583,7 @@ class GeminiStoryboardClient:
             "model": self.config.openrouter_image_model,
             "messages": [{"role": "user", "content": message_content}],
             "max_tokens": 4096,
-            "temperature": 0.9,
+            "temperature": temperature,
         }
 
         for attempt in range(self.config.max_retries):
@@ -1151,35 +1225,36 @@ Return ONLY valid JSON matching this exact structure:
         knowledge_context = prompt_builders.build_knowledge_context(audience)
         persona_context = prompts.get_persona_generation_context(audience, persona)
 
-        # Customer-focused storyboard (all 8 BDR Playbook personas)
-        raw_context = ""
-        if understanding.raw_extracted_text:
-            raw_context = f"""
-RAW EXTRACTION (for context):
-{understanding.raw_extracted_text[:500]}
-"""
+        # The copy the model must render, de-duplicated and length-capped. Note
+        # raw_extracted_text is deliberately NOT fed to the image prompt — it's
+        # the least-curated (debug/verification) field and the main source of
+        # garbled fragments baked into the artwork (e.g. "222 ar a perfect
+        # fit"). It stays on the understanding for the debug panel only.
+        copy_lines = _dedupe_and_cap(
+            [
+                understanding.headline,
+                understanding.what_it_does,
+                understanding.business_value,
+                understanding.differentiator,
+                understanding.pain_point_addressed,
+            ]
+        )
+        extracted_bullets = "\n".join(f"• {line}" for line in copy_lines)
 
         # Ground the image in the ACTUAL Epiphan hardware the extraction picked.
         # Empty when no product was recommended → byte-identical to prior prompt.
         product_visual_block = build_product_visual_block(
             understanding.recommended_products
         )
-        product_section = (
-            f"\n{product_visual_block}\n" if product_visual_block else ""
-        )
+        product_section = f"\n{product_visual_block}\n" if product_visual_block else ""
 
         return f"""CONTENT TO DISPLAY:
 
 {persona_context}
 
 EXTRACTED DATA (organize visually - create your own section headers based on the content):
-• {understanding.headline}
-• {understanding.what_it_does}
-• {understanding.business_value}
-• {understanding.differentiator}
-• {understanding.pain_point_addressed}
+{extracted_bullets}
 
-{raw_context}
 {product_section}
 {knowledge_context if knowledge_context else ""}
 
@@ -1188,6 +1263,7 @@ VISUAL DESIGN FREEDOM:
 - NOT generic labels like "Value Proposition" or "Key Benefit"
 - Let icons and visuals communicate - minimize text
 - Trust that executives understand visual hierarchy without explicit labels
+- Render each line above EXACTLY ONCE — never repeat a phrase or label in two places
 
 INDUSTRY GUARDRAILS (CRITICAL - NEVER VIOLATE):
 - This is for AV/IT professionals in education, corporate, healthcare, government, and live events
@@ -1348,7 +1424,7 @@ DESIGN PRINCIPLES:
                 self._ensure_client()
                 from google.genai import types
 
-                temperature = 0.9 + random.uniform(0, 0.1)
+                temperature = _TEXT_FIDELITY_TEMPERATURE + random.uniform(0, 0.05)
                 # Image-to-image: attach reference photos as inline image Parts
                 # alongside the text prompt. No references → keep the prior
                 # text-only `contents=prompt` shape unchanged.

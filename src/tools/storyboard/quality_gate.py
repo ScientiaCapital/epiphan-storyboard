@@ -21,7 +21,8 @@ from typing import Any
 
 from src.tools.storyboard.epiphan_presets import (
     COMPETITOR_TOKENS,
-    EPIPHAN_PRODUCTS,
+    EPIPHAN_VERTICALS,
+    normalize_product_id,
 )
 from src.tools.storyboard.product_visual_specs import collect_do_not_depict
 from src.tools.storyboard.prompts import get_persona_job_statement
@@ -50,11 +51,9 @@ _CONTRAST_FIELDS: tuple[str, ...] = (
     "buyer_signals",
 )
 
-# Synthetic product ids that are valid recommendations but have no catalog
-# entry in EPIPHAN_PRODUCTS (so _check_product_references must not flag them).
-# ``epiphan_edge`` is the cloud fleet-management service (see
-# product_visual_specs.py).
-_NON_CATALOG_PRODUCT_IDS: frozenset[str] = frozenset({"epiphan_edge"})
+# Product-id validity (catalog + synthetic cloud ids + alias resolution) lives
+# in epiphan_presets.normalize_product_id — the single source of truth. The
+# gate reuses it so it never re-introduces the kebab-vs-snake false positive.
 
 
 @dataclass
@@ -571,9 +570,10 @@ def _check_product_references(understanding: dict, report: QualityReport) -> Non
     products = understanding.get("recommended_products", [])
     if isinstance(products, list):
         for pid in products:
-            if pid in _NON_CATALOG_PRODUCT_IDS:
-                continue  # synthetic id (e.g. Epiphan Edge cloud) — no catalog entry
-            if isinstance(pid, str) and pid not in EPIPHAN_PRODUCTS:
+            # normalize_product_id resolves kebab slugs (pearl-nexus), the bare
+            # ec20 camera slug, and synthetic cloud ids — only truly unknown
+            # ids return None and get flagged.
+            if isinstance(pid, str) and normalize_product_id(pid) is None:
                 report.add_issue(
                     QualityIssue(
                         category="brand",
@@ -668,6 +668,33 @@ _ROLE_WORDS: frozenset[str] = frozenset(
     """.split()
 )
 
+# Organizational-unit / department / function words. A capitalized two-word
+# phrase containing one of these is a team or department ("Media Services",
+# "Creative Services", "Customer Success"), not a person — without these the
+# John-Smith pattern flags our own org vocabulary.
+_ORG_UNIT_WORDS: frozenset[str] = frozenset(
+    """
+    services service media creative operations operation marketing
+    communications comms affairs success research broadcast broadcasting
+    studio facilities learning content design events event worship ministry
+    athletics esports library
+    """.split()
+)
+
+# Vertical display names are controlled vocabulary too ("Higher Education",
+# "Live Events / Production"). Derive their tokens so the allowlist stays in
+# sync with epiphan_presets rather than drifting.
+_VERTICAL_WORDS: frozenset[str] = frozenset(
+    word.lower()
+    for v in EPIPHAN_VERTICALS.values()
+    for word in str(v.get("name", "")).replace("/", " ").split()
+    if word.isalpha()
+)
+
+# A flagged two-word phrase is a real personal name only when NONE of its words
+# appear in this combined allowlist.
+_NON_NAME_WORDS: frozenset[str] = _ROLE_WORDS | _ORG_UNIT_WORDS | _VERTICAL_WORDS
+
 
 def _check_no_personal_names(understanding: dict, report: QualityReport) -> None:
     """Check that output uses roles, not personal names."""
@@ -683,7 +710,7 @@ def _check_no_personal_names(understanding: dict, report: QualityReport) -> None
             real_names = [
                 m
                 for m in matches
-                if not any(word.lower() in _ROLE_WORDS for word in m.split())
+                if not any(word.lower() in _NON_NAME_WORDS for word in m.split())
             ]
             if real_names:
                 report.add_issue(

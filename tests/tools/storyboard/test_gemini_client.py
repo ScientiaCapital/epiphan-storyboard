@@ -8,6 +8,8 @@ from src.tools.storyboard.gemini_client import (
     GeminiStoryboardClient,
     GeminiConfig,
     StoryboardUnderstanding,
+    _cap_words,
+    _dedupe_and_cap,
     _repair_json,
 )
 from src.tools.storyboard.epiphan_presets import (
@@ -562,10 +564,13 @@ class TestBuildGenerationContentSection:
         section = self._build_section("av_director")
         assert "AV Director" in section or "av_director" in section.lower()
 
-    def test_includes_raw_context_when_present(self):
-        """Section should include raw extraction when available."""
+    def test_excludes_raw_extracted_text(self):
+        """raw_extracted_text is debug-only and must NOT be fed to the image
+        prompt — it's the least-curated field and the main source of garbled
+        fragments baked into the artwork (Track B fix)."""
         section = self._build_section("av_director")
-        assert "RAW EXTRACTION" in section or "Fleet management dashboard" in section
+        assert "RAW EXTRACTION" not in section
+        assert "Fleet management dashboard" not in section
 
     def test_all_eight_personas_produce_output(self):
         """All 8 BDR Playbook personas should produce valid content sections."""
@@ -1177,3 +1182,63 @@ class TestShouldRunTwoPass:
 
         config = GeminiConfig(api_key="test-key")
         assert DEMO_MAX_TEXT_CHARS < config.two_pass_threshold_chars
+
+
+class TestImagePromptTextHygiene:
+    """Track B: de-dup + length-cap copy before it reaches the diffusion model,
+    so labels aren't drawn twice and long strings don't garble."""
+
+    def test_cap_words_truncates_with_ellipsis(self):
+        assert _cap_words("one two three", 5) == "one two three"
+        assert _cap_words("a b c d e f", 3) == "a b c…"
+
+    def test_exact_duplicate_dropped(self):
+        out = _dedupe_and_cap(
+            [
+                "Fewer truck rolls. Managed remotely",
+                "Fewer truck rolls. Managed remotely",
+            ]
+        )
+        assert len(out) == 1
+
+    def test_substring_overlap_keeps_richer_line(self):
+        out = _dedupe_and_cap(
+            ["Fewer truck rolls", "Fewer truck rolls. Managed remotely from anywhere"]
+        )
+        assert len(out) == 1
+        assert "Managed remotely" in out[0]
+
+    def test_empty_and_blank_fields_skipped(self):
+        assert _dedupe_and_cap(["", "   ", None]) == []
+
+    def test_distinct_lines_preserved_in_order(self):
+        out = _dedupe_and_cap(["Save money", "Stream anywhere", "No truck rolls"])
+        assert out == ["Save money", "Stream anywhere", "No truck rolls"]
+
+
+class TestRecommendedProductsValidator:
+    """Track A: ids are canonicalized at the schema boundary."""
+
+    @staticmethod
+    def _make(products):
+        return StoryboardUnderstanding(
+            headline="h",
+            what_it_does="w",
+            business_value="b",
+            who_benefits="AV Directors",
+            differentiator="d",
+            pain_point_addressed="p",
+            recommended_products=products,
+        )
+
+    def test_kebab_ids_canonicalized(self):
+        u = self._make(["pearl-nexus", "ec20-ptz"])
+        assert u.recommended_products == ["pearl_nexus", "ec20_ptz"]
+
+    def test_bare_ec20_alias_and_dedup(self):
+        u = self._make(["ec20", "ec20_ptz"])
+        assert u.recommended_products == ["ec20_ptz"]
+
+    def test_unknown_ids_dropped(self):
+        u = self._make(["pearl_mini", "acme-9000"])
+        assert u.recommended_products == ["pearl_mini"]

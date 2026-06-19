@@ -12,6 +12,7 @@ Golden Rule: If a competitor could use the info to copy us, strip it.
              If a 5th grader couldn't understand it, simplify it.
 """
 
+import re
 from enum import Enum
 from typing import Any, Final
 
@@ -409,6 +410,51 @@ EPIPHAN_PRODUCTS = {
         "savings": "$1,417 vs buying separately",
     },
 }
+
+
+# =============================================
+# Product-id normalization (SSOT)
+# =============================================
+#
+# EPIPHAN_PRODUCTS keys on snake_case ids (``pearl_nexus``, ``ec20_ptz``). The
+# LLM extraction that populates ``recommended_products`` often emits the public
+# URL/catalog slug instead (``pearl-nexus``, ``ec20``), which then fails the
+# quality gate AND silently misses product_visual_specs injection. Funnel every
+# incoming product id through ``normalize_product_id`` so the rest of the system
+# only ever sees canonical catalog ids.
+
+# Synthetic ids that are valid recommendations but have no hardware-catalog
+# entry (cloud services). ``epiphan_edge`` is the fleet-management service.
+NON_CATALOG_PRODUCT_IDS: frozenset[str] = frozenset({"epiphan_edge"})
+
+# Known slug/alias divergences that snake-casing alone does not resolve. The
+# camera's live catalog slug is the bare ``ec20`` (verified against the Epiphan
+# catalog: ESP1899); everything else here guards common LLM variants.
+_PRODUCT_ID_ALIASES: Final[dict[str, str]] = {
+    "ec20": "ec20_ptz",
+    "ec20_ptz_camera": "ec20_ptz",
+    "ec20_camera": "ec20_ptz",
+    "pearl2": "pearl_2",
+    "pearl_two": "pearl_2",
+    "avio_4k_plus": "avio_4k",
+}
+
+
+def normalize_product_id(raw: str) -> str | None:
+    """Return the canonical EPIPHAN_PRODUCTS id for *raw*, or ``None``.
+
+    Lower-cases, trims, collapses any run of spaces/hyphens to a single
+    underscore, then applies the alias map. Returns the canonical id only when
+    it resolves to a real catalog entry or a known synthetic id; otherwise
+    ``None`` so callers can drop genuinely unknown ids.
+    """
+    if not isinstance(raw, str):
+        return None
+    canon = re.sub(r"[\s\-]+", "_", raw.strip().lower()).strip("_")
+    canon = _PRODUCT_ID_ALIASES.get(canon, canon)
+    if canon in EPIPHAN_PRODUCTS or canon in NON_CATALOG_PRODUCT_IDS:
+        return canon
+    return None
 
 
 # =============================================

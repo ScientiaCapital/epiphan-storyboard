@@ -503,6 +503,34 @@ async def generate_storyboard(
         understanding = result.result.get("understanding")
         storage_url = None
 
+        # Extraction failure → surface a clean retry message instead of rendering a
+        # polished card titled "EXTRACTION FAILED". The canvas faithfully renders
+        # whatever layout it's handed, so a degraded/parse-failed extraction
+        # (sentinel headline or near-zero confidence) must be caught here.
+        _headline = (understanding or {}).get("headline", "") or ""
+        _confidence = (understanding or {}).get("extraction_confidence", 1.0)
+        if _headline.startswith("EXTRACTION FAILED") or _confidence < 0.1:
+            return GenerateResponse(
+                success=False,
+                input_type=result.result.get("input_type", input_type),
+                output_format=request.output_format,
+                visual_style=request.visual_style,
+                artist_style=request.artist_style,
+                image_count=image_count,
+                stage=request.stage,
+                audience=request.audience,
+                icp_preset=request.icp_preset,
+                execution_time_ms=result.execution_time_ms,
+                collateral_links=None,
+                quality=None,
+                hero_png_b64=None,
+                layout=None,
+                error=(
+                    "We couldn't read that input — the model returned malformed "
+                    "data. Please try again, or use a cleaner or different input."
+                ),
+            )
+
         # Auto-save to Supabase storage
         if storyboard_png:
             try:

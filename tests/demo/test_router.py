@@ -706,3 +706,39 @@ def test_generate_requests_text_free_hero(client):
         )
         args = mock_instance.run.call_args[0][0]
         assert args["text_free_hero"] is True
+
+
+def test_failed_extraction_returns_friendly_error_not_card(client):
+    """A degraded extraction (sentinel headline / near-zero confidence) must
+    surface a clean retry message — NOT a polished card titled EXTRACTION FAILED
+    (the canvas renders whatever layout it's given, so we catch it server-side)."""
+    result = ToolResult(
+        tool_name="unified_storyboard",
+        success=True,
+        result={
+            "storyboard_png": "fake",
+            "hero_png_b64": "fake",
+            "layout": {"headline": "EXTRACTION FAILED - Check Input", "cards": []},
+            "understanding": {
+                "headline": "EXTRACTION FAILED - Check Input",
+                "extraction_confidence": 0.0,
+            },
+            "input_type": "code",
+        },
+        execution_time_ms=100,
+    )
+    with patch("src.demo.router.UnifiedStoryboardTool") as MockTool:
+        mock_instance = AsyncMock()
+        mock_instance.run.return_value = result
+        MockTool.return_value = mock_instance
+        response = client.post(
+            "/demo/generate",
+            json={"input_type": "code", "code": "def f(): pass",
+                  "stage": "demo", "audience": "av_director"},
+        )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is False
+    assert body["layout"] is None
+    assert "EXTRACTION FAILED" not in (body.get("error") or "")
+    assert "try again" in body["error"].lower()

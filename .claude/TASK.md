@@ -1,8 +1,24 @@
 # Active Tasks
 
-**Updated:** 2026-06-19 (/end — quality-gate false-positives + image text polish shipped; Track C designed)
+**Updated:** 2026-06-20 (/end — Track C shipped end-to-end + deployed; gate false-positives killed; QA banner + hardware name pulled from customer view)
 
-## Today's sprint (2026-06-19) — 2 commits, deployed
+## Today's sprint (2026-06-20) — 9 commits, merged to main, deployed ×3
+
+Began via `/begin` (read-only observer audit of the 06-17→06-19 diff: clean, 1 minor finding → DA-TXT2). User reframed to "fix this once and for all so it works properly" → implemented **Track C (DA-TXT1)** across 5 sessions, then two customer-facing cleanups from live screenshots.
+
+1. ✅ **Track C — deterministic canvas text layer** (`7a947fb`→`e1d103e`, branch `feature/track-c-deterministic-text-layer`, ff-merged to main). Diffusion now paints a **text-free hero only**; all copy composites client-side on `<canvas>` in crisp Söhne and exports via `canvas.toBlob` → garbled/duplicated image text is now **structurally impossible**.
+   - New `src/tools/storyboard/storyboard_layout.py` — pure `build_layout()` + `resolve_icon()` + 13-glyph `ICON_SVGS` (no LLM call). `gemini_client._build_hero_prompt` + `text_free_hero` flag. Router returns `hero_png_b64` + `layout`. `demo.html` `renderStoryboard()` + `downloadCanvas()`. Removed the old DOM card, garbled `#resultImg`, AI-visual toggle, html2canvas (closes **DA-B2**).
+   - Verified live via Playwright; caught+fixed a missing-`xmlns` icon bug. Backend TDD throughout.
+2. ✅ **Gate tech-accuracy false-positives killed** (`b14f830`). "One-cable lecture capture" was wrongly flagged as "needing multiple cables" — `do_not_depict` parentheticals (the TRUE state) leaked into the matcher. Fix: strip parentheticals + stopword generic plumbing nouns. EC20 separate-encoder claim still fires. +4 regression tests.
+3. ✅ **Customer-facing cleanup** (`d707e1b`) — removed the internal QA banner and the footer hardware name ("Pearl Mini") from the demo. Gate still runs server-side; only its report is hidden. +2 contract guards.
+4. ✅ **Graceful extraction-failure handling** (`0f0d062`) — a malformed/degraded extraction (sentinel headline / confidence < 0.1) now returns a clean "couldn't read that input — try again" error instead of Track C rendering a polished "EXTRACTION FAILED" card. +1 test. (Root cause: the understand-step LLM intermittently returns non-JSON — follow-up = extraction retry, see PROJECT_CONTEXT.)
+
+**Tests:** 1,679 → **1,726** (+47, all green). mypy **372** (0 new). gitleaks: **no leaks** (98 commits).
+**Deploy:** force-redeployed ×3 to https://epiphan-storyboard.vercel.app — `/health` 200; user confirmed "looks good worked great"; QA banner + hardware name confirmed gone in prod.
+
+---
+
+## Prior — 2026-06-19 sprint — 2 commits, deployed
 
 Debug-led session (started via `/begin` with an error report, not a planned sprint).
 

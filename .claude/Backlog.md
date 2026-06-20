@@ -2,11 +2,11 @@
 
 ## Feature — designed, ready to implement
 
-- **DA-TXT1: Track C — deterministic text layer for storyboard art** (effort: multi-session, impact: HIGH — exec-grade output) **[NEW 2026-06-19]**
-  - Full approved design at `docs/plans/2026-06-19-deterministic-text-layer-design.md`. Diffusion renders a TEXT-FREE hero illustration only; the infographic layout + crisp Söhne copy + stat + CTA + SVG icons composite client-side on a `<canvas>` from a fixed brand template, exported as PNG. Text never touches the diffusion model → garble/dup failure modes become structurally impossible.
-  - Anticipated files: `gemini_client.py` (text-free hero prompt), new `storyboard_layout.py` (`StoryboardLayout`/`build_layout`/`resolve_icon`), new `icons/` SVG set, `demo/router.py` (response → `{hero_png_b64, layout}`), `static/demo.html` (canvas renderer). Tests: `test_storyboard_layout.py` + Playwright E2E.
-  - Next step: `superpowers:writing-plans` from the design doc, then implement on a fresh branch.
-  - Tech-accuracy note to honor: Pearl Nexus Dante is licensed but NOT functional until ~fall 2026 — copy must not claim Dante works today.
+- ~~**DA-TXT1: Track C — deterministic text layer for storyboard art**~~ — **DONE 2026-06-20** (commits `7a947fb`→`e1d103e`, merged to main, deployed). Diffusion paints a text-free hero only; copy composites on `<canvas>` from `storyboard_layout.build_layout` + exports via `canvas.toBlob`. See TASK.md 2026-06-20 + memory `track-c-canvas-output`. Dante tech-accuracy note honored (machine-enforced in `product_visual_specs` pearl_nexus). Playwright-verified; full Playwright pytest E2E deferred (no JS test runner — covered by `test_demo_html_contract.py` static guards + live MCP checks).
+
+- **DA-TXT3: tech-accuracy gate — multi-product cross-contamination** (effort: ~1 hr, impact: low-med — occasional false flag) **[NEW 2026-06-20]**
+  - When a card recommends multiple products, `find_tech_accuracy_violations` checks copy against EVERY product's `do_not_depict`, so a claim TRUE for product A (e.g. "NDI|HX" — real for Pearl Nexus) can be flagged against product B's exclusion (Pearl Nano has no NDI). Didn't surface in the 06-20 cards and the gate report is no longer customer-facing, so low urgency. Fix idea: attribute each hero claim to the product it's about (proximity/explicit mention) before matching, or only match a phrase against copy that names that product.
+  - Source: 2026-06-20 false-positive investigation (noted to user).
 
 ## Security / Tooling
 
@@ -18,9 +18,7 @@
   - `src/brand/fonts.py` raises `HTTPException(502)` when chat.epiphan.com is unreachable. Browser falls back to system fonts fine, but the 5xx pollutes Vercel error metrics and may trigger CDN retries. Consider 200 empty-body with `font/otf` content-type, or a long-cached last-known-good response.
   - Source: 2026-06-12 arch audit (smell).
 
-- **DA-B2: downloadCard() html2canvas may blank the teal gradient header** (effort: needs repro first, impact: medium if real — broken PNG exports) **[NEW 2026-06-12]**
-  - `static/demo.html` uses `html2canvas(card, { scale: 2, useCORS: true })`; inline-styled gradient + foreignObject rendering is known-flaky with cross-origin stylesheets (Tailwind CDN). Downloaded PNGs may render the header area white while text sections survive. Manually repro before fixing.
-  - Source: 2026-06-12 arch audit (smell).
+- ~~**DA-B2: downloadCard() html2canvas may blank the teal gradient header**~~ — **DONE 2026-06-20** (Track C, commit `87f2f38`). html2canvas removed entirely; download is now `canvas.toBlob('image/png')` from the deterministic renderer — no DOM rasterization, no gradient-blanking risk.
 
 - ~~**DA-A4: SSOT emoji/label drift in `_dropdowns.py`**~~ — **DONE 2026-06-12** (commit `6544dd7`). SSOT emoji/labels synced with demo.html.
 

@@ -13,10 +13,6 @@
          last-resort fallback if the proxy upstream is unreachable. -->
     <link rel="stylesheet" href="/brand/fonts.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Rasterizes the brand storyboard card to PNG for download. -->
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
-            integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H"
-            crossorigin="anonymous"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -267,11 +263,27 @@ Example:
         </div>
 
         <!-- Loading -->
-        <div id="loadingSection" class="bg-white rounded-lg p-10 border border-epiphan-line shadow-[0_2px_6px_rgba(0,0,0,0.06)] hidden animate-fade-in" role="status" aria-live="polite">
-            <div class="text-center">
-                <div class="spinner" aria-hidden="true"></div>
-                <p id="loadingStatus" class="text-epiphan-ink font-medium">Reading the call…</p>
-                <p id="loadingElapsed" class="text-epiphan-ink3 text-sm mt-2 font-mono">0s · usually under 90s</p>
+        <div id="loadingSection" class="bg-white rounded-lg p-6 border border-epiphan-line shadow-[0_2px_6px_rgba(0,0,0,0.06)] hidden animate-fade-in" role="status" aria-live="polite">
+            <!-- Skeleton mirrors the final asset's layout so the wait previews the
+                 output instead of showing a blank spinner. -->
+            <div class="aspect-[16/9] w-full rounded-md overflow-hidden border border-epiphan-line bg-epiphan-surface animate-pulse" aria-hidden="true">
+                <div class="h-[18%] bg-epiphan-tealDeep/80"></div>
+                <div class="flex gap-3 p-3" style="height:64%">
+                    <div class="w-[55%] flex flex-col gap-3">
+                        <div class="flex-1 bg-white rounded"></div>
+                        <div class="flex-1 bg-white rounded"></div>
+                        <div class="flex-1 bg-white rounded"></div>
+                    </div>
+                    <div class="w-[45%] bg-epiphan-tealDeep/20 rounded"></div>
+                </div>
+                <div class="flex items-center gap-3 px-3" style="height:18%">
+                    <div class="w-24 h-9 bg-epiphan-green/60 rounded"></div>
+                    <div class="w-40 h-3 bg-white rounded"></div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <p id="loadingStatus" class="text-epiphan-ink font-medium">Reading your input…</p>
+                <p id="loadingElapsed" class="text-epiphan-ink3 text-sm mt-1 font-mono">0s · usually under 90s</p>
             </div>
         </div>
 
@@ -299,9 +311,19 @@ Example:
 
             <div class="flex flex-wrap gap-3 mt-5">
                 <button onclick="downloadCanvas()" aria-label="Download storyboard as PNG"
-                    class="flex-1 min-w-[180px] px-6 py-3 text-sm font-semibold text-white bg-epiphan-indigo rounded-md
+                    class="flex-1 min-w-[160px] px-6 py-3 text-sm font-semibold text-white bg-epiphan-indigo rounded-md
                            hover:bg-epiphan-indigoBright hover:-translate-y-0.5 transition-all">
                     Download PNG
+                </button>
+                <button id="copyImageBtn" onclick="copyImage()" aria-label="Copy storyboard image to clipboard"
+                    class="px-6 py-3 text-sm font-semibold text-epiphan-tealDeep bg-white border border-epiphan-line rounded-md
+                           hover:border-epiphan-indigo hover:text-epiphan-indigo transition-all">
+                    Copy image
+                </button>
+                <button id="shareLinkBtn" onclick="copyShareLink()" aria-label="Copy a shareable link"
+                    class="hidden px-6 py-3 text-sm font-semibold text-epiphan-tealDeep bg-white border border-epiphan-line rounded-md
+                           hover:border-epiphan-indigo hover:text-epiphan-indigo transition-all">
+                    Copy link
                 </button>
             </div>
 
@@ -321,6 +343,7 @@ Example:
         // State
         let imagesBase64 = [];
         const MAX_IMAGES = 3;
+        let lastShareUrl = null;
 
         // DOM utilities
         const $ = (id) => document.getElementById(id);
@@ -338,7 +361,17 @@ Example:
             setupDropZone();
             setupPaste();
             setupCharCounter();
+            $('codeInput').addEventListener('input', updateGenerateState);
+            updateGenerateState();
         });
+
+        // Inline validation: Generate is enabled only when there's input to work
+        // with (an image or some text), so the user never submits an empty form.
+        function updateGenerateState() {
+            const hasText = $('codeInput').value.trim().length > 0;
+            const hasImage = imagesBase64.length > 0;
+            $('generateBtn').disabled = !(hasText || hasImage);
+        }
 
         // Character counter for text input
         function setupCharCounter() {
@@ -466,6 +499,7 @@ Example:
 
         // Update image previews display (safe DOM construction)
         function updateImagePreviews() {
+            updateGenerateState();
             const container = $('imagePreviewContainer');
             const previews = $('imagePreviews');
 
@@ -600,11 +634,11 @@ Example:
             // counter plus staged status messages. (The work is synchronous on
             // the server; this is purely client-side reassurance.)
             const stages = [
-                'Reading the call…',
+                'Reading your input…',
                 'Finding the angle…',
-                'Designing the storyboard…',
-                'Rendering the image…',
-                'Almost there…',
+                "Checking it's on-brand…",
+                'Illustrating the hero…',
+                'Composing your asset…',
             ];
             let elapsed = 0, stageIdx = 0;
             $('loadingStatus').textContent = stages[0];
@@ -708,6 +742,10 @@ Example:
             renderQuality(result.quality);
             show('resultSection');
 
+            // Shareable link (Supabase public URL) — show the button only if present.
+            lastShareUrl = result.storage_url || null;
+            $('shareLinkBtn').classList.toggle('hidden', !lastShareUrl);
+
             // Track C: one deterministic canvas asset. Copy is drawn in Söhne from
             // result.layout; the picture behind it is the text-free hero (falls back
             // to storyboard_png for older responses, brand gradient if neither).
@@ -773,7 +811,13 @@ Example:
             if (!quality) return;
 
             const criticals = (quality.issues || []).filter(i => i.severity === 'critical');
-            if (quality.passed && !quality.reframe_applied) return;
+            // Clean pass → a quiet confidence chip, so the user knows it's send-ready.
+            if (quality.passed && !quality.reframe_applied) {
+                section.className = 'mb-4 p-3 rounded-md border-l-4 bg-[#eef6e6] border-epiphan-green text-epiphan-tealDeep';
+                title.textContent = 'On-brand ✓ — ready to send';
+                section.classList.remove('hidden');
+                return;
+            }
 
             if (!quality.passed) {
                 section.className = 'mb-4 p-4 rounded-md border-l-4 bg-[#eddfdd] border-[#7c414c] text-[#7c414c]';
@@ -996,6 +1040,41 @@ Example:
                 link.click();
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
             }, 'image/png');
+        }
+
+        // Copy the composited asset to the clipboard as a PNG (where supported).
+        async function copyImage() {
+            const canvas = $('storyboardCanvas');
+            if (!canvas || !navigator.clipboard || !window.ClipboardItem) {
+                showError("Copy-to-clipboard isn't supported here — use Download PNG.");
+                return;
+            }
+            try {
+                const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                flashButton($('copyImageBtn'), 'Copied ✓');
+            } catch (e) {
+                showError('Could not copy the image — use Download PNG instead.');
+            }
+        }
+
+        // Copy the shareable storage link (Supabase public URL) to the clipboard.
+        async function copyShareLink() {
+            if (!lastShareUrl) return;
+            try {
+                await navigator.clipboard.writeText(lastShareUrl);
+                flashButton($('shareLinkBtn'), 'Link copied ✓');
+            } catch (e) {
+                showError('Could not copy the link.');
+            }
+        }
+
+        // Briefly confirm an action on a button, then restore its label.
+        function flashButton(btn, label) {
+            const original = btn.textContent;
+            btn.textContent = label;
+            btn.disabled = true;
+            setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1600);
         }
 
         // Show error

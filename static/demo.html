@@ -286,52 +286,23 @@ Example:
                 <h3 id="qualityTitle" class="font-semibold mb-1 text-sm"></h3>
                 <ul id="qualityIssues" class="text-sm list-disc ml-5"></ul>
             </div>
-            <!-- PRIMARY deliverable: brand storyboard card. All text here is the
-                 LLM-extracted copy rendered as real Söhne type, so spelling is
-                 guaranteed correct (no AI-painted text). This is what downloads. -->
-            <div id="storyboardCard" class="bg-white rounded-lg border border-epiphan-line shadow-[0_10px_24px_rgba(0,0,0,0.10)] overflow-hidden">
-                <div class="p-8" style="background: radial-gradient(130% 130% at 0% 0%, #0d231f 0%, #0c3d34 55%, #316472 100%);">
-                    <p id="cardEyebrow" class="text-xs font-medium tracking-[0.08em] uppercase text-epiphan-greenBright mb-3">Epiphan storyboard</p>
-                    <h2 id="cardHeadline" class="text-3xl md:text-4xl font-semibold tracking-tight text-white leading-tight"></h2>
-                    <p id="cardTagline" class="text-lg text-white/80 mt-3"></p>
-                </div>
-                <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div><h3 class="eyebrow mb-1.5">What it does</h3><p id="cardWhat" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
-                    <div><h3 class="eyebrow mb-1.5">Business value</h3><p id="cardValue" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
-                    <div><h3 class="eyebrow mb-1.5">Who it's for</h3><p id="cardWho" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
-                    <div><h3 class="eyebrow mb-1.5">The differentiator</h3><p id="cardDiff" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
-                    <div class="md:col-span-2"><h3 class="eyebrow mb-1.5">Problem it solves</h3><p id="cardPain" class="text-sm text-epiphan-ink leading-relaxed"></p></div>
-                </div>
-                <div class="px-8 py-4 border-t border-epiphan-line flex items-center justify-between">
-                    <span class="text-sm font-medium text-epiphan-tealDeep">Epiphan Video</span>
-                    <span class="text-xs text-epiphan-ink3">Broadcast without barriers.</span>
-                </div>
-            </div>
+            <!-- PRIMARY deliverable: a single deterministic canvas asset. The
+                 diffusion model paints ONLY a text-free hero illustration; every
+                 word of copy is drawn here in crisp Söhne from the layout, so
+                 garbled/duplicated text is structurally impossible. This canvas
+                 is exactly what downloads (canvas.toBlob → PNG). -->
+            <canvas id="storyboardCanvas" role="img" aria-label="Generated Epiphan storyboard"
+                class="w-full h-auto rounded-lg border border-epiphan-line shadow-[0_10px_24px_rgba(0,0,0,0.10)] bg-white"></canvas>
+            <p id="fontWarning" class="hidden mt-2 text-xs text-[#a36a00]">
+                Heads up — the Söhne brand font didn't load, so this preview uses a system font. The text itself is still correct.
+            </p>
 
             <div class="flex flex-wrap gap-3 mt-5">
-                <button onclick="downloadCard()" aria-label="Download storyboard as PNG"
+                <button onclick="downloadCanvas()" aria-label="Download storyboard as PNG"
                     class="flex-1 min-w-[180px] px-6 py-3 text-sm font-semibold text-white bg-epiphan-indigo rounded-md
                            hover:bg-epiphan-indigoBright hover:-translate-y-0.5 transition-all">
                     Download PNG
                 </button>
-                <button onclick="toggleAiVisual()" aria-label="Show the AI-generated visual"
-                    class="px-6 py-3 text-sm font-semibold text-epiphan-tealDeep bg-white border border-epiphan-line rounded-md
-                           hover:border-epiphan-indigo hover:text-epiphan-indigo transition-all">
-                    View AI visual
-                </button>
-            </div>
-
-            <!-- SECONDARY: the raw AI image. Its text can be garbled (image models
-                 paint text), so it is reference-only behind a toggle. -->
-            <div id="aiVisualSection" class="mt-5 hidden">
-                <p class="text-xs text-epiphan-ink3 mb-2">AI-generated visual — reference only. The card above is the accurate version; image text can contain spelling errors.</p>
-                <img id="resultImg" src="" alt="AI-generated visual" loading="lazy" class="max-w-full rounded-md border border-epiphan-line mx-auto">
-                <div class="mt-3">
-                    <button onclick="openInNewTab()" aria-label="Open the AI visual in a new tab"
-                        class="px-5 py-2 text-sm font-medium text-epiphan-tealDeep bg-white border border-epiphan-line rounded-md hover:border-epiphan-indigo hover:text-epiphan-indigo transition-all">
-                        Open visual in new tab
-                    </button>
-                </div>
             </div>
 
             <div id="collateralSection" class="mt-5 p-4 bg-epiphan-surface rounded-md border-l-4 border-epiphan-green hidden">
@@ -350,7 +321,6 @@ Example:
         // State
         let imagesBase64 = [];
         const MAX_IMAGES = 3;
-        let resultImageBase64 = null;
 
         // DOM utilities
         const $ = (id) => document.getElementById(id);
@@ -734,29 +704,22 @@ Example:
         // Display result. The brand card is populated from the LLM-extracted
         // `understanding` (real typeset text → spelling is correct). The raw AI
         // image is kept behind a toggle because its painted text can be garbled.
-        function displayResult(result) {
-            resultImageBase64 = result.storyboard_png || null;
-            if (resultImageBase64) {
-                $('resultImg').src = 'data:image/png;base64,' + resultImageBase64;
-            }
-            $('aiVisualSection').classList.add('hidden'); // collapsed by default
-
-            const u = result.understanding || {};
-            const persona = selectedLabel('audienceSelect');
-            const vertical = selectedLabel('verticalSelect');
-            const eyebrow = [persona, vertical].filter(Boolean).join(' · ') || 'Epiphan storyboard';
-            $('cardEyebrow').textContent = eyebrow;
-            $('cardHeadline').textContent = u.headline || 'Epiphan storyboard';
-            $('cardTagline').textContent = u.tagline || '';
-            $('cardWhat').textContent = u.what_it_does || '—';
-            $('cardValue').textContent = u.business_value || '—';
-            $('cardWho').textContent = u.who_benefits || '—';
-            $('cardDiff').textContent = u.differentiator || '—';
-            $('cardPain').textContent = u.pain_point_addressed || '—';
-
+        async function displayResult(result) {
             renderQuality(result.quality);
-
             show('resultSection');
+
+            // Track C: one deterministic canvas asset. Copy is drawn in Söhne from
+            // result.layout; the picture behind it is the text-free hero (falls back
+            // to storyboard_png for older responses, brand gradient if neither).
+            const layout = result.layout;
+            const hero = result.hero_png_b64 || result.storyboard_png || null;
+            if (layout) {
+                try {
+                    await renderStoryboard(layout, hero);
+                } catch (e) {
+                    showError('Generated successfully, but the preview failed to render. Try Download PNG.');
+                }
+            }
 
             if (result.collateral_links) {
                 const collateralLinks = $('collateralLinks');
@@ -829,60 +792,210 @@ Example:
             section.classList.remove('hidden');
         }
 
-        // Toggle the reference-only AI visual.
-        function toggleAiVisual() {
-            const sec = $('aiVisualSection');
-            sec.classList.toggle('hidden');
-            if (!sec.classList.contains('hidden')) {
-                sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // ---- Track C canvas renderer -----------------------------------------
+        // Composite the deterministic layout (crisp Söhne copy) over the text-free
+        // hero into ONE 16:9 asset, exported losslessly via canvas.toBlob.
+        const CV = { W: 1600, H: 900, SCALE: 2, PAD: 48 };
+        const CVC = {
+            navy: '#1D2B51', lime: '#8CBE3F', ink: '#202329',
+            sub: '#5a5a5a', bg: '#f6f7f9', white: '#ffffff', line: '#e4e6eb',
+        };
+        const CV_FAM = "'Söhne','Sohne',system-ui,-apple-system,'Segoe UI',sans-serif";
+
+        function cvLoadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+        function cvIconUrl(svg, color) {
+            // ICON_SVGS use stroke="currentColor"; canvas can't resolve it.
+            return 'data:image/svg+xml;charset=utf-8,' +
+                encodeURIComponent(svg.replace(/currentColor/g, color));
+        }
+        function cvRoundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+        function cvWrap(ctx, text, maxW, maxLines) {
+            const words = String(text || '').split(/\s+/).filter(Boolean);
+            const lines = [];
+            let line = '';
+            for (let i = 0; i < words.length; i++) {
+                const test = line ? line + ' ' + words[i] : words[i];
+                if (ctx.measureText(test).width > maxW && line) {
+                    lines.push(line);
+                    line = words[i];
+                    if (lines.length === maxLines) break;
+                } else {
+                    line = test;
+                }
             }
+            if (lines.length < maxLines && line) lines.push(line);
+            const drawnWords = lines.join(' ').split(/\s+/).filter(Boolean).length;
+            if (lines.length === maxLines && drawnWords < words.length) {
+                let last = lines[maxLines - 1];
+                while (last && ctx.measureText(last + '…').width > maxW) {
+                    last = last.replace(/\s*\S+$/, '');
+                }
+                lines[maxLines - 1] = (last || lines[maxLines - 1]) + '…';
+            }
+            return lines;
         }
 
-        // Download the brand card (with correct text) as a PNG via html2canvas.
-        // Rasterizes the DOM card — text stays crisp and correctly spelled.
-        async function downloadCard() {
-            const card = $('storyboardCard');
-            if (!card || typeof html2canvas === 'undefined') {
-                // Fallback: if html2canvas didn't load, download the AI image.
-                if (resultImageBase64) {
-                    const link = document.createElement('a');
-                    link.href = 'data:image/png;base64,' + resultImageBase64;
-                    link.download = `storyboard-${Date.now()}.png`;
-                    link.click();
+        async function renderStoryboard(layout, heroB64) {
+            const canvas = $('storyboardCanvas');
+            canvas.width = CV.W * CV.SCALE;
+            canvas.height = CV.H * CV.SCALE;
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(CV.SCALE, 0, 0, CV.SCALE, 0, 0);
+            ctx.textBaseline = 'alphabetic';
+
+            // Söhne must be ready before we measure/draw text.
+            let fontOk = true;
+            try {
+                await document.fonts.ready;
+                fontOk = document.fonts.check(`600 40px ${CV_FAM}`);
+            } catch (e) { fontOk = false; }
+            $('fontWarning').classList.toggle('hidden', fontOk);
+
+            // Geometry (fractions of 1600×900 from the approved design).
+            const headerH = 168;
+            const bodyTop = headerH + 22;
+            const footerTop = 744;
+            const heroX = 904, heroW = CV.W - heroX - CV.PAD;
+            const cardsX = CV.PAD, cardsW = heroX - CV.PAD - 28;
+            const colH = footerTop - bodyTop - 16;
+
+            // Background
+            ctx.fillStyle = CVC.bg;
+            ctx.fillRect(0, 0, CV.W, CV.H);
+
+            // Header band
+            ctx.fillStyle = CVC.navy;
+            ctx.fillRect(0, 0, CV.W, headerH);
+            ctx.fillStyle = CVC.lime;
+            ctx.font = `600 20px ${CV_FAM}`;
+            ctx.fillText((layout.eyebrow || '').toUpperCase(), CV.PAD, 52);
+            ctx.fillStyle = CVC.white;
+            ctx.font = `600 40px ${CV_FAM}`;
+            let hy = 100;
+            for (const ln of cvWrap(ctx, layout.headline || '', CV.W - CV.PAD * 2, 2)) {
+                ctx.fillText(ln, CV.PAD, hy); hy += 46;
+            }
+
+            // Hero (right column) — clip to rounded rect, cover-fit; else gradient.
+            cvRoundRect(ctx, heroX, bodyTop, heroW, colH, 14);
+            ctx.save();
+            ctx.clip();
+            let drewHero = false;
+            if (heroB64) {
+                try {
+                    const img = await cvLoadImage('data:image/png;base64,' + heroB64);
+                    const s = Math.max(heroW / img.width, colH / img.height);
+                    const dw = img.width * s, dh = img.height * s;
+                    ctx.drawImage(img, heroX + (heroW - dw) / 2, bodyTop + (colH - dh) / 2, dw, dh);
+                    drewHero = true;
+                } catch (e) { drewHero = false; }
+            }
+            if (!drewHero) {
+                const g = ctx.createLinearGradient(heroX, bodyTop, heroX + heroW, bodyTop + colH);
+                g.addColorStop(0, CVC.navy);
+                g.addColorStop(1, '#33508f');
+                ctx.fillStyle = g;
+                ctx.fillRect(heroX, bodyTop, heroW, colH);
+            }
+            ctx.restore();
+
+            // Cards (left column)
+            const cards = (layout.cards || []).slice(0, 4);
+            const n = Math.max(cards.length, 1);
+            const gap = 16;
+            const cardH = (colH - gap * (n - 1)) / n;
+            for (let i = 0; i < cards.length; i++) {
+                const cy = bodyTop + i * (cardH + gap);
+                ctx.fillStyle = CVC.white;
+                cvRoundRect(ctx, cardsX, cy, cardsW, cardH, 12); ctx.fill();
+                ctx.strokeStyle = CVC.line; ctx.lineWidth = 1;
+                cvRoundRect(ctx, cardsX, cy, cardsW, cardH, 12); ctx.stroke();
+
+                const icoSize = Math.min(46, cardH - 28);
+                const icoX = cardsX + 24, icoY = cy + (cardH - icoSize) / 2;
+                const svg = (layout.icon_svgs || {})[cards[i].icon];
+                if (svg) {
+                    try {
+                        const ico = await cvLoadImage(cvIconUrl(svg, CVC.navy));
+                        ctx.drawImage(ico, icoX, icoY, icoSize, icoSize);
+                    } catch (e) { /* missing icon → skip */ }
                 }
-                return;
+                ctx.fillStyle = CVC.ink;
+                ctx.font = `500 22px ${CV_FAM}`;
+                const tx = icoX + icoSize + 22;
+                const tw = cardsW - (tx - cardsX) - 24;
+                const lines = cvWrap(ctx, cards[i].caption, tw, cardH > 96 ? 3 : 2);
+                const lh = 28;
+                let ty = cy + (cardH - lines.length * lh) / 2 + 21;
+                for (const ln of lines) { ctx.fillText(ln, tx, ty); ty += lh; }
+            }
+
+            // Stat callout + CTA + logo (footer band)
+            let footX = CV.PAD;
+            if (layout.stat_value) {
+                ctx.font = `700 34px ${CV_FAM}`;
+                const vw = ctx.measureText(layout.stat_value).width;
+                ctx.font = `500 16px ${CV_FAM}`;
+                const lw = ctx.measureText(layout.stat_label || '').width;
+                const boxW = Math.max(vw, lw) + 48;
+                const boxY = footerTop + 16, boxH = 96;
+                ctx.fillStyle = CVC.lime;
+                cvRoundRect(ctx, CV.PAD, boxY, boxW, boxH, 12); ctx.fill();
+                ctx.fillStyle = CVC.navy;
+                ctx.font = `700 34px ${CV_FAM}`;
+                ctx.fillText(layout.stat_value, CV.PAD + 24, boxY + 48);
+                ctx.font = `500 16px ${CV_FAM}`;
+                ctx.fillText(layout.stat_label || '', CV.PAD + 24, boxY + 74);
+                footX = CV.PAD + boxW + 28;
+            }
+            ctx.fillStyle = CVC.ink;
+            ctx.font = `600 22px ${CV_FAM}`;
+            ctx.fillText(layout.cta || '', footX, footerTop + 60);
+            if (layout.product_name) {
+                ctx.fillStyle = CVC.sub;
+                ctx.font = `500 16px ${CV_FAM}`;
+                ctx.fillText(layout.product_name, footX, footerTop + 88);
             }
             try {
-                await (document.fonts && document.fonts.ready);
-                const canvas = await html2canvas(card, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-                const link = document.createElement('a');
-                link.href = canvas.toDataURL('image/png');
-                link.download = `storyboard-${Date.now()}.png`;
-                link.click();
-            } catch (e) {
-                showError('Could not export the PNG. Try the "View AI visual" option to save the image instead.');
-            }
+                const logoEl = document.querySelector('header svg');
+                if (logoEl) {
+                    const xml = new XMLSerializer().serializeToString(logoEl);
+                    const logo = await cvLoadImage(
+                        'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml));
+                    const lw2 = 150, lh2 = lw2 * (logo.height / logo.width || 0.28);
+                    ctx.drawImage(logo, CV.W - CV.PAD - lw2, footerTop + 46, lw2, lh2);
+                }
+            } catch (e) { /* logo optional */ }
         }
 
-        // Open in new tab (safe DOM construction via createElement)
-        function openInNewTab() {
-            if (!resultImageBase64) return;
-
-            const win = window.open('', '_blank');
-            if (!win) return;
-
-            win.document.title = 'Storyboard';
-
-            const style = win.document.createElement('style');
-            style.textContent = 'body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f1f2f0}';
-            win.document.head.appendChild(style);
-
-            const img = win.document.createElement('img');
-            img.src = 'data:image/png;base64,' + resultImageBase64;
-            img.style.maxWidth = '100%';
-            img.style.height = 'auto';
-            img.alt = 'Storyboard';
-            win.document.body.appendChild(img);
+        // Download the composited canvas as a lossless PNG (replaces html2canvas).
+        function downloadCanvas() {
+            const canvas = $('storyboardCanvas');
+            if (!canvas) return;
+            canvas.toBlob((blob) => {
+                if (!blob) { showError('Could not export the PNG.'); return; }
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `epiphan-storyboard-${Date.now()}.png`;
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }, 'image/png');
         }
 
         // Show error

@@ -45,10 +45,16 @@ _ICON_RULES: list[tuple[str, tuple[str, ...]]] = [
 
 
 def _svg(viewbox_paths: str) -> str:
-    """Wrap inner SVG markup in a consistent 24×24 stroke icon."""
+    """Wrap inner SVG markup in a consistent 24×24 stroke icon.
+
+    The ``xmlns`` is required: these SVGs are rendered client-side as standalone
+    ``image/svg+xml`` data-URL images on a ``<canvas>``, and an SVG used as an
+    image must declare its namespace or the browser refuses to load it.
+    """
     return (
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
-        'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+        'stroke-linejoin="round">'
         f"{viewbox_paths}</svg>"
     )
 

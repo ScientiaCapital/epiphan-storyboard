@@ -479,6 +479,9 @@ async def generate_storyboard(
         "output_format": request.output_format,
         "visual_style": request.visual_style,
         "open_browser": False,  # Server-side - don't open browser
+        # Track C: the demo composites copy on canvas, so the diffusion model
+        # paints a TEXT-FREE hero. hero_png_b64 + layout come back in the result.
+        "text_free_hero": True,
     }
 
     # Add vertical if provided

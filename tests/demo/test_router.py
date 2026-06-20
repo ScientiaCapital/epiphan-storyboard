@@ -686,3 +686,23 @@ def test_generate_forwards_layout_and_hero(client):
     assert body["hero_png_b64"] == "hero_base64_png"
     assert body["layout"]["headline"] == "Walk SD cards no more"
     assert body["layout"]["cards"][0]["icon"] == "encoder"
+
+
+def test_generate_requests_text_free_hero(client):
+    """Track C: the demo must ask the tool for a TEXT-FREE hero (copy is drawn
+    on canvas), so hero_png_b64 + layout come back populated."""
+    with patch("src.demo.router.UnifiedStoryboardTool") as MockTool:
+        mock_instance = AsyncMock()
+        mock_instance.run.return_value = _mock_tool_success()
+        MockTool.return_value = mock_instance
+        client.post(
+            "/demo/generate",
+            json={
+                "input_type": "code",
+                "code": "def foo(): pass",
+                "stage": "demo",
+                "audience": "av_director",
+            },
+        )
+        args = mock_instance.run.call_args[0][0]
+        assert args["text_free_hero"] is True

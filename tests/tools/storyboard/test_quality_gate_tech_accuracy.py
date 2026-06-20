@@ -219,3 +219,32 @@ class TestPearlDuoTechAccuracy:
             )
         )
         assert hits == {}
+
+
+class TestPearlNexusDante:
+    """Pearl Nexus licenses Dante but it is NOT functional until ~fall 2026.
+
+    Copy must not claim Dante works today. The do_not_depict SSOT enforces it.
+    """
+
+    def test_dante_today_claim_flagged(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                differentiator="Pearl Nexus delivers Dante audio today, right out of the box.",
+                recommended_products=["pearl_nexus"],
+            )
+        )
+        assert "differentiator" in hits
+
+    def test_clean_nexus_copy_without_dante_passes(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                headline="Capture every room in one rack unit",
+                what_it_does="Pearl Nexus records and streams several rooms without an operator.",
+                differentiator="Only Pearl pairs capture with fleet management via Epiphan Edge",
+                business_value="Cuts truck rolls across campus",
+                pain_point_addressed="Manual SD card collection after every lecture",
+                recommended_products=["pearl_nexus"],
+            )
+        )
+        assert hits == {}

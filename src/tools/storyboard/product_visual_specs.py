@@ -130,6 +130,10 @@ PRODUCT_VISUAL_SPECS: dict[str, ProductVisualSpec] = {
             "NDI full / NDI Alpha channel (only NDI|HX ingest, no alpha)",
             "NVMe storage (SATA only)",
             "more than three channels",
+            # Dante is licensed but NOT functional until ~fall 2026 — copy must
+            # never claim it works today. Mirrors Pearl Nano's "Dante (not
+            # supported)" exclusion; the gate keys on the distinctive "dante".
+            "Dante audio as a working feature today (licensed, NOT functional until ~fall 2026)",
         ],
     ),
     "pearl_2": ProductVisualSpec(

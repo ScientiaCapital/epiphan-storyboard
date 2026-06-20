@@ -248,3 +248,50 @@ class TestPearlNexusDante:
             )
         )
         assert hits == {}
+
+
+class TestTechAccuracyFalsePositives:
+    """Regression: correct one-cable / multi-product higher-ed copy was wrongly
+    flagged because do_not_depict parentheticals (the TRUE state) leaked words
+    like 'cable'/'pearl' into the match signal, and generic plumbing nouns
+    ('power','cable') matched on their own. (Reported 2026-06-20 from the demo.)
+    """
+
+    def test_one_cable_headline_not_flagged(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                headline="One-cable lecture capture for every room",
+                what_it_does="Pearl records and streams every classroom without an operator.",
+                recommended_products=["ec20_ptz", "pearl_nano"],
+            )
+        )
+        assert hits == {}, hits
+
+    def test_single_cable_carries_power_not_flagged(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                what_it_does="One PoE+ cable carries power and video to the camera.",
+                recommended_products=["ec20_ptz"],
+            )
+        )
+        assert "what_it_does" not in hits, hits
+
+    def test_pearl_mention_not_flagged_via_nano_parenthetical(self):
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                differentiator="Pearl pairs capture with fleet management via Epiphan Edge",
+                what_it_does="Pearl records and streams to every classroom.",
+                recommended_products=["pearl_nano"],
+            )
+        )
+        assert hits == {}, hits
+
+    def test_real_ec20_separate_encoder_still_flagged(self):
+        # The fix must NOT weaken the #1 true claim to block.
+        hits = find_tech_accuracy_violations(
+            _understanding(
+                what_it_does="The EC20 needs a separate encoder to record to your CMS.",
+                recommended_products=["ec20_ptz"],
+            )
+        )
+        assert "what_it_does" in hits, hits

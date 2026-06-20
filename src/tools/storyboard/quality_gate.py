@@ -200,6 +200,7 @@ _TECH_STOPWORDS: frozenset[str] = frozenset(
     supported source sources input inputs output outputs stream streams
     streaming over your you our them they into via more than
     camera cameras ptz zoom pan tilt motorized lens capture captures
+    cable cables power data video audio poe single one
     """.split()
 )
 
@@ -247,7 +248,12 @@ def _asserts_phrase(field_text: str, phrase: str) -> bool:
         tripping the gate, at the cost of occasionally missing a violation
         that also happens to contain an unrelated negation.
     """
-    phrase_words = _content_words(phrase)
+    # The parenthetical in a do_not_depict phrase documents the TRUE state
+    # ("(single PoE+ cable)", "(Pearl Nano does NOT support NDI)") for human
+    # readers. Its words must NOT count as match-signal, or correct copy
+    # ("one-cable", "Pearl records…") collides with them — the false-positive
+    # class reported 2026-06-20. Match only the false-claim clause.
+    phrase_words = _content_words(re.sub(r"\([^)]*\)", " ", phrase))
     if not phrase_words:
         return False
 

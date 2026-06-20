@@ -151,3 +151,7 @@
 - DA-PD3 (INFO) — Add a test asserting `pearl_duo` appears in the 4 wired verticals' `recommended_products` (structural data, currently only guarded by `_check_product_references`).
 - DA-PD4 (INFO) — genai exception branch (`gemini_client.py` image-gen `except Exception: raise`) is untested. Low.
 - NOTE: pearl-duo observer WARNINGs (healthcare bidirectional inconsistency, fragile lecture/CMS signal, do_not_depict test gaps) were ALL FIXED this sprint (commit 28f5cd9), not deferred.
+
+- **DA-TXT2: Extraction-model temperature consistency** (effort: 15 min, impact: low) **[NEW 2026-06-20]**
+  - `gemini_client.py` `_call_qwen_vision`/`_call_deepseek` hardcode `temperature: 0.5` ("higher for creative extraction") while image gen uses the 0.4 `_TEXT_FIDELITY_TEMPERATURE`. Not a bug (extraction ≠ generation), but the rationale for the 0.5 divergence is undocumented. Either add a comment or align.
+  - Source: 2026-06-20 read-only observer audit of the 06-17→06-19 diff (the only genuinely-new finding; rest were pre-existing/intentional).

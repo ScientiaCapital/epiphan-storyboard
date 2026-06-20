@@ -1280,6 +1280,64 @@ PROFESSIONAL QUALITY (LinkedIn-ready):
 
 NEVER output generic copy. ALWAYS use specifics from the extraction."""
 
+    def _build_hero_prompt(
+        self,
+        understanding: StoryboardUnderstanding,
+        vertical: str | None,
+        has_reference: bool = False,
+    ) -> str:
+        """Build a TEXT-FREE hero-illustration prompt (Track C).
+
+        The diffusion model paints ONLY an editorial scene — no headline, no
+        copy, no labels. Every word is composited client-side on canvas, so the
+        garble/duplication failure modes never reach the image. Product
+        grounding, the brand palette, and reference-image conditioning are
+        preserved; the extracted copy is deliberately withheld.
+        """
+        from src.tools.storyboard.product_visual_specs import (
+            build_product_visual_block,
+        )
+
+        product_visual_block = build_product_visual_block(
+            understanding.recommended_products
+        )
+        product_section = (
+            "\nPRODUCT GROUNDING (depict the hardware accurately — but STILL no "
+            f"text/labels on it):\n{product_visual_block}\n"
+            if product_visual_block
+            else ""
+        )
+        vertical_context = prompts.get_vertical_generation_context(vertical)
+        reference_instruction = ""
+        if has_reference:
+            reference_instruction = (
+                "\nREFERENCE IMAGES (CRITICAL): reference photos of the user's "
+                "real environment are attached — match that room/scene/layout and "
+                "place the Epiphan hardware into it. Do NOT invent a stock room.\n"
+            )
+
+        return f"""Create a SINGLE text-free editorial HERO ILLUSTRATION for an AV/IT storyboard.
+{reference_instruction}
+ABSOLUTELY NO TEXT (this is the entire point of this image):
+- NO text, NO words, NO letters, NO numbers, NO labels, NO captions, NO logos
+- NO UI chrome, NO buttons, NO charts with axis text, NO speech bubbles
+- If tempted to write a word, draw an icon or physical object instead
+- Copy is added separately on top of this image — your job is the PICTURE only
+
+SUBJECT:
+- A clean, modern scene depicting an AV/IT capture → stream → record workflow
+- Appropriate to the buyer's environment described in the vertical context below
+{product_section}{vertical_context}
+
+STYLE:
+- Flat, modern editorial vector illustration with generous negative space
+- Professional, LinkedIn-grade; balanced single focal scene
+- Color palette — use these EXACT brand colors:
+  - Navy #1D2B51 (primary structure)
+  - Lime #8CBE3F (accents/highlights)
+  - Neutral light background; do not fill every pixel
+"""
+
     async def generate_storyboard(
         self,
         understanding: StoryboardUnderstanding,
@@ -1292,6 +1350,7 @@ NEVER output generic copy. ALWAYS use specifics from the extraction."""
         icp_preset: dict[str, Any] | None = None,
         custom_style: dict[str, Any] | None = None,
         reference_images: list[bytes] | None = None,
+        text_free_hero: bool = False,
     ) -> bytes:
         """
         Stage 2: Generate beautiful PNG storyboard.
@@ -1412,6 +1471,14 @@ DESIGN PRINCIPLES:
 - NO promotional badges or ribbons - this is executive content, not a sales flyer
 
 {prompts.get_format_output_instructions(output_format)}"""
+
+        # Track C: when enabled, the diffusion model paints a wordless hero
+        # illustration only; the infographic copy is composited on canvas
+        # downstream, so text can never be garbled by the model.
+        if text_free_hero:
+            prompt = self._build_hero_prompt(
+                understanding, vertical, has_reference=bool(reference_images)
+            )
 
         try:
             logger.info(

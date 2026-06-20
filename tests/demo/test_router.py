@@ -66,7 +66,9 @@ def test_list_examples_contains_expected(client):
         "epiphan_presets",
     }
 
-    assert expected.issubset(example_names), f"Missing examples: {expected - example_names}"
+    assert expected.issubset(example_names), (
+        f"Missing examples: {expected - example_names}"
+    )
 
 
 # ============================================================================
@@ -639,3 +641,48 @@ def test_generate_passes_quality_through(client):
     assert data["quality"]["passed"] is False
     assert data["quality"]["reframe_applied"] is True
     assert data["quality"]["issues"][0]["category"] == "brand"
+
+
+def test_generate_forwards_layout_and_hero(client):
+    """Track C: /demo/generate forwards `layout` and `hero_png_b64` to the client."""
+    result = ToolResult(
+        tool_name="unified_storyboard",
+        success=True,
+        result={
+            "storyboard_png": "fake_base64_png",
+            "hero_png_b64": "hero_base64_png",
+            "layout": {
+                "eyebrow": "Higher Education",
+                "headline": "Walk SD cards no more",
+                "cards": [{"caption": "Records every room", "icon": "encoder"}],
+                "stat_value": "$6,600",
+                "stat_label": "per room",
+                "cta": "Let's talk about your operation.",
+                "product_name": "Pearl Nexus",
+                "hero_alt": "One box from capture to cloud",
+                "icon_svgs": {"encoder": '<svg viewBox="0 0 24 24"></svg>'},
+            },
+            "understanding": {},
+            "input_type": "code",
+        },
+        execution_time_ms=100,
+    )
+    with patch("src.demo.router.UnifiedStoryboardTool") as MockTool:
+        mock_instance = AsyncMock()
+        mock_instance.run.return_value = result
+        MockTool.return_value = mock_instance
+        response = client.post(
+            "/demo/generate",
+            json={
+                "input_type": "code",
+                "code": "def foo(): pass",
+                "stage": "demo",
+                "audience": "av_director",
+                "vertical": "higher_ed",
+            },
+        )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["hero_png_b64"] == "hero_base64_png"
+    assert body["layout"]["headline"] == "Walk SD cards no more"
+    assert body["layout"]["cards"][0]["icon"] == "encoder"

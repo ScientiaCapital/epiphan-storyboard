@@ -207,6 +207,21 @@ class GenerateResponse(BaseModel):
             "competitor as the hero and was regenerated."
         ),
     )
+    hero_png_b64: str | None = Field(
+        None,
+        description=(
+            "Track C: text-free hero illustration (base64 PNG). Present only when "
+            "text-free generation was requested; the client composites crisp copy "
+            "over it on canvas. None → use storyboard_png as before."
+        ),
+    )
+    layout: dict[str, Any] | None = Field(
+        None,
+        description=(
+            "Track C: deterministic StoryboardLayout (eyebrow/headline/cards/stat/"
+            "cta/product/hero_alt/icon_svgs) for the client-side canvas renderer."
+        ),
+    )
     error: str | None = None
 
 
@@ -533,6 +548,8 @@ async def generate_storyboard(
             execution_time_ms=result.execution_time_ms,
             collateral_links=collateral,
             quality=(result.result or {}).get("quality"),
+            hero_png_b64=(result.result or {}).get("hero_png_b64"),
+            layout=(result.result or {}).get("layout"),
         )
     else:
         return GenerateResponse(
@@ -548,5 +565,7 @@ async def generate_storyboard(
             execution_time_ms=result.execution_time_ms,
             collateral_links=None,
             quality=None,
+            hero_png_b64=None,
+            layout=None,
             error=result.error,
         )

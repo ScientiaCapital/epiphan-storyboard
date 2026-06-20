@@ -435,6 +435,9 @@ class UnifiedStoryboardTool(BaseTool):
         supplementary_context = arguments.get(
             "supplementary_context"
         )  # Optional text context for mixed input
+        # Track C: when True, Stage 2 paints a TEXT-FREE hero illustration and
+        # the copy is composited on canvas client-side from the returned layout.
+        text_free_hero = arguments.get("text_free_hero", False)
 
         # Handle multiple images (input can be a list of base64 strings)
         is_multi_image = isinstance(input_value, list)
@@ -622,9 +625,7 @@ class UnifiedStoryboardTool(BaseTool):
                 tech_hits = find_tech_accuracy_violations(understanding.model_dump())
                 if tech_hits and not reframe_applied:
                     bad_fields = sorted(tech_hits)
-                    bad_claims = sorted(
-                        {p for ps in tech_hits.values() for p in ps}
-                    )
+                    bad_claims = sorted({p for ps in tech_hits.values() for p in ps})
                     logger.warning(
                         "Quality gate: technically false claim in %s — "
                         "corrective reframe retry",
@@ -699,6 +700,7 @@ class UnifiedStoryboardTool(BaseTool):
                 visual_style=visual_style,
                 artist_style=artist_style,
                 reference_images=reference_images,
+                text_free_hero=text_free_hero,
             )
 
             # Save and optionally open in browser
@@ -710,10 +712,21 @@ class UnifiedStoryboardTool(BaseTool):
             # Encode result as base64
             storyboard_b64 = base64.b64encode(png_bytes).decode("utf-8")
 
+            # Track C: deterministic layout for the client-side canvas renderer.
+            # Pure mapping (no model call); always returned so the frontend can
+            # composite crisp Söhne copy. hero_png_b64 is only populated when the
+            # image was generated text-free (otherwise the canvas would paint copy
+            # on top of an image that already bakes in its own text).
+            from src.tools.storyboard.storyboard_layout import build_layout
+
+            layout = build_layout(understanding, vertical=vertical, stage=stage)
+
             execution_time_ms = int((perf_counter() - start_time) * 1000)
 
             result = {
                 "storyboard_png": storyboard_b64,
+                "hero_png_b64": storyboard_b64 if text_free_hero else None,
+                "layout": layout.model_dump(),
                 "understanding": {
                     "headline": understanding.headline,
                     "tagline": understanding.tagline,

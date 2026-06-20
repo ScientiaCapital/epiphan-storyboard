@@ -611,8 +611,6 @@ class TestDirBugFix:
         # The input_type should be captured even in the error path
         assert result.result.get("input_type") == "code"
 
-
-
     """Tests for result format."""
 
     @pytest.mark.asyncio
@@ -978,3 +976,67 @@ class TestReferenceImageThreading:
         assert result.success is True
         kwargs = mock_client.generate_storyboard.call_args.kwargs
         assert kwargs["reference_images"] is None
+
+
+class TestTrackCLayout:
+    """Track C: run() returns a deterministic layout + (when enabled) a hero PNG."""
+
+    _PNG = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    )
+
+    def _mock_client(self):
+        u = StoryboardUnderstanding(
+            headline="ROI Calculator",
+            what_it_does="Calculates return on investment fast",
+            business_value="Save 10 hours per week",
+            who_benefits="Finance teams",
+            differentiator="Simple and fast cloud workflow",
+            pain_point_addressed="Manual calculations every month",
+            recommended_products=["pearl_mini"],
+        )
+        client = MagicMock()
+        client.understand_code = AsyncMock(return_value=u)
+        client.generate_storyboard = AsyncMock(return_value=self._PNG)
+        return client
+
+    @pytest.mark.asyncio
+    async def test_run_returns_layout_and_hero_when_enabled(self):
+        tool = UnifiedStoryboardTool()
+        tool._gemini_client = self._mock_client()
+        with patch("webbrowser.open"):
+            result = await tool.run(
+                {
+                    "input": "def calc(): return 1",
+                    "open_browser": False,
+                    "vertical": "higher_ed",
+                    "text_free_hero": True,
+                }
+            )
+        assert result.success is True
+        layout = result.result["layout"]
+        assert layout["headline"] == "ROI Calculator"
+        assert layout["eyebrow"] == "Higher Education"
+        assert layout["cards"]
+        assert result.result["hero_png_b64"]  # populated when enabled
+        # generate_storyboard told to paint a text-free hero
+        assert (
+            tool._gemini_client.generate_storyboard.call_args.kwargs["text_free_hero"]
+            is True
+        )
+
+    @pytest.mark.asyncio
+    async def test_hero_png_none_but_layout_present_when_disabled(self):
+        tool = UnifiedStoryboardTool()
+        tool._gemini_client = self._mock_client()
+        with patch("webbrowser.open"):
+            result = await tool.run(
+                {
+                    "input": "def calc(): return 1",
+                    "open_browser": False,
+                    "vertical": "higher_ed",
+                }
+            )
+        assert result.success is True
+        assert result.result["hero_png_b64"] is None
+        assert result.result["layout"]["headline"] == "ROI Calculator"

@@ -47,3 +47,16 @@ def test_old_garbled_image_path_removed(html: str) -> None:
     assert 'id="storyboardCard"' not in html
     assert 'id="resultImg"' not in html
     assert "toggleAiVisual" not in html
+
+
+def test_internal_qa_not_customer_facing(html: str) -> None:
+    # The quality-gate report is internal QA — it must not render in the demo
+    # (it still runs server-side to drive the reframe retry).
+    assert "renderQuality" not in html
+    assert 'id="qualitySection"' not in html
+    assert "review before sending" not in html
+
+
+def test_no_hardware_name_in_canvas_footer(html: str) -> None:
+    # By request: the footer names no product/hardware.
+    assert "layout.product_name" not in html

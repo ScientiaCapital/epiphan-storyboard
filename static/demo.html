@@ -292,12 +292,6 @@ Example:
 
         <!-- Result -->
         <div id="resultSection" class="hidden animate-fade-in mt-5">
-            <!-- Quality gate report: shown when the extraction was reframed
-                 (competitor-as-hero retry) or has unresolved issues. -->
-            <div id="qualitySection" class="hidden mb-4 p-4 rounded-md border-l-4" role="status">
-                <h3 id="qualityTitle" class="font-semibold mb-1 text-sm"></h3>
-                <ul id="qualityIssues" class="text-sm list-disc ml-5"></ul>
-            </div>
             <!-- PRIMARY deliverable: a single deterministic canvas asset. The
                  diffusion model paints ONLY a text-free hero illustration; every
                  word of copy is drawn here in crisp Söhne from the layout, so
@@ -735,11 +729,11 @@ Example:
             return opt.textContent.trim().replace(/^\S+\s+/, '').trim();
         }
 
-        // Display result. The brand card is populated from the LLM-extracted
-        // `understanding` (real typeset text → spelling is correct). The raw AI
-        // image is kept behind a toggle because its painted text can be garbled.
+        // Display result: composite the single shareable asset on canvas from the
+        // deterministic layout + text-free hero. The quality gate still runs
+        // server-side (it drives the reframe retry), but its report is internal
+        // QA — intentionally NOT shown here, so a prospect never sees it.
         async function displayResult(result) {
-            renderQuality(result.quality);
             show('resultSection');
 
             // Shareable link (Supabase public URL) — show the button only if present.
@@ -797,43 +791,6 @@ Example:
             }
 
             $('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        // Quality gate banner. Hidden when the gate passed without a reframe.
-        // Amber (#f5a524) = reframed or warnings; danger tint = unresolved
-        // critical issues (e.g. competitor still positioned as the hero).
-        function renderQuality(quality) {
-            const section = $('qualitySection');
-            const title = $('qualityTitle');
-            const list = $('qualityIssues');
-            clearChildren(list);
-            section.classList.add('hidden');
-            if (!quality) return;
-
-            const criticals = (quality.issues || []).filter(i => i.severity === 'critical');
-            // Clean pass → a quiet confidence chip, so the user knows it's send-ready.
-            if (quality.passed && !quality.reframe_applied) {
-                section.className = 'mb-4 p-3 rounded-md border-l-4 bg-[#eef6e6] border-epiphan-green text-epiphan-tealDeep';
-                title.textContent = 'On-brand ✓ — ready to send';
-                section.classList.remove('hidden');
-                return;
-            }
-
-            if (!quality.passed) {
-                section.className = 'mb-4 p-4 rounded-md border-l-4 bg-[#eddfdd] border-[#7c414c] text-[#7c414c]';
-                title.textContent = 'Quality gate: review before sending';
-            } else {
-                section.className = 'mb-4 p-4 rounded-md border-l-4 bg-[#fdf3df] border-[#f5a524] text-epiphan-ink';
-                title.textContent = 'Quality gate: source was competitor-focused — card reframed around Epiphan';
-            }
-
-            const toShow = quality.passed ? [] : criticals;
-            toShow.forEach(issue => {
-                const li = document.createElement('li');
-                li.textContent = issue.message;
-                list.appendChild(li);
-            });
-            section.classList.remove('hidden');
         }
 
         // ---- Track C canvas renderer -----------------------------------------
@@ -1007,14 +964,11 @@ Example:
                 ctx.fillText(layout.stat_label || '', CV.PAD + 24, boxY + 74);
                 footX = CV.PAD + boxW + 28;
             }
+            // CTA only — no product/hardware name in the footer (kept out of the
+            // customer-facing asset by request).
             ctx.fillStyle = CVC.ink;
             ctx.font = `600 22px ${CV_FAM}`;
-            ctx.fillText(layout.cta || '', footX, footerTop + 60);
-            if (layout.product_name) {
-                ctx.fillStyle = CVC.sub;
-                ctx.font = `500 16px ${CV_FAM}`;
-                ctx.fillText(layout.product_name, footX, footerTop + 88);
-            }
+            ctx.fillText(layout.cta || '', footX, footerTop + 72);
             try {
                 const logoEl = document.querySelector('header svg');
                 if (logoEl) {
